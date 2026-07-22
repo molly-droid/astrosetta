@@ -1,0 +1,251 @@
+// Astrosetta Database Schema
+// This schema supports the full application through M6
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================================================
+// AUTHENTICATION & USERS (M2)
+// ============================================================================
+
+model User {
+  id              String           @id @default(cuid())
+  email           String           @unique
+  passwordHash    String?
+  oauthProvider   String?          // "google"
+  oauthSub        String?          // Google user ID
+  createdAt       DateTime         @default(now())
+  settings        Json             @default("{}")
+
+  // Relations
+  sessions        Session[]
+  birthProfiles   BirthProfile[]
+  lessonProgress  LessonProgress[]
+  quizAttempts    QuizAttempt[]
+  srsCards        SrsCard[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  transport String   // "cookie" | "bearer"
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@map("sessions")
+}
+
+// ============================================================================
+// BIRTH PROFILES & CHARTS (M2)
+// ============================================================================
+
+model BirthProfile {
+  id              String             @id @default(cuid())
+  userId          String
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label           String
+  isPrimary       Boolean            @default(false)
+
+  // Birth data
+  birthDate       DateTime           @db.Date
+  birthTime       DateTime?          @db.Time
+  timeKnown       Boolean
+
+  // Location
+  placeName       String
+  lat             Float
+  lon             Float
+  ianaTimezone    String
+  utcDatetime     DateTime
+  tzConfidence    String             // "high" | "medium" | "low"
+
+  createdAt       DateTime           @default(now())
+
+  // Relations
+  chartsCache      ChartCache[]
+  transitHitsCache TransitHitCache[]
+
+  @@index([userId])
+  @@map("birth_profiles")
+}
+
+model ChartCache {
+  id               String       @id @default(cuid())
+  profileId        String
+  profile          BirthProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  houseSystem      String
+  chartData        Json
+  chartDataVersion String
+  computedAt       DateTime     @default(now())
+
+  @@unique([profileId, houseSystem])
+  @@index([profileId])
+  @@map("charts_cache")
+}
+
+// ============================================================================
+// GEOCODING CACHE (M2)
+// ============================================================================
+
+model GeocodeCache {
+  query     String   @id
+  results   Json
+  cachedAt  DateTime @default(now())
+  expiresAt DateTime
+
+  @@map("geocode_cache")
+}
+
+// ============================================================================
+// TRANSITS (M3)
+// ============================================================================
+
+model TransitPosition {
+  date       DateTime @db.Date
+  hour       Int      // 0 for daily, 0-23 for Moon hourly
+  body       String
+  lon        Float
+  lat        Float
+  speed      Float
+  retrograde Boolean
+
+  @@unique([date, hour, body])
+  @@index([date, body])
+  @@map("transit_positions")
+}
+
+model TransitHitCache {
+  profileId  String
+  profile    BirthProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  date       DateTime     @db.Date
+  hits       Json
+  computedAt DateTime     @default(now())
+
+  @@unique([profileId, date])
+  @@index([profileId, date])
+  @@map("transit_hits_cache")
+}
+
+// ============================================================================
+// LEARNING CONTENT (M4)
+// ============================================================================
+
+model Track {
+  id      String   @id
+  title   String
+  order   Int
+  modules Module[]
+
+  @@map("tracks")
+}
+
+model Module {
+  id      String   @id
+  trackId String
+  track   Track    @relation(fields: [trackId], references: [id])
+  title   String
+  order   Int
+  lessons Lesson[]
+  quizId  String?  @unique
+  quiz    Quiz?
+
+  @@map("modules")
+}
+
+model Lesson {
+  id               String           @id
+  moduleId         String
+  module           Module           @relation(fields: [moduleId], references: [id])
+  title            String
+  order            Int
+  contentPath      String
+  estimatedMinutes Int
+  lessonProgress   LessonProgress[]
+
+  @@map("lessons")
+}
+
+model LessonProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id])
+  completedAt DateTime @default(now())
+
+  @@unique([userId, lessonId])
+  @@index([userId])
+  @@map("lesson_progress")
+}
+
+// ============================================================================
+// QUIZZES (M4)
+// ============================================================================
+
+model Quiz {
+  id        String         @id
+  moduleId  String         @unique
+  module    Module         @relation(fields: [moduleId], references: [id])
+  questions QuizQuestion[]
+  attempts  QuizAttempt[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id          String   @id @default(cuid())
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id])
+  type        String   // "static_mcq" | "personalized_mcq" | "glyph"
+  conceptTags String[]
+  payload     Json
+  order       Int
+
+  @@map("quiz_questions")
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId    String
+  quiz      Quiz     @relation(fields: [quizId], references: [id])
+  score     Float
+  answers   Json
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("quiz_attempts")
+}
+
+// ============================================================================
+// SPACED REPETITION (M5)
+// ============================================================================
+
+model SrsCard {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questionRef  String    // Reference to quiz question or concept
+  ease         Float     @default(2.5)
+  intervalDays Int       @default(1)
+  dueDate      DateTime
+  lapses       Int       @default(0)
+  lastReviewed DateTime?
+
+  @@index([userId, dueDate])
+  @@map("srs_cards")
+}

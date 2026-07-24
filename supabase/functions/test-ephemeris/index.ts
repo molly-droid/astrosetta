@@ -2,21 +2,53 @@
 // This tests if we can use astronomy-engine in Supabase Edge Functions
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import * as Astronomy from 'npm:astronomy-engine@2.1.19';
 
 serve(async (req) => {
   try {
-    // Try to import astronomy-engine
-    // Note: This is a test - we'll need to properly bundle @astro/core later
+    // Test astronomy-engine by calculating current planetary positions
+    const now = new Date();
+
+    // Calculate positions for key planets
+    const sun = Astronomy.EquatorFromEcl(
+      Astronomy.SunPosition(now),
+      now
+    );
+
+    const moon = Astronomy.EquatorFromEcl(
+      Astronomy.GeoMoon(now),
+      now
+    );
+
+    const mars = Astronomy.EquatorFromEcl(
+      Astronomy.HelioVector('Mars', now),
+      now
+    );
+
     const testData = {
+      success: true,
       runtime: 'deno',
       denoVersion: Deno.version.deno,
-      message: 'Edge Function is working',
-      timestamp: new Date().toISOString(),
+      message: 'astronomy-engine is working in Edge Functions!',
+      timestamp: now.toISOString(),
+      positions: {
+        sun: {
+          ra: sun.ra,
+          dec: sun.dec,
+          dist: sun.dist,
+        },
+        moon: {
+          ra: moon.ra,
+          dec: moon.dec,
+          dist: moon.dist,
+        },
+        mars: {
+          ra: mars.ra,
+          dec: mars.dec,
+          dist: mars.dist,
+        },
+      },
     };
-
-    // For now, we're just testing the runtime
-    // Next step: Try importing astronomy-engine via npm specifier
-    // import * as Astronomy from 'npm:astronomy-engine@2.1.19';
 
     return new Response(JSON.stringify(testData, null, 2), {
       headers: {
@@ -27,6 +59,7 @@ serve(async (req) => {
   } catch (error) {
     return new Response(
       JSON.stringify({
+        success: false,
         error: error.message,
         stack: error.stack,
       }),

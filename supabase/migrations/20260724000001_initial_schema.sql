@@ -98,6 +98,7 @@ CREATE INDEX idx_saved_charts_created_at ON saved_charts(created_at DESC);
 
 CREATE TABLE synthesis (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
   chart_id uuid REFERENCES saved_charts(id) ON DELETE CASCADE,
 
   -- Synthesis metadata
@@ -117,13 +118,10 @@ CREATE TABLE synthesis (
   cache_expires_at timestamptz
 );
 
+CREATE INDEX idx_synthesis_user_id ON synthesis(user_id);
 CREATE INDEX idx_synthesis_chart_id ON synthesis(chart_id);
 CREATE INDEX idx_synthesis_type_key ON synthesis(synthesis_type, placement_key);
 CREATE INDEX idx_synthesis_bookmarked ON synthesis(user_id, bookmarked) WHERE bookmarked = true;
-
--- Add user_id for easier querying
-ALTER TABLE synthesis ADD COLUMN user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE;
-CREATE INDEX idx_synthesis_user_id ON synthesis(user_id);
 
 -- ============================================================================
 -- LLM USAGE TRACKING
@@ -523,7 +521,7 @@ INSERT INTO learning_modules (section, title, description, order_index, xp_rewar
 
 -- Composite indexes for common queries
 CREATE INDEX idx_saved_charts_user_primary ON saved_charts(user_id, is_primary);
-CREATE INDEX idx_synthesis_cache_lookup ON synthesis(chart_id, synthesis_type, placement_key) WHERE cache_expires_at > now();
+CREATE INDEX idx_synthesis_cache_lookup ON synthesis(chart_id, synthesis_type, placement_key);
 CREATE INDEX idx_user_progress_completed_modules ON user_progress(user_id) WHERE completed = true;
 CREATE INDEX idx_entitlements_active ON entitlements(user_id) WHERE status = 'active';
 

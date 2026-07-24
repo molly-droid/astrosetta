@@ -25,6 +25,8 @@ lerna-debug.log*
 # Local env files
 .env
 .env*.local
+.env.local
+supabase/.env
 
 # Vercel
 .vercel

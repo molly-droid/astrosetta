@@ -2,28 +2,24 @@
 // This tests if we can use astronomy-engine in Supabase Edge Functions
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import * as Astronomy from 'npm:astronomy-engine@2.1.19';
 
 serve(async (req) => {
   try {
-    // Test astronomy-engine by calculating current planetary positions
+    // Step 1: Verify basic Deno environment
     const now = new Date();
 
-    // Calculate positions for key planets
-    const sun = Astronomy.EquatorFromEcl(
-      Astronomy.SunPosition(now),
-      now
-    );
+    // Step 2: Try importing astronomy-engine
+    const Astronomy = await import('npm:astronomy-engine@2.1.19');
 
-    const moon = Astronomy.EquatorFromEcl(
-      Astronomy.GeoMoon(now),
-      now
-    );
+    // Step 3: Create an AstroTime
+    const time = new Astronomy.AstroTime(now);
 
-    const mars = Astronomy.EquatorFromEcl(
-      Astronomy.HelioVector('Mars', now),
-      now
-    );
+    // Step 4: Calculate Sun position (simpler API)
+    const sunPos = Astronomy.SunPosition(time);
+
+    // Step 5: Calculate Moon position
+    const moonVec = Astronomy.GeoMoon(time);
+    const moonEcl = Astronomy.Ecliptic(moonVec);
 
     const testData = {
       success: true,
@@ -31,22 +27,15 @@ serve(async (req) => {
       denoVersion: Deno.version.deno,
       message: 'astronomy-engine is working in Edge Functions!',
       timestamp: now.toISOString(),
-      positions: {
-        sun: {
-          ra: sun.ra,
-          dec: sun.dec,
-          dist: sun.dist,
-        },
-        moon: {
-          ra: moon.ra,
-          dec: moon.dec,
-          dist: moon.dist,
-        },
-        mars: {
-          ra: mars.ra,
-          dec: mars.dec,
-          dist: mars.dist,
-        },
+      sun: {
+        ecliptic_lon: sunPos.elon,
+        ecliptic_lat: sunPos.elat,
+        distance_au: sunPos.vec.t,
+      },
+      moon: {
+        ecliptic_lon: moonEcl.elon,
+        ecliptic_lat: moonEcl.elat,
+        distance_au: moonVec.t,
       },
     };
 
@@ -56,16 +45,20 @@ serve(async (req) => {
         'Access-Control-Allow-Origin': '*',
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message,
-        stack: error.stack,
-      }),
+        error: String(error),
+        message: error?.message || 'Unknown error',
+        stack: error?.stack || 'No stack trace',
+      }, null, 2),
       {
         status: 500,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
       }
     );
   }

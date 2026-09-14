@@ -1,0 +1,65 @@
+{
+  "name": "XPEvent",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "FK to User"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "card_completed",
+        "daily_quiz_completed",
+        "interpretation_submitted",
+        "interpretation_rated_up",
+        "first_chart",
+        "mastery_completed"
+      ]
+    },
+    "xp_amount": {
+      "type": "integer"
+    },
+    "reference_id": {
+      "type": "string",
+      "description": "Optional reference to related entity id"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "user_id",
+    "event_type",
+    "xp_amount"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "name": "Interpretation",
+  "type": "object",
+  "properties": {
+    "placement_key": {
+      "type": "string",
+      "description": "FK to Placement.canonical_key"
+    },
+    "text": {
+      "type": "string",
+      "description": "Max 500 chars"
+    },
+    "tone": {
+      "type": "string",
+      "enum": [
+        "psychological",
+        "spiritual",
+        "predictive",
+        "lived_experience",
+        "humorous"
+      ]
+    },
+    "experience_level": {
+      "type": "string",
+      "enum": [
+        "beginner",
+        "intermediate",
+        "advanced"
+      ]
+    },
+    "contributor_id": {
+      "type": "string",
+      "description": "FK to User, nullable for seeded data"
+    },
+    "source_platform": {
+      "type": "string",
+      "enum": [
+        "reddit",
+        "blog",
+        "user_submitted"
+      ]
+    },
+    "source_url": {
+      "type": "string"
+    },
+    "rating_score": {
+      "type": "number",
+      "default": 0
+    },
+    "rating_count": {
+      "type": "integer",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "pending",
+        "flagged"
+      ],
+      "default": "pending"
+    }
+  },
+  "required": [
+    "placement_key",
+    "text",
+    "tone",
+    "experience_level"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.status": "active"
+        },
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "$and": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "$or": [
+                {
+                  "data.status": "pending"
+                },
+                {
+                  "data.status": "flagged"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "$and": [
+            {
+              "created_by_id": "{{user.id}}"
+            },
+            {
+              "$or": [
+                {
+                  "data.status": "pending"
+                },
+                {
+                  "data.status": "flagged"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

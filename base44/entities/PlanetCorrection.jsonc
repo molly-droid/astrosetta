@@ -1,0 +1,50 @@
+{
+  "name": "PlanetCorrection",
+  "type": "object",
+  "properties": {
+    "planet": {
+      "type": "string",
+      "description": "Planet name (Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, Chiron)"
+    },
+    "longitude_offset": {
+      "type": "number",
+      "description": "Correction in degrees to add to calculated longitude (reference - ours)"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this correction was last verified"
+    },
+    "source": {
+      "type": "string",
+      "default": "astro-seek-swiss-ephemeris"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "planet",
+    "longitude_offset"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

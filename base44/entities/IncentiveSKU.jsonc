@@ -1,0 +1,88 @@
+{
+  "name": "IncentiveSKU",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "FK to PopupEvent.event_id"
+    },
+    "sku_id": {
+      "type": "string",
+      "description": "Unique SKU key, e.g. raven2026_core_yearly_necklace_gold"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "core",
+        "premium"
+      ],
+      "description": "Subscription tier this SKU is gifted for"
+    },
+    "billing_cycle": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "yearly"
+      ]
+    },
+    "item_type": {
+      "type": "string",
+      "enum": [
+        "keychain",
+        "bracelet",
+        "necklace",
+        "gift"
+      ],
+      "description": "gift = the scaled-down mailed keepsake for promo-code (remote) redemptions"
+    },
+    "metal": {
+      "type": "string",
+      "enum": [
+        "silver",
+        "gold"
+      ],
+      "description": "Null for items without a metal choice (monthly keychains, remote gifts)"
+    },
+    "stock_total": {
+      "type": "integer",
+      "default": 0
+    },
+    "stock_remaining": {
+      "type": "integer",
+      "default": 0,
+      "description": "Live-decremented server-side as event orders complete"
+    },
+    "is_remote": {
+      "type": "boolean",
+      "default": false,
+      "description": "True for the scaled-down mailed item used by promo-code (remote) redemptions"
+    }
+  },
+  "required": [
+    "event_id",
+    "sku_id",
+    "tier",
+    "billing_cycle",
+    "item_type",
+    "stock_total",
+    "stock_remaining"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

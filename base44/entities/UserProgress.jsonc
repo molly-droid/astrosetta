@@ -1,0 +1,189 @@
+{
+  "name": "UserProgress",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "FK to User"
+    },
+    "current_tier": {
+      "type": "string",
+      "enum": [
+        "apprentice",
+        "adept",
+        "maestro"
+      ],
+      "default": "apprentice"
+    },
+    "knowledge_depth": {
+      "type": "string",
+      "enum": [
+        "essential",
+        "insightful",
+        "technical"
+      ],
+      "default": "insightful",
+      "description": "User's preferred Knowledge Density \u2014 controls interpretation depth, curriculum block filtering, and email synthesis tone across the app"
+    },
+    "active_tradition": {
+      "type": "string",
+      "enum": [
+        "modern",
+        "hellenistic",
+        "vedic"
+      ],
+      "default": "modern",
+      "description": "User's active astrological tradition \u2014 reshapes chart calculation (zodiac + house system), rulerships, and interpretation tone across all surfaces. Gated to Core and Premium tiers."
+    },
+    "timezone": {
+      "type": "string",
+      "description": "IANA timezone string (e.g. America/Chicago)",
+      "default": "UTC"
+    },
+    "house_system": {
+      "type": "string",
+      "enum": [
+        "placidus",
+        "whole_sign"
+      ],
+      "default": "whole_sign",
+      "description": "User's preferred house system for chart calculations"
+    },
+    "recommended_start_section": {
+      "type": "string",
+      "description": "Learn section to start from based on onboarding familiarity answer, e.g. foundations, planets, elements_modalities, aspects"
+    },
+    "referral_source": {
+      "type": "string",
+      "enum": [
+        "ember_society",
+        "discord",
+        "reddit",
+        "linkedin",
+        "instagram",
+        "tiktok",
+        "word_of_mouth",
+        "other"
+      ],
+      "description": "Where the user heard about Astrosetta, captured during onboarding"
+    },
+    "referral_source_detail": {
+      "type": "string",
+      "description": "Free-text comment when referral_source is 'other'"
+    },
+    "consecutive_streak_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Current unbroken daily quiz streak (display only \u2014 not used for tiering)"
+    },
+    "streak_best": {
+      "type": "integer",
+      "default": 0,
+      "description": "All-time longest streak (display only)"
+    },
+    "streak_last_date": {
+      "type": "string",
+      "description": "YYYY-MM-DD of last completed quiz (user's timezone)"
+    },
+    "modules_completed": {
+      "type": "integer",
+      "default": 0,
+      "description": "Count of curriculum modules with status 'completed' \u2014 used for tier advancement"
+    },
+    "total_answered": {
+      "type": "integer",
+      "default": 0
+    },
+    "accuracy_rate": {
+      "type": "number",
+      "default": 0,
+      "description": "0-100 rolling accuracy across all answered questions"
+    },
+    "tier_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When user entered their current tier"
+    },
+    "curriculum_started_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When user first opened the Foundations curriculum module"
+    },
+    "apprentice_quiz_days_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Number of progression quizzes completed at Apprentice tier"
+    },
+    "adept_quiz_days_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Number of progression quizzes completed at Adept tier"
+    },
+    "apprentice_correct_total": {
+      "type": "integer",
+      "default": 0
+    },
+    "apprentice_questions_total": {
+      "type": "integer",
+      "default": 0
+    },
+    "adept_correct_total": {
+      "type": "integer",
+      "default": 0
+    },
+    "adept_questions_total": {
+      "type": "integer",
+      "default": 0
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "user_id",
+    "current_tier"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

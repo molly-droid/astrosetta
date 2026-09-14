@@ -1,0 +1,44 @@
+{
+  "name": "Placement",
+  "type": "object",
+  "properties": {
+    "canonical_key": {
+      "type": "string",
+      "description": "e.g. sun_taurus, mars_scorpio, sun_7h"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "e.g. Mars in Scorpio"
+    },
+    "placement_type": {
+      "type": "string",
+      "enum": [
+        "planet_sign",
+        "planet_house",
+        "aspect",
+        "node",
+        "point"
+      ],
+      "description": "Category of placement"
+    },
+    "planet": {
+      "type": "string"
+    },
+    "sign_or_house": {
+      "type": "string"
+    },
+    "aspect_type": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "canonical_key",
+    "display_name",
+    "placement_type"
+  ]
+}

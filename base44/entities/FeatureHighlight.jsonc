@@ -1,0 +1,84 @@
+{
+  "name": "FeatureHighlight",
+  "type": "object",
+  "properties": {
+    "spotlight_key": {
+      "type": "string",
+      "description": "Unique key matching the feature spotlight (e.g. traditions_v1, transit_movement_v1)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Headline shown on the homepage card and email highlight"
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "Short tagline used as the CTA label"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Highlight copy shown on the homepage New-in-Beta card and in email digests"
+    },
+    "deep_link": {
+      "type": "string",
+      "description": "App route the highlight CTA links to (e.g. /profile, /planner)"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Icon key from ANNOUNCEMENT_ICONS (Scroll, Route, Layers, Gauge, etc.)"
+    },
+    "go_live_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When this highlight becomes active across all enabled surfaces"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "When this highlight stops being active. Optional; if blank it stays live until the next scheduled highlight supersedes it."
+    },
+    "show_on_homepage": {
+      "type": "boolean",
+      "default": true,
+      "description": "Feature this highlight in the homepage New-in-Beta section while live"
+    },
+    "show_in_email": {
+      "type": "boolean",
+      "default": true,
+      "description": "Feature this highlight in the daily/weekly/monthly email digests while live"
+    },
+    "show_in_notification": {
+      "type": "boolean",
+      "default": true,
+      "description": "Surface this highlight's spotlight popup to logged-in users while live"
+    },
+    "is_archived": {
+      "type": "boolean",
+      "default": false,
+      "description": "Archived highlights never appear, regardless of dates"
+    }
+  },
+  "required": [
+    "spotlight_key",
+    "title",
+    "go_live_date"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

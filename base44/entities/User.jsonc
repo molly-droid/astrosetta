@@ -1,0 +1,152 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "learner",
+        "contributor",
+        "admin"
+      ],
+      "default": "learner"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "User-editable display name"
+    },
+    "birth_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "birth_time": {
+      "type": "string"
+    },
+    "birth_location": {
+      "type": "string"
+    },
+    "current_timezone": {
+      "type": "string",
+      "description": "User's current local timezone, e.g. America/New_York"
+    },
+    "time_format": {
+      "type": "string",
+      "enum": [
+        "12h",
+        "24h"
+      ],
+      "default": "12h"
+    },
+    "xp_total": {
+      "type": "integer",
+      "default": 0
+    },
+    "level": {
+      "type": "string",
+      "enum": [
+        "apprentice",
+        "adept",
+        "practitioner",
+        "sage"
+      ],
+      "default": "apprentice"
+    },
+    "streak_days": {
+      "type": "integer",
+      "default": 0
+    },
+    "last_active": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "subscription_tier": {
+      "type": "string",
+      "enum": [
+        "free",
+        "interpret",
+        "calendar"
+      ],
+      "default": "free",
+      "description": "User's subscription level"
+    },
+    "subscription_expires": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the paid subscription expires. Null = free tier forever."
+    },
+    "stripe_customer_id": {
+      "type": "string"
+    },
+    "stripe_subscription_id": {
+      "type": "string"
+    },
+    "is_founding_member": {
+      "type": "boolean",
+      "default": true,
+      "description": "True if user signed up during the beta period \u2014 qualifies for locked founding pricing"
+    },
+    "founding_tier_preference": {
+      "type": "string",
+      "enum": [
+        "free",
+        "core",
+        "pro"
+      ],
+      "default": "free",
+      "description": "Tier the user indicated interest in from the landing page pricing section"
+    },
+    "daily_email_opt_in": {
+      "type": "boolean",
+      "default": true,
+      "description": "True if user wants to receive the daily transit + quiz email digest"
+    },
+    "weekly_email_opt_in": {
+      "type": "boolean",
+      "default": true,
+      "description": "True if user wants to receive the weekly synthesis email digest (paid subscribers only)"
+    },
+    "monthly_email_opt_in": {
+      "type": "boolean",
+      "default": true,
+      "description": "True if user wants to receive the monthly synthesis email digest (paid subscribers only)"
+    },
+    "show_asteroids": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show Chiron and asteroid placements on the chart"
+    },
+    "show_angles": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show the ASC, MC, DSC, IC row beneath the chart wheel"
+    },
+    "show_lots": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show the Arabic Lots (Part of Fortune, Part of Spirit, Part of Eros, Part of Necessity) on the chart"
+    },
+    "show_nodes": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show the North & South Lunar Nodes on the chart"
+    },
+    "show_lilith": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show Black Moon Lilith (mean lunar apogee) on the chart"
+    },
+    "font_scale": {
+      "type": "number",
+      "default": 1,
+      "minimum": 0.8,
+      "maximum": 1.8,
+      "description": "App-wide font size scale (0.8\u20131.8), applied via the --app-font-scale CSS variable"
+    }
+  },
+  "required": [
+    "birth_date",
+    "birth_time",
+    "birth_location",
+    "last_active"
+  ]
+}

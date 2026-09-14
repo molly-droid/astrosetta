@@ -1,0 +1,44 @@
+{
+  "name": "RoadmapItem",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "Short title of the task or recommendation"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "data_accuracy",
+        "planner_ux",
+        "synthesis_quality",
+        "export_sync",
+        "learn_integration",
+        "mobile_polish",
+        "other"
+      ],
+      "description": "Category bucket"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional notes or details"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "todo",
+        "in_progress",
+        "done"
+      ],
+      "default": "todo"
+    },
+    "order_index": {
+      "type": "integer",
+      "default": 0
+    }
+  },
+  "required": [
+    "title",
+    "status"
+  ]
+}

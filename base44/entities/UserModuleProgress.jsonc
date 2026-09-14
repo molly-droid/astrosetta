@@ -1,0 +1,97 @@
+{
+  "name": "UserModuleProgress",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "module_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed"
+      ],
+      "default": "not_started"
+    },
+    "current_block_index": {
+      "type": "integer",
+      "default": 0
+    },
+    "xp_earned": {
+      "type": "integer",
+      "default": 0
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "quiz_answers": {
+      "type": "object",
+      "description": "Map of block_index -> chosen answer"
+    },
+    "mastery_completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the user completed the mastery challenge for this module"
+    },
+    "mastery_xp_earned": {
+      "type": "integer",
+      "default": 0,
+      "description": "XP earned from completing the mastery challenge"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "user_id",
+    "module_id"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

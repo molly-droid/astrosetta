@@ -1,34 +1,173 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
-    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@layer base {
+  :root {
+    /* Astrosetta Vintage Celestial Palette */
+    --background: 40 33% 98%;        /* #FDFBF7 cream */
+    --foreground: 210 28% 24%;       /* #2C3E50 deep blue */
 
-  color-scheme: light dark;
+    --card: 38 27% 94%;              /* #F5F1E8 light paper */
+    --card-foreground: 210 28% 24%;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    --popover: 38 27% 94%;
+    --popover-foreground: 210 28% 24%;
 
-  /* Safe area insets for Capacitor/mobile */
-  --safe-area-inset-top: env(safe-area-inset-top, 0px);
-  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
-  --safe-area-inset-left: env(safe-area-inset-left, 0px);
-  --safe-area-inset-right: env(safe-area-inset-right, 0px);
+    --primary: 35 43% 68%;           /* #D4AF85 primary gold */
+    --primary-foreground: 210 28% 24%;
+
+    --secondary: 35 38% 58%;         /* #C9A961 accent gold */
+    --secondary-foreground: 210 28% 24%;
+
+    --muted: 38 20% 90%;
+    --muted-foreground: 28 22% 44%;  /* #8B7355 tarnished brass */
+
+    --accent: 35 43% 68%;
+    --accent-foreground: 210 28% 24%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 40 33% 98%;
+
+    --border: 35 38% 78%;            /* soft gold border */
+    --input: 38 27% 94%;
+    --ring: 35 43% 68%;
+
+    --radius: 0.75rem;
+
+    /* Custom tokens */
+    --gold-primary: #D4AF85;
+    --gold-accent: #C9A961;
+    --cyan-soft: #A8D4D9;
+    --blue-soft: #9DB4C8;
+    --purple-soft: #B8A5C8;
+    --pink-soft: #D8B4C2;
+    --green-soft: #A8C8A8;
+    --cream: #FDFBF7;
+    --paper: #141e33;
+    --deep-blue: #2C3E50;
+    --brass: #C4A882;
+    --copper: #6B4423;
+    --bronze: #8B7B6B;
+
+    --font-display: 'Playfair Display', Georgia, serif;
+    --font-body: 'Lora', Georgia, serif;
+    --font-label: 'Inter', sans-serif;
+
+    /* App Store compliance surfaces — deep velvet palette */
+    --velvet: #0C0E1A;
+    --velvet-surface: #14172B;
+    --velvet-card: #1A1D36;
+    --starlight: #F4EFE6;
+    --starlight-muted: #A0A5BD;
+    --gold-foil: #D4AF37;
+    --gold-hairline: rgba(212, 175, 55, 0.2);
+    --gold-muted: rgba(212, 175, 55, 0.15);
+    --danger-red: #E55B5B;
+  }
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
+@layer base {
+  html {
+    font-size: calc(16px * var(--app-font-scale, 1));
+  }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+  }
 }
 
-#root {
+/* Force all astrological glyphs to render as text, never emoji */
+@layer base {
+  .glyph {
+    font-variant-emoji: text;
+    font-variant: normal;
+  }
+}
+
+/* Global unicode emoji prevention — applies to the whole app */
+* {
+  font-variant-emoji: text;
+}
+
+/* Opt-in emoji presentation for astrological glyphs (zodiac signs + planets
+   that have an emoji form). Unlayered + !important so it beats the global
+   text-presentation rule above. */
+.emoji-glyph {
+  font-variant-emoji: emoji !important;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif !important;
+}
+
+/* WebKit (iOS Safari) renders temporal inputs with their own intrinsic width,
+   ignoring width:100% — date/time fields then overflow their container and
+   render wider than sibling text inputs. Normalize their sizing so every
+   input field shares the same width. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="month"],
+input[type="week"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
   width: 100%;
-  min-height: 100vh;
+}
+
+input::-webkit-datetime-edit,
+input::-webkit-datetime-edit-fields-wrapper {
+  padding: 0;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  .font-body {
+    font-family: var(--font-body);
+  }
+  .text-brass {
+    color: var(--brass);
+  }
+  .text-gold {
+    color: var(--gold-primary);
+  }
+  .bg-paper {
+    background: rgba(255, 255, 255, 0.024);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .bg-cream {
+    background-color: #0f1a2e;
+  }
+  .border-gold {
+    border-color: var(--gold-primary);
+  }
+  .border-gold-accent {
+    border-color: var(--gold-accent);
+  }
+  .celestial-card {
+    background: rgba(255, 255, 255, 0.024);
+    border-radius: var(--radius);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .ornament {
+    color: var(--gold-accent);
+    font-family: var(--font-display);
+  }
 }

@@ -1,0 +1,89 @@
+{
+  "name": "UserPlacementProgress",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "FK to User"
+    },
+    "placement_key": {
+      "type": "string",
+      "description": "FK to Placement.canonical_key"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "unseen",
+        "in_progress",
+        "completed"
+      ],
+      "default": "unseen"
+    },
+    "rating_given": {
+      "type": "string",
+      "enum": [
+        "helpful",
+        "not_for_me",
+        "saved"
+      ]
+    },
+    "xp_earned": {
+      "type": "integer",
+      "default": 0
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "user_id",
+    "placement_key"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

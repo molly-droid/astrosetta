@@ -1,0 +1,118 @@
+{
+  "name": "DailyQuiz",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "FK to User"
+    },
+    "date_key": {
+      "type": "string",
+      "description": "YYYY-MM-DD in user's local timezone"
+    },
+    "user_timezone": {
+      "type": "string",
+      "description": "IANA timezone string at time of creation"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "apprentice",
+        "adept",
+        "maestro"
+      ],
+      "default": "apprentice"
+    },
+    "quiz_mode": {
+      "type": "string",
+      "enum": [
+        "progression",
+        "exploration"
+      ],
+      "default": "progression"
+    },
+    "questions": {
+      "type": "array",
+      "description": "Array of question objects with options, correct_index, explanation",
+      "items": {
+        "type": "object"
+      }
+    },
+    "user_answers": {
+      "type": "array",
+      "description": "Array of {question_index, chosen_option_index, is_correct}",
+      "items": {
+        "type": "object"
+      }
+    },
+    "score": {
+      "type": "integer",
+      "description": "0-100 percentage score"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "tier_at_completion": {
+      "type": "string",
+      "enum": [
+        "apprentice",
+        "adept",
+        "maestro"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "user_id",
+    "date_key",
+    "tier",
+    "quiz_mode",
+    "questions"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,53 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+Astrosetta is a live astrology education app (astrosetta.com, operated by Sharp Energetics LLC) being migrated **off Base44** to Supabase + Vercel, with Capacitor mobile apps to follow. This is fixed-scope client work: the migration target is an **exact replica** of the Base44 app — parity, not redesign. See `~/Downloads/Astrosetta/SCOPE_DRAFTING_HANDOFF.md` for the agreed scope.
+
+pnpm workspace + Turborepo monorepo (Node ≥20, pnpm 9). The migration work happens on the `migration/base44-to-supabase` branch.
+
+## Layout
+
+- **`apps/web`** — the real product: the complete React/Vite/Tailwind/shadcn frontend from the client's Base44 export (JSX, not TS). This is what gets migrated and shipped.
+- **`base44/`** — the exported Base44 backend, kept as the porting source of truth: 34 Deno function implementations (`functions/*/entry.ts`), 29 entity schemas (`entities/*.jsonc`), 9 scheduled workflows, the `chart_navigator` agent persona, shared server utils.
+- **`supabase/`** — migrations and Edge Functions (the porting target).
+- **`apps/mobile`** (Expo), **`apps/api`** (Fastify), **`packages/*`** — pre-scope architecture experiments, **parked**. The scope explicitly excludes a React Native rewrite (mobile will be Capacitor). `packages/core` may be reused as a chart-parity test harness. `ARCHITECTURE_PLAN_V2.md` and the old README describe this superseded direction — don't follow them.
+
+## Commands
+
+```bash
+corepack pnpm install                 # pnpm via corepack (no global pnpm on this machine)
+cd apps/web && corepack pnpm dev      # Vite dev server (needs .env — see .env.example)
+cd apps/web && corepack pnpm build    # production build
+cd apps/web && corepack pnpm lint
+```
+
+Avoid root `pnpm build`/`test` (turbo) for now — the parked workspaces are not maintained.
+
+## Migration architecture (the important part)
+
+All 103 feature files import one object: `import { base44 } from '@/api/base44Client'`. That file is now a **Supabase-backed shim** reproducing the Base44 SDK surface, so feature code stays untouched. Mappings live in `apps/web/src/api/shim/`:
+
+- `entities.js` — `base44.entities.<Name>.list/filter/create/update/delete/deleteMany/subscribe` → Postgres tables. Table names in `shim/tables.js` (snake_case; `User` → `users`). Tables replicate Base44's record shape: `id`, `created_date`, `updated_date`, `created_by` + fields from `base44/entities/<Name>.jsonc`. Sort strings are Base44-style (`'-created_date'` = desc); filters are plain equality maps.
+- `auth.js` — Base44's single user object = Supabase Auth session + `public.users` row merged. `me()` throws `{status: 401}` (no session) or `{status: 403}` (no users row → "user_not_registered" screen).
+- `functions.js` — `base44.functions.invoke('chartCalculator', payload)` → Edge Function at the **kebab-case slug** (`chart-calculator`); returns axios-like `{data}`.
+- `integrations.js` — `InvokeLLM`/`SendEmail` bridge to `invoke-llm`/`send-email` Edge Functions; `UploadPublicFile` → Storage `public` bucket. The 31 client-side `InvokeLLM` call sites are transitional: scope requires converting them to named server-side tasks with tier checks + usage logging.
+- `agents.js` — Navigator conversations: `agent_conversation` rows with a jsonb `messages` array + realtime UPDATE subscription; `addMessage` posts to the `navigator-chat` Edge Function (planned backend: Astrology-API.io hosted chat, pending validation — not Claude).
+
+When porting a `base44/functions/*` function to `supabase/functions/`, keep the camelCase→kebab-case slug convention so the shim finds it.
+
+## Key facts and decisions (confirmed with the client)
+
+- Tiers: internal IDs stay `free`/`interpret`/`calendar`; Core/Premium are display names (interpret=Core, calendar=Premium). Tier enforcement must be server-side.
+- Founding members: `LAUNCH_DATE = null` in `stampFoundingMember` — every signup is stamped `is_founding_member` until launch is declared. This cohort and behavior must survive migration.
+- Auth cutover: pre-created Supabase accounts; existing users get reset/magic-link on first login. A `/login` page must be built (`shim/auth.js` `redirectToLogin` points at it).
+- Charts: `base44/functions/chartCalculator` is a hand-rolled ephemeris (fixed TZ offsets, known accuracy issues) — port it as-is behind a stable adapter first; swap to Astrology-API.io once the client has credentials. All cached chart data gets recalculated at cutover.
+- The old `supabase/migrations/20260724000001_initial_schema.sql` is the superseded V2-plan schema, **not** the replica schema the shim expects — the replica schema is generated from `base44/entities/*.jsonc`.
+- Media on `media.base44.com` (referenced in `index.html`, `src/lib/moduleImages.js`, and inside data) must be re-hosted before Base44 is decommissioned.
+
+## Conventions
+
+- `apps/web` is JavaScript/JSX with `@/` → `src/` alias (see `vite.config.js`); match the existing style — don't convert files to TypeScript.
+- `base44/` is reference material: read it, port from it, but don't edit it.

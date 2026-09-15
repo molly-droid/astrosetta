@@ -36,7 +36,15 @@ All 103 feature files import one object: `import { base44 } from '@/api/base44Cl
 - `integrations.js` — `InvokeLLM`/`SendEmail` bridge to `invoke-llm`/`send-email` Edge Functions; `UploadPublicFile` → Storage `public` bucket. The 31 client-side `InvokeLLM` call sites are transitional: scope requires converting them to named server-side tasks with tier checks + usage logging.
 - `agents.js` — Navigator conversations: `agent_conversation` rows with a jsonb `messages` array + realtime UPDATE subscription; `addMessage` posts to the `navigator-chat` Edge Function (planned backend: Astrology-API.io hosted chat, pending validation — not Claude).
 
-When porting a `base44/functions/*` function to `supabase/functions/`, keep the camelCase→kebab-case slug convention so the shim finds it.
+All 34 backend functions are ported to `supabase/functions/` (camelCase→kebab-case slugs, e.g. `chartCalculator` → `chart-calculator` — the shim relies on this mapping). Function bodies are unchanged from `base44/functions/*`; the platform seams live in `supabase/functions/_shared/`:
+
+- `base44Compat.ts` — server-side Base44 SDK stand-in (`compatClient(req)` replaces `createClientFromRequest(req)`): auth.me/updateMe, entities CRUD incl. `deleteMany`/`updateMany` (Mongo-style `$set`/`$inc`/`$gt`, atomic path via the service-only `compat_update_many` RPC), `asServiceRole`, `integrations.Core` (InvokeLLM→Claude via `llm.ts`, SendEmail→Resend), `functions.invoke` with JWT forwarding.
+- `edge.ts` — CORS (`json()`, `handleOptions`) and auth helpers (`getAuthUser`, `isServiceRole`, `serviceClient`). Every function does in-function auth; `verify_jwt = false` for all functions in `config.toml` (webhooks/ICS/email-link/service-key callers can't present user JWTs).
+- Scheduled workflows + entity automations are pg_cron jobs and DB triggers (migration `..._scheduled_jobs.sql`) posting through `invoke_edge_function()`; it needs vault secrets `edge_base_url` + `edge_service_key` seeded per environment (unseeded = warn + no-op).
+- `navigator-chat` is the Navigator backend; `generateReply()` is the provider seam (interim: Claude; planned: Astrology-API.io hosted chat pending validation).
+- Function secrets: `ANTHROPIC_API_KEY`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `STRIPE_*`, `APPLE_SHARED_SECRET`; optional `LLM_MODEL`/`NAVIGATOR_MODEL`.
+
+Local testing: `supabase start` (ports shifted to 5434x to coexist with another local project), `supabase functions serve` (restart it after adding a function directory — it only discovers functions present at startup).
 
 ## Key facts and decisions (confirmed with the client)
 

@@ -10,6 +10,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 // Page imports
 import Landing from './pages/Landing';
 import AccountDeletion from './pages/AccountDeletion';
+import Login from './pages/Login';
 import Home from './pages/Home';
 import Onboarding from './pages/Onboarding';
 import MyChart from './pages/MyChart.jsx';
@@ -54,6 +55,7 @@ const AuthenticatedApp = () => {
       // Show landing page instead of immediately redirecting
       return (
         <Routes>
+          <Route path="/login" element={<Login />} />
           <Route path="/delete-account" element={<AccountDeletion />} />
           <Route path="*" element={<Landing />} />
         </Routes>
@@ -64,6 +66,7 @@ const AuthenticatedApp = () => {
   if (!isAuthenticated) {
     return (
       <Routes>
+        <Route path="/login" element={<Login />} />
         <Route path="/delete-account" element={<AccountDeletion />} />
         <Route path="*" element={<Landing />} />
       </Routes>
@@ -87,6 +90,7 @@ const AuthenticatedApp = () => {
         <Route path="/admin" element={<Admin />} />
       </Route>
 
+      <Route path="/login" element={<Login />} />
       <Route path="/delete-account" element={<AccountDeletion />} />
 
       {/* Legal / policy pages */}

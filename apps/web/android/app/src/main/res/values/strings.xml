@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Astrosetta</string>
+    <string name="title_activity_main">Astrosetta</string>
+    <string name="package_name">com.astrosetta.app</string>
+    <string name="custom_url_scheme">com.astrosetta.app</string>
+</resources>

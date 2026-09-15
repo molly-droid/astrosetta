@@ -47,11 +47,8 @@ supabase/.env
 .DS_Store
 Thumbs.db
 
-# Capacitor
-ios/
-android/
-*.xcodeproj
-*.xcworkspace
+# Capacitor — native projects are committed; generated/synced artifacts
+# are ignored below (see the Capacitor section at the end of this file)
 
 # Prisma
 *.db
@@ -59,3 +56,13 @@ android/
 
 # Railway
 .railway/
+
+# Capacitor native projects: generated/synced artifacts
+apps/web/ios/App/App/public/
+apps/web/ios/App/build/
+apps/web/ios/DerivedData/
+apps/web/android/app/src/main/assets/public/
+apps/web/android/.gradle/
+apps/web/android/build/
+apps/web/android/app/build/
+apps/web/android/local.properties

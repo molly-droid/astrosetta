@@ -4,20 +4,20 @@
 project_id = "sqdpawyqvgqadflezxxk"
 
 [api]
-port = 54321
+port = 54341
 schemas = ["public", "storage", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 54322
+port = 54342
 major_version = 15
 
 [studio]
-port = 54323
+port = 54343
 
 [inbucket]
-port = 54324
+port = 54344
 smtp_port = 54325
 pop3_port = 54326
 

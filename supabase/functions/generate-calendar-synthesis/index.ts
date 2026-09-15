@@ -11,7 +11,7 @@
  * skipped, making re-runs free.
  */
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions } from '../_shared/edge.ts';
+import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
 import { traditionPromptPreamble } from '../_shared/traditionFraming.ts';
 import { TONE_DIRECTIVE } from '../_shared/toneDirective.ts';
 
@@ -398,8 +398,9 @@ Deno.serve(async (req) => {
   if (opt) return opt;
   try {
     const base44 = compatClient(req);
+    // Admin user or the service role (scheduled jobs ran as the platform in Base44)
     const user = await base44.auth.me();
-    if (user?.role !== 'admin') return json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    if (user?.role !== 'admin' && !isServiceRole(req)) return json({ error: 'Forbidden: Admin access required' }, { status: 403 });
 
     let body = {};
     try { body = await req.json(); } catch { /* no body — scheduled run */ }

@@ -11,7 +11,7 @@
  *   - scope: 'all' → every chart in the system (default)
  */
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions } from '../_shared/edge.ts';
+import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
 
 const TZ = { 'UTC': 0, 'GMT': 0, 'America/New_York': -5, 'America/Chicago': -6, 'America/Denver': -7, 'America/Los_Angeles': -8, 'America/Anchorage': -9, 'America/Honolulu': -10, 'America/Sao_Paulo': -3, 'America/Toronto': -5, 'America/Mexico_City': -6, 'America/Vancouver': -8, 'Europe/London': 0, 'Europe/Paris': 1, 'Europe/Berlin': 1, 'Europe/Rome': 1, 'Europe/Madrid': 1, 'Europe/Amsterdam': 1, 'Europe/Zurich': 1, 'Europe/Helsinki': 2, 'Europe/Athens': 2, 'Europe/Istanbul': 3, 'Europe/Moscow': 3, 'Asia/Jerusalem': 2, 'Asia/Dubai': 4, 'Asia/Kolkata': 5.5, 'Asia/Bangkok': 7, 'Asia/Singapore': 8, 'Asia/Shanghai': 8, 'Asia/Tokyo': 9, 'Asia/Seoul': 9, 'Australia/Sydney': 10, 'Pacific/Auckland': 12, 'Africa/Cairo': 2, 'Africa/Johannesburg': 2 };
 
@@ -20,8 +20,9 @@ Deno.serve(async (req) => {
   if (opt) return opt;
   try {
     const base44 = compatClient(req);
+    // Admin user or the service role (scheduled jobs ran as the platform in Base44)
     const user = await base44.auth.me();
-    if (user?.role !== 'admin') return json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    if (user?.role !== 'admin' && !isServiceRole(req)) return json({ error: 'Forbidden: Admin access required' }, { status: 403 });
 
     let body: any = {};
     try { body = await req.json(); } catch { /* no body = default scope */ }

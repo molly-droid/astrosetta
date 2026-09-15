@@ -18,8 +18,8 @@ port = 54343
 
 [inbucket]
 port = 54344
-smtp_port = 54325
-pop3_port = 54326
+smtp_port = 54345
+pop3_port = 54346
 
 [storage]
 file_size_limit = "50MiB"

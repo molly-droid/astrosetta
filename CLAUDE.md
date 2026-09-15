@@ -13,7 +13,7 @@ pnpm workspace + Turborepo monorepo (Node ≥20, pnpm 9). The migration work hap
 - **`apps/web`** — the real product: the complete React/Vite/Tailwind/shadcn frontend from the client's Base44 export (JSX, not TS). This is what gets migrated and shipped.
 - **`base44/`** — the exported Base44 backend, kept as the porting source of truth: 34 Deno function implementations (`functions/*/entry.ts`), 29 entity schemas (`entities/*.jsonc`), 9 scheduled workflows, the `chart_navigator` agent persona, shared server utils.
 - **`supabase/`** — migrations and Edge Functions (the porting target).
-- **`apps/mobile`** (Expo), **`apps/api`** (Fastify), **`packages/*`** — pre-scope architecture experiments, **parked**. The scope explicitly excludes a React Native rewrite (mobile will be Capacitor). `packages/core` may be reused as a chart-parity test harness. `ARCHITECTURE_PLAN_V2.md` and the old README describe this superseded direction — don't follow them.
+- **`packages/*`** — pre-scope architecture experiments. `packages/core` may be reused as a chart-parity test harness; `packages/shared`/`packages/ui` are orphaned (they served the deleted Expo app — mobile is Capacitor inside `apps/web`, see `docs/MOBILE.md`). The old Expo `apps/mobile` and Fastify `apps/api` were deleted (in git history if ever needed). `ARCHITECTURE_PLAN_V2.md` and the old README describe this superseded direction — don't follow them.
 
 ## Commands
 

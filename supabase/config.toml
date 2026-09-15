@@ -84,6 +84,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.log-frontend-error]
 verify_jwt = false
+[functions.navigator-chat]
+verify_jwt = false
 [functions.notify-admin-bug-report]
 verify_jwt = false
 [functions.pre-generate-synthesis]

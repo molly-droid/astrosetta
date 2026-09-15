@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     try {
       return_url = returnUrl || `${new URL(returnUrl).origin}/profile`;
     } catch {
-      return_url = returnUrl || 'https://astrosetta.base44.app/profile';
+      return_url = returnUrl || (Deno.env.get('APP_URL') || 'https://astrosetta.com') + '/profile';
     }
 
     const session = await stripe.billingPortal.sessions.create({

@@ -16,7 +16,8 @@ import { json, handleOptions, serviceClient } from '../_shared/edge.ts';
 import { sendDigestEmail } from '../_shared/resendEmail.ts';
 
 const TOKEN_TTL_HOURS = 24;
-const WEB_APP_ORIGIN = 'https://astrosetta.base44.app';
+// Fallback when the client doesn't pass body.origin (APP_URL secret in prod)
+const WEB_APP_ORIGIN = Deno.env.get('APP_URL') || 'https://astrosetta.com';
 
 async function handler(req): Promise<Response> {
   const opt = handleOptions(req);

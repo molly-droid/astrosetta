@@ -10,7 +10,7 @@
  * scheduled jobs) may send to any recipient.
  */
 import { json, handleOptions, getAuthUser, isServiceRole } from '../_shared/edge.ts';
-import { sendEmail } from '../_shared/resend.ts';
+import { sendDigestEmail } from '../_shared/resendEmail.ts';
 
 Deno.serve(async (req) => {
   const opt = handleOptions(req);
@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    const result = await sendEmail({ to, subject, html: body ?? '', fromName: from_name });
+    const result = await sendDigestEmail({ to, subject, html: body ?? '', fromName: from_name });
     return json({ ok: true, id: result?.id });
   } catch (err) {
     return json({ error: err.message }, { status: 500 });

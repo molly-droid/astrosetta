@@ -13,25 +13,8 @@
  */
 import { base44 } from '@/api/base44Client';
 import { processTransits } from '@/components/planner/useTransits';
-import {
-  PERSONA,
-  TONE_DIRECTIVE,
-  formatTransitLabelProse,
-  PLANET_GLYPHS,
-  ASPECT_GLYPHS,
-} from '@/lib/transitUtils';
+import { formatTransitLabelProse } from '@/lib/transitUtils';
 import { getMoonPhaseName } from '@/lib/moonPhase';
-
-/**
- * Directive that makes the read SYMMETRIC — either person's activations are
- * fair game, and everything is framed through the bond rather than one chart.
- */
-export const RELATIONSHIP_DIRECTIVE = `RELATIONSHIP LENS — SYMMETRIC, NOT ONE-SIDED:
-- You are reading the period THROUGH THE RELATIONSHIP between two people. Either person's transits are fair game for the narrative — do not center one chart over the other. Weave them together.
-- Frame every effect through the bond: how a transit landing on one person ripples into the connection, what it asks of the relationship, where it creates ease or friction between them.
-- Use "you" for the user (the app owner) and the partner's first name for the saved chart. Never speak as if you know what either person is experiencing — keep the invitational tone from the TONE directive.
-- Name BOTH people's placements when a transit activates one and connects to the other (e.g. "Saturn's square to your partner's Venus, landing on their 7th house, asks the relationship to get real about commitment").
-- The static natal cross-aspects are the RELATIONSHIP'S anatomy — the wired-in chemistry. The transits are what's ACTIVATING that anatomy this period. Connect the two: a transit to one person's planet that sits in a tight cross-aspect to the other person's planet is especially charged.`;
 
 /**
  * Fetch transits-to-natal for a single chart on a single date.
@@ -151,79 +134,39 @@ function transitPositionsLine(transits) {
     .join(', ');
 }
 
-// ── Prompt builders ──────────────────────────────────────────────────────────
+// ── Task-param builders ─────────────────────────────────────────────────────
+// Each assembles the astrological fact blocks for the corresponding named
+// server-side task (supabase/functions/_shared/llm_tasks/tasks_relationship.ts),
+// which owns the directives, rules, and JSON schemas.
 
 /**
- * Build the DAY relationship prompt.
+ * Build the DAY relationship task params ('relationship-day-synthesis').
  */
-export function buildDayPrompt({ date, userChart, partnerChart, userTransits, partnerTransits, crossAspects }) {
+export function buildDayParams({ date, userChart, partnerChart, userTransits, partnerTransits, crossAspects }) {
   const userName = 'You';
   const partnerName = partnerChart?.name || 'your partner';
-  const relationship = partnerChart?.relationship;
-  const relLine = relationship && relationship !== 'Other'
-    ? `${partnerName} is your ${relationship.toLowerCase()}. Frame the read through the lens of a ${relationship.toLowerCase()} bond where relevant.`
-    : '';
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  const transitPositions = transitPositionsLine(userTransits);
 
-  return `${PERSONA}
-
-${RELATIONSHIP_DIRECTIVE}
-
-Today: ${dateStr}
-${relLine}
-
-YOUR CHART (the app user): ${chartBig3(userChart)}
-Your planets: ${chartPlanetsLine(userChart) || 'unavailable'}
-
-${partnerName.toUpperCase()}'S CHART: ${chartBig3(partnerChart)}
-${partnerName}'s planets: ${chartPlanetsLine(partnerChart) || 'unavailable'}
-
-NATAL CROSS-ASPECTS (the wired-in chemistry between you two — the relationship's anatomy):
-${crossAspectsForPrompt(crossAspects, userName, partnerName)}
-
-AUTHORITATIVE TRANSIT POSITIONS (use these exact signs — do NOT use your own knowledge of where planets are):
-${transitPositions || 'Data unavailable.'}
-
-=== TODAY'S TRANSITS, TO EACH CHART ===
-${transitsForPrompt(userTransits, 'TRANSITS TO YOUR CHART')}
-
-${transitsForPrompt(partnerTransits, `TRANSITS TO ${partnerName.toUpperCase()}'S CHART`)}
-
-Rules:
-- THIS IS A RELATIONSHIP READ, NOT TWO SOLO READS. Weave the two charts together symmetrically — either person's transits can lead a sentence, and every transit should be connected to what it means for the BOND.
-- Use ONLY the transit data listed above. Do NOT mention any aspect, ingress, station, or lunar event not listed. If a category says "none," do NOT invent any.
-- CRITICAL: Use ONLY the signs from AUTHORITATIVE TRANSIT POSITIONS above. Do NOT rely on your own knowledge of where planets currently are.
-- Every time you name a transit, name the transiting planet, its current sign, the aspect, and the natal planet + house — in full WORDS (no glyph symbols; the frontend adds glyphs). Then explain how it lands on the relationship.
-- Connect transits to the natal cross-aspects where charged: if a transit hits a planet that's in a tight cross-aspect to the other person's planet, say so — that's where the relationship gets activated.
-- Use "you" for the user and "${partnerName}" (first name) for the partner. Never use bare "your" for the partner's placements.
-- Do NOT include raw glyph symbols, em-dash labels, "applying," or "separating." Write only prose.
-
-Return JSON:
-{
-  "overview": "3-4 sentences synthesizing the WHOLE of what is happening for the relationship today — weave transits to both charts into one coherent narrative naming the key configurations and where the relationship is lit up.",
-  "relationship_focus": "1-2 sentences on the single most important relationship theme today, framed through the bond (not one person).",
-  "personal_reading": ["TransitLabel (which chart it hits) — 2-3 sentence interpretation of the mechanic and how it lands on the relationship", "..."],
-  "collective_reading": ["PlanetName aspectName PlanetName — 1 sentence on collective meaning", "..."],
-  "collective_highlight": "1 sentence on the single most significant mundane transit",
-  "maximize": "1 action sentence for the relationship today",
-  "focus": "1 attention sentence for the relationship today",
-  "watch": "1 caution sentence for the relationship today",
-  "best_areas": ["area1", "area2"],
-  "power_planet": "planet name",
-  "key_themes": ["theme1", "theme2", "theme3"]
-}`;
+  return {
+    partnerName,
+    relationship: partnerChart?.relationship || '',
+    dateStr,
+    userBig3: chartBig3(userChart),
+    userPlanets: chartPlanetsLine(userChart),
+    partnerBig3: chartBig3(partnerChart),
+    partnerPlanets: chartPlanetsLine(partnerChart),
+    crossAspects: crossAspectsForPrompt(crossAspects, userName, partnerName),
+    transitPositions: transitPositionsLine(userTransits),
+    userTransitsBlock: transitsForPrompt(userTransits, 'TRANSITS TO YOUR CHART'),
+    partnerTransitsBlock: transitsForPrompt(partnerTransits, `TRANSITS TO ${partnerName.toUpperCase()}'S CHART`),
+  };
 }
 
 /**
- * Build the WEEK relationship prompt.
+ * Build the WEEK relationship task params ('relationship-week-synthesis').
  */
-export function buildWeekPrompt({ days, userChart, partnerChart, userDayTransits, partnerDayTransits, crossAspects }) {
+export function buildWeekParams({ days, userChart, partnerChart, userDayTransits, partnerDayTransits, crossAspects }) {
   const partnerName = partnerChart?.name || 'your partner';
-  const relationship = partnerChart?.relationship;
-  const relLine = relationship && relationship !== 'Other'
-    ? `${partnerName} is your ${relationship.toLowerCase()}. Frame the read through the lens of a ${relationship.toLowerCase()} bond where relevant.`
-    : '';
   const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const weekRange = `${days[0].toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' })} – ${days[6].toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}`;
 
@@ -243,63 +186,23 @@ export function buildWeekPrompt({ days, userChart, partnerChart, userDayTransits
     return `${DOW[d.getDay()]} ${d.getDate()}: ${moonInfo}. To you: ${uNatal.join(', ') || 'quiet'}. To ${partnerName}: ${pNatal.join(', ') || 'quiet'}.`;
   });
 
-  const transitPositions = transitPositionsLine(userDayTransits[0]);
-
-  return `${PERSONA}
-
-${RELATIONSHIP_DIRECTIVE}
-
-Week: ${weekRange}
-${relLine}
-
-YOUR CHART: ${chartBig3(userChart)}
-${partnerName.toUpperCase()}'S CHART: ${chartBig3(partnerChart)}
-
-NATAL CROSS-ASPECTS (the relationship's wired-in chemistry):
-${crossAspectsForPrompt(crossAspects, 'You', partnerName)}
-
-AUTHORITATIVE TRANSIT POSITIONS (use these exact signs — do NOT use your own knowledge of where planets are):
-${transitPositions || 'Data unavailable.'}
-
-DAILY TRANSITS (slow planets, to each chart):
-${dayLines.join('\n')}
-
-Rules:
-- THIS IS A RELATIONSHIP READ. Weave both charts symmetrically; frame the week through the bond.
-- Use ONLY the transit data listed above. Do NOT mention any aspect, ingress, station, or lunar event not listed.
-- CRITICAL: Use ONLY the signs from AUTHORITATIVE TRANSIT POSITIONS above.
-- For days with no personal aspects to either chart, write the day_sentence about Moon sign energy.
-- Each day_sentences entry max 18 words. Never repeat the same energy across days.
-- When naming aspects in prose, write them as "PlanetName aspectName PlanetName" using FULL names. Never abbreviations.
-- Do NOT include raw glyph symbols or em-dash labels. Write only prose.
-
-Return JSON:
-{
-  "overview": "2-3 sentences on the overall energy of the week for the relationship, referencing specific transits to either chart.",
-  "relationship_focus": "1-2 sentences on the single most important relationship theme this week, framed through the bond.",
-  "personal_focus": "1-2 sentences on the most significant personal transit theme for the user this week.",
-  "collective_theme": "1 sentence on the collective backdrop for everyone.",
-  "collective_tags": ["theme1", "theme2"],
-  "maximize": ["opportunity1", "opportunity2", "opportunity3"],
-  "focus": "1 attention sentence tied to a specific transit this week",
-  "watch": ["caution1", "caution2"],
-  "best_areas": ["area1", "area2", "area3"],
-  "day_sentences": {
-    "0": "Sun sentence", "1": "Mon sentence", "2": "Tue sentence",
-    "3": "Wed sentence", "4": "Thu sentence", "5": "Fri sentence", "6": "Sat sentence"
-  }
-}`;
+  return {
+    partnerName,
+    relationship: partnerChart?.relationship || '',
+    weekRange,
+    userBig3: chartBig3(userChart),
+    partnerBig3: chartBig3(partnerChart),
+    crossAspects: crossAspectsForPrompt(crossAspects, 'You', partnerName),
+    transitPositions: transitPositionsLine(userDayTransits[0]),
+    dayLines: dayLines.join('\n'),
+  };
 }
 
 /**
- * Build the MONTH relationship prompt.
+ * Build the MONTH relationship task params ('relationship-month-synthesis').
  */
-export function buildMonthPrompt({ date, userChart, partnerChart, userTransits, partnerTransits, crossAspects }) {
+export function buildMonthParams({ date, userChart, partnerChart, userTransits, partnerTransits, crossAspects }) {
   const partnerName = partnerChart?.name || 'your partner';
-  const relationship = partnerChart?.relationship;
-  const relLine = relationship && relationship !== 'Other'
-    ? `${partnerName} is your ${relationship.toLowerCase()}. Frame the read through the lens of a ${relationship.toLowerCase()} bond where relevant.`
-    : '';
   const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   const uNatal = (userTransits?.natalAspects || []).map(a => {
@@ -314,7 +217,6 @@ export function buildMonthPrompt({ date, userChart, partnerChart, userTransits, 
     .filter(p => ['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Chiron'].includes(p.name))
     .map(p => `${p.name} in ${p.sign}${p.retrograde ? ' Rx' : ''}`)
     .join(', ');
-  const transitPositions = transitPositionsLine(userTransits);
 
   // Lunations from the user's transit sample
   const moon = userTransits?.transitPlanets?.find(p => p.name === 'Moon');
@@ -326,108 +228,19 @@ export function buildMonthPrompt({ date, userChart, partnerChart, userTransits, 
     else if (phase === 'Full Moon') lunation = `Full Moon in ${moon.sign}`;
   }
 
-  return `${PERSONA}
-
-${RELATIONSHIP_DIRECTIVE}
-
-Month: ${monthName}
-${relLine}
-
-YOUR CHART: ${chartBig3(userChart)}
-Your planets: ${chartPlanetsLine(userChart) || 'unavailable'}
-
-${partnerName.toUpperCase()}'S CHART: ${chartBig3(partnerChart)}
-${partnerName}'s planets: ${chartPlanetsLine(partnerChart) || 'unavailable'}
-
-NATAL CROSS-ASPECTS (the relationship's wired-in chemistry):
-${crossAspectsForPrompt(crossAspects, 'You', partnerName)}
-
-AUTHORITATIVE TRANSIT POSITIONS (use these exact signs — do NOT use your own knowledge of where planets are):
-${transitPositions || 'Data unavailable.'}
-
-Slow planet positions this month: ${slowPositions || 'unavailable'}
-Active transits to YOUR chart: ${uNatal.join('; ') || 'none exact'}
-Active transits to ${partnerName.toUpperCase()}'S chart: ${pNatal.join('; ') || 'none exact'}
-${lunation ? `Lunation: ${lunation}` : ''}
-
-Rules:
-- THIS IS A RELATIONSHIP READ. Weave both charts symmetrically; frame the month through the bond.
-- Use ONLY the transit data provided. Do NOT mention any transit, aspect, or lunation not listed.
-- CRITICAL: Use ONLY the signs from AUTHORITATIVE TRANSIT POSITIONS above.
-- Connect the month's transits to the natal cross-aspects where charged.
-- Do NOT include raw glyph symbols or em-dash labels. Write only prose.
-
-Return JSON:
-- overview: 2-3 sentences summarizing the month's energy for the relationship, referencing specific transits to either chart and lunations
-- relationship_focus: 1-2 sentences on the single most important relationship theme this month, framed through the bond
-- personal_focus: 1-2 sentences on the most significant personal transit theme for the user this month
-- collective_theme: 1 sentence on the collective backdrop
-- collective_tags: array of 2-3 thematic labels
-- maximize: array of 3 opportunities for the relationship this month
-- focus: 1 attention sentence tied to a specific transit this month
-- watch: array of 2 cautions for the relationship this month
-- best_areas: top 3 from [Love, Career, Finances, Creativity, Health, Spirituality, Relationships, Transformation]`;
+  return {
+    partnerName,
+    relationship: partnerChart?.relationship || '',
+    monthName,
+    userBig3: chartBig3(userChart),
+    userPlanets: chartPlanetsLine(userChart),
+    partnerBig3: chartBig3(partnerChart),
+    partnerPlanets: chartPlanetsLine(partnerChart),
+    crossAspects: crossAspectsForPrompt(crossAspects, 'You', partnerName),
+    transitPositions: transitPositionsLine(userTransits),
+    slowPositions,
+    userActive: uNatal.join('; '),
+    partnerActive: pNatal.join('; '),
+    lunation,
+  };
 }
-
-// ── JSON schemas (shared so the LLM call is consistent) ─────────────────────
-export const DAY_SCHEMA = {
-  type: 'object',
-  properties: {
-    overview: { type: 'string' },
-    relationship_focus: { type: 'string' },
-    personal_reading: { type: 'array', items: { type: 'string' } },
-    collective_reading: { type: 'array', items: { type: 'string' } },
-    collective_highlight: { type: 'string' },
-    maximize: { type: 'string' },
-    focus: { type: 'string' },
-    watch: { type: 'string' },
-    best_areas: { type: 'array', items: { type: 'string' } },
-    power_planet: { type: 'string' },
-    key_themes: { type: 'array', items: { type: 'string' } },
-  },
-  required: ['overview', 'relationship_focus', 'personal_reading', 'collective_reading', 'maximize', 'focus', 'watch', 'best_areas'],
-};
-
-export const WEEK_SCHEMA = {
-  type: 'object',
-  properties: {
-    overview: { type: 'string' },
-    relationship_focus: { type: 'string' },
-    personal_focus: { type: 'string' },
-    collective_theme: { type: 'string' },
-    collective_tags: { type: 'array', items: { type: 'string' } },
-    maximize: { type: 'array', items: { type: 'string' } },
-    focus: { type: 'string' },
-    watch: { type: 'array', items: { type: 'string' } },
-    best_areas: { type: 'array', items: { type: 'string' } },
-    day_sentences: {
-      type: 'object',
-      properties: {
-        '0': { type: 'string' }, '1': { type: 'string' }, '2': { type: 'string' },
-        '3': { type: 'string' }, '4': { type: 'string' }, '5': { type: 'string' },
-        '6': { type: 'string' },
-      },
-      required: ['0', '1', '2', '3', '4', '5', '6'],
-      additionalProperties: false,
-    },
-  },
-  required: ['overview', 'relationship_focus', 'personal_focus', 'collective_theme', 'collective_tags', 'maximize', 'focus', 'watch', 'best_areas', 'day_sentences'],
-};
-
-export const MONTH_SCHEMA = {
-  type: 'object',
-  properties: {
-    overview: { type: 'string' },
-    relationship_focus: { type: 'string' },
-    personal_focus: { type: 'string' },
-    collective_theme: { type: 'string' },
-    collective_tags: { type: 'array', items: { type: 'string' } },
-    maximize: { type: 'array', items: { type: 'string' } },
-    focus: { type: 'string' },
-    watch: { type: 'array', items: { type: 'string' } },
-    best_areas: { type: 'array', items: { type: 'string' } },
-  },
-  required: ['overview', 'relationship_focus', 'personal_focus', 'collective_theme', 'collective_tags', 'maximize', 'focus', 'watch', 'best_areas'],
-};
-
-export { PLANET_GLYPHS, ASPECT_GLYPHS, TONE_DIRECTIVE };

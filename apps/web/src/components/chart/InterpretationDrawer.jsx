@@ -1,84 +1,31 @@
 import { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { getHouseName, findNatalHouseForLongitude } from '@/lib/houseUtils';
 import { forceTextGlyph } from '@/lib/chartUtils';
 
-function buildPrompt(item, chartContext) {
+// Assembles the astrological facts for the 'interpretation-deep-dive'
+// server task — the sectioned templates and FORMAT rules live in
+// supabase/functions/_shared/llm_tasks/tasks_chart.ts.
+function buildTaskParams(item, chartContext) {
   const raw = chartContext?.raw_data || chartContext || {};
   const sun = raw?.sun_sign || '';
   const moon = raw?.moon_sign || '';
   const asc = raw?.ascendant_sign || '';
   const ctx = `Sun in ${sun}, Moon in ${moon}, Rising ${asc}`;
 
-  const FORMAT = `
-Format your response in clear sections using markdown:
-- Start immediately with the first ### header — NO greetings, NO conversational openers (no "It's a pleasure...", "I'm happy to...", "Let's explore...", "Your chart reveals..."). Just go straight into the content.
-- Use **bold** for key phrases and planet/sign names
-- Use exactly 2-3 section headers. Each header MUST start with "### " (three hashes + space) followed by an emoji and title. Example of correct header format:
-  ### ✨ Core Energy
-  
-  This is the paragraph under the header.
-  
-  ### 🌙 How It Shows Up
-  
-  This is the next paragraph.
-- The "###" prefix is REQUIRED on every header line — without it, the text will not render as a header. Never output a header without "###" at the start of the line.
-- Place each header on its own line with a blank line before and after it.
-- For bullet lists, use standard markdown syntax: each item MUST start on its own line with "- " (hyphen + space), with a line break before the first item and between every item. Never run multiple bullets together on one line.
-- NEVER use zodiac sign emojis (♈♉♊♋♌♍♎♏♐♑♒♓) — always write the sign name as a word
-- Keep each paragraph tight — 3-4 sentences max
-- Do not use "It's not X, it's Y" phrasing
-- Write in warm, direct second person ("you/your") — these are statements, not a conversation
-- Avoid generic astrology filler — be specific to the placements given
-- Use ONLY the chart data explicitly provided in this prompt. Do NOT reference any planets, signs, houses, aspects, or placements other than those listed above. If information about another placement is not provided, speak to the archetype generally rather than inventing a specific placement for the user.
-`;
-
   if (item.type === 'planet') {
     const houseName = getHouseName(item.house || item.number);
-    return `You are a warm, insightful astrologer. The user has **${item.name} in ${item.sign}**, placed in the **${houseName}**${item.retrograde ? ', retrograde' : ''}. Their chart: ${ctx}.
-
-Write a personal interpretation with these three sections:
-### ✨ Core Energy
-What this placement means at its core — the fundamental drive or quality it brings.
-
-### 🌙 How It Shows Up
-Specific ways this placement manifests in daily life, relationships, or self-expression.
-
-### ⚡ Working With It
-1-2 practical insights or growth edges for this placement.
-${FORMAT}`;
+    return { kind: 'planet', ctx, name: item.name, sign: item.sign, houseName, retrograde: !!item.retrograde };
   }
 
   if (item.type === 'house') {
-    const houseName = getHouseName(item.number);
-    return `You are a warm, insightful astrologer. The user has their **${houseName}** cusp in **${item.sign}**. Their chart: ${ctx}.
-
-Write a personal interpretation with these three sections:
-### 🏠 What This House Rules
-The life themes and domains governed by this house.
-
-### ✦ ${item.sign} Colors This Area
-How having ${item.sign} on the cusp specifically shapes this life domain for them.
-
-### 🔍 Themes to Explore
-2-3 bullet points on practical themes, strengths, or questions this placement raises.
-${FORMAT}`;
+    return { kind: 'house', ctx, houseName: getHouseName(item.number), sign: item.sign };
   }
 
   if (item.type === 'sign') {
     const planetsInSign = (raw?.planets || []).filter(p => p.sign === item.sign).map(p => p.name).join(', ');
     const pContext = planetsInSign ? `They have ${planetsInSign} in ${item.sign}.` : `They have no planets in ${item.sign}.`;
-    return `You are a warm, insightful astrologer. Explain the **${item.sign}** archetype to this person. ${pContext} Their chart: ${ctx}.
-
-### ✨ The ${item.sign} Archetype
-Core energy, motivation, and style of this sign.
-
-### 🌟 In Your Chart
-How this sign's energy shows up specifically given their placements.
-
-### 🔑 Key Qualities
-3-4 bullet point traits or themes of ${item.sign}.
-${FORMAT}`;
+    return { kind: 'sign', ctx, sign: item.sign, pContext };
   }
 
   if (item.type === 'aspect') {
@@ -87,18 +34,7 @@ ${FORMAT}`;
     const p2Data = planets.find(p => p.name === item.planet2);
     const p1Detail = p1Data ? `${item.planet1} in ${p1Data.sign} (${getHouseName(p1Data.house)}${p1Data.retrograde ? ', retrograde' : ''})` : item.planet1;
     const p2Detail = p2Data ? `${item.planet2} in ${p2Data.sign} (${getHouseName(p2Data.house)}${p2Data.retrograde ? ', retrograde' : ''})` : item.planet2;
-    return `You are a warm, insightful astrologer. The user has **${p1Detail}** in a **${item.aspect}** with **${p2Detail}** (${item.orb?.toFixed(1)}° orb). Their Big 3: ${ctx}.
-
-Write an interpretation with these three sections:
-### ⚡ The Core Dynamic
-The fundamental psychological tension or gift created by this aspect between these two planets.
-
-### 🔄 How It Plays Out
-Specific life areas, relationships, or patterns where this aspect is most visible — using the signs and houses involved.
-
-### 🌱 Growth Edge
-1-2 practical insights on how to work consciously with this aspect.
-${FORMAT}`;
+    return { kind: 'aspect', ctx, aspect: item.aspect, orb: item.orb, p1Detail, p2Detail };
   }
 
   if (item.type === 'node') {
@@ -115,20 +51,10 @@ ${FORMAT}`;
     const houseNum = item.house
       || (item.longitude != null ? findNatalHouseForLongitude(item.longitude, houses, houseSystem, ascendantSign) : null);
     const houseDetail = houseNum ? ` in the ${getHouseName(houseNum)}` : '';
-    return `You are a warm, insightful astrologer. The user has their **${name} in ${item.sign}**${houseDetail}. Their ${opp} is in ${oppSign}. Big 3: ${ctx}.
-
-### 🌙 The Past Pattern (${opp} in ${oppSign})
-What the ${opp} in ${oppSign} represents as ingrained tendencies and comfort zones carried from the past.
-
-### ✨ The Soul's Direction (${name} in ${item.sign}${houseDetail})
-What ${item.sign} calls them toward — the unfamiliar territory that holds the deepest growth.
-
-### 🧭 Living the Axis
-2-3 bullet points of practical, grounded ways to embody this nodal direction in everyday life.
-${FORMAT}`;
+    return { kind: 'node', ctx, name, opp, oppSign, sign: item.sign, houseDetail };
   }
 
-  return `You are a warm, insightful astrologer. Write a 2-3 paragraph interpretation for: ${JSON.stringify(item)}. Speak directly to the person. ${FORMAT}`;
+  return { kind: 'other', ctx, itemJson: JSON.stringify(item) };
 }
 
 // ── Module-level cache ─────────────────────────────────────────────────────
@@ -147,8 +73,8 @@ function makeCacheKey(item, chartContext) {
 export function preloadInterpretation(item, chartContext) {
   const cacheKey = makeCacheKey(item, chartContext);
   if (!item?.key || interpretationCache[cacheKey]) return;
-  const prompt = buildPrompt(item, chartContext);
-  interpretationCache[cacheKey] = base44.integrations.Core.InvokeLLM({ prompt }).then(res => forceTextGlyph(res));
+  const params = buildTaskParams(item, chartContext);
+  interpretationCache[cacheKey] = invokeLLMTask('interpretation-deep-dive', params).then(res => forceTextGlyph(res));
 }
 
 // ── Hook: used by InterpretCard in MyChart ─────────────────────────────────
@@ -174,8 +100,8 @@ export function useInterpretation(item, chartContext) {
     // Fire (or reuse an in-flight) LLM call. We do NOT permanently cache a
     // rejected promise — on error we delete it so a retry can fire fresh.
     if (!interpretationCache[cacheKey]) {
-      const prompt = buildPrompt(item, chartContext);
-      interpretationCache[cacheKey] = base44.integrations.Core.InvokeLLM({ prompt });
+      const params = buildTaskParams(item, chartContext);
+      interpretationCache[cacheKey] = invokeLLMTask('interpretation-deep-dive', params);
     }
     const cached = interpretationCache[cacheKey];
 

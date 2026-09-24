@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { Loader2, Heart, Lock, ChevronDown, ChevronRight } from 'lucide-react';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
 import SignName from '@/components/ui/SignName';
-import { base44 } from '@/api/base44Client';
-import { PERSONA, highlightSynthesisText } from '@/lib/transitUtils';
+import { invokeLLMTask } from '@/api/llmTasks';
+import { highlightSynthesisText } from '@/lib/transitUtils';
 import { useAuth } from '@/lib/AuthContext';
 import { usePermissions } from '@/lib/permissions';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
-import { densityPromptSuffix } from '@/lib/knowledgeDensity';
 import PaywallModal from '@/components/paywall/PaywallModal';
 
 const ASPECT_SYMBOLS = {
@@ -118,23 +117,16 @@ function SharedTransitRow({ item, userTransits, partnerTransits, userChart, part
       const partnerLines = item.partnerAspects
         .map((a) => `${a.transit_planet} ${a.aspect} ${partnerName}'s natal ${a.natal_planet}${natalPlanetHouse(partnerTransits, partnerChart, a.natal_planet) ? ` in ${ordinal(natalPlanetHouse(partnerTransits, partnerChart, a.natal_planet))}H` : ''} (orb ${a.orb?.toFixed(1)}°)`)
         .join('; ');
-      const prompt = `${PERSONA}
-
-${densityPromptSuffix(knowledgeDepth)}
-
-GROUNDING RULES:
-- Use ONLY the transiting planet, signs, natal planets, houses, aspects, and orbs explicitly listed below.
-- Do NOT introduce any additional planet, celestial body, aspect, sign, or house that is not listed.
-- The transiting planet is ${item.transit_planet} in ${tP?.sign || '?'}${tP?.retrograde ? ' (retrograde)' : ''} — do not assign it a different sign or invent its retrograde status.
-- Name each natal planet and house exactly as listed; do not invent houses for placements that have none listed.
-
-Today's transiting ${item.transit_planet} in ${tP?.sign || '?'}${tP?.retrograde ? ' (retrograde)' : ''} is simultaneously:
-- To you: ${userLines}
-- To ${partnerName}: ${partnerLines}
-
-This transit activates BOTH people's charts. Write 2-3 sentences on how this shared activation lands on the relationship dynamic — where it creates alignment, tension, or a shared theme. Frame it through the bond, not one person. Name signs and houses. No clichés, no generic horoscope language.`;
       try {
-        const result = await base44.integrations.Core.InvokeLLM({ prompt });
+        const result = await invokeLLMTask('shared-transit-interpretation', {
+          knowledgeDepth,
+          transitPlanet: item.transit_planet,
+          sign: tP?.sign || '',
+          retrograde: !!tP?.retrograde,
+          partnerName,
+          userLines,
+          partnerLines,
+        });
         // Strip any sentence naming a planet not actually in this shared transit.
         const allowed = new Set([item.transit_planet, ...item.userAspects.map((a) => a.natal_planet), ...item.partnerAspects.map((a) => a.natal_planet)]);
         setText(sanitizeSharedText(result, allowed));

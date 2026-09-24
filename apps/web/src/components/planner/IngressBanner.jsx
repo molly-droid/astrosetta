@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
 import { highlightSynthesisText, getChartRuler } from '@/lib/transitUtils';
 import SignName from '@/components/ui/SignName';
@@ -165,54 +165,31 @@ function IngressCard({ ing, chart, compact, onLinkToHighlights, autoExpandKey })
       : '';
 
     const ruler = getChartRuler(raw.ascendant_sign);
-    const isChartRuler = ruler && ing.planet === ruler.planet;
-    const rulerNote = isChartRuler
-      ? `⭐ This is YOUR CHART RULER — ${ruler.planet} rules your ${raw.ascendant_sign} Ascendant. This ingress is personally significant because it directly activates your identity, life direction, and how you meet the world. Emphasize this as a personal milestone, not just a collective shift. Reference what natal house ${ruler.planet} occupies and what house it rules (the 1st house) to ground the reading.`
-      : '';
+    const isChartRuler = !!(ruler && ing.planet === ruler.planet);
 
     const duration = PLANET_DURATIONS[ing.planet] || 'an extended period';
     const action = ing.approaching ? 'is entering' : ing.recent ? 'recently entered' : 'enters';
 
-    const personalHouseInstr = crossesInto
-      ? `Reference BOTH houses it activates: it starts in your ${entryHouse}th house of ${entryTheme}, then as it advances through ${ing.to_sign} it crosses into your ${crossesInto.house}th house of ${crossTheme}. Describe what this transition means — e.g. "as it crosses into your ${crossesInto.house}th house, it shifts from ${entryTheme} to ${crossTheme}."`
-      : `Reference the house it enters (the ${entryHouse}th house of ${entryTheme}).`;
-
-    const prompt = `You are a skilled astrologer. Today is ${dateStr} and ${ing.planet} ${action} ${ing.to_sign}, leaving ${ing.from_sign}.
-
-NATAL CHART:
-Sun: ${raw.sun_sign}, Moon: ${raw.moon_sign}, Rising: ${raw.ascendant_sign}
-Planets: ${natalPlanets || 'not provided'}
-House cusps: ${natalHouses || 'not provided'}
-${houseContext}
-${conjunctionNote}
-
-${ing.planet} will stay in ${ing.to_sign} for ${duration}.
-
-Write a focused reading for this ${ing.planet} ingress into ${ing.to_sign}.
-
-IMPORTANT: Use ONLY the natal chart data and ingress data provided above. Do NOT mention any aspects or planetary placements that are not explicitly listed. Only reference natal planets in ${ing.to_sign} as listed in the conjunction note above — do not invent additional conjunctions.
-
-${rulerNote}
-
-Return JSON:
-- headline: a short evocative title (max 6 words), e.g. "Jupiter Enters Your 9th House"
-- collective: 2 sentences on what this ingress means for everyone collectively — the archetypal shift, what themes ${ing.to_sign} activates for ${ing.planet}
-- personal: 2-3 sentences on how this specifically activates THIS person's natal chart. ${personalHouseInstr} Mention any natal planets in ${ing.to_sign} that will be aspected, and what area of life is being expanded/challenged. Be concrete and personal.
-- ritual: 1 short practical suggestion for working with this ingress energy`;
-
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            headline: { type: 'string' },
-            collective: { type: 'string' },
-            personal: { type: 'string' },
-            ritual: { type: 'string' },
-          },
-          required: ['headline', 'collective', 'personal', 'ritual'],
-        },
+      const result = await invokeLLMTask('ingress-reading', {
+        dateStr,
+        planet: ing.planet,
+        action,
+        toSign: ing.to_sign,
+        fromSign: ing.from_sign,
+        sunSign: raw.sun_sign,
+        natalMoonSign: raw.moon_sign,
+        ascSign: raw.ascendant_sign,
+        natalPlanets,
+        natalHouses,
+        houseContext,
+        conjunctionNote,
+        duration,
+        isChartRuler,
+        entryHouse,
+        entryTheme,
+        crossHouse: crossesInto?.house,
+        crossTheme,
       });
       if (cacheKey) ingressCache[cacheKey] = result;
       setReading(result);

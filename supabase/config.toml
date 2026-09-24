@@ -82,6 +82,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.invoke-llm]
 verify_jwt = false
+[functions.llm-task]
+verify_jwt = false
 [functions.log-frontend-error]
 verify_jwt = false
 [functions.navigator-chat]

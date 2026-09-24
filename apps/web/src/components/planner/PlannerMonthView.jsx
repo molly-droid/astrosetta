@@ -14,6 +14,7 @@ import { getMoonPhaseIcon } from '@/lib/moonPhase';
 import { ECLIPSE_META } from '@/lib/eclipseUtils';
 import { PLANET_GLYPHS, SIGN_GLYPHS } from '@/lib/transitUtils';
 import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { X, ChevronDown, Loader2, CalendarDays } from 'lucide-react';
 
 const MonthSynthesis = React.lazy(() => import('./MonthSynthesis'));
@@ -324,39 +325,15 @@ function CalendarAndThemes({ date, chart }) {
         const { transitContext, monthName, natalPlanets } = await buildMonthTransitContext(date, chart, daysInMonth);
         const raw = chart.raw_data || {};
         const topicList = TOPICS.map(t => `${t.key} = ${t.fullLabel}`).join('\n');
-        const res = await base44.integrations.Core.InvokeLLM({
-          prompt: `You are a professional astrologer. For ${monthName}, generate a focused monthly outlook for EACH of these life themes:\n${topicList}\n\nNATAL CHART:\nSun: ${raw.sun_sign}, Moon: ${raw.moon_sign}, Rising: ${raw.ascendant_sign}\nPlanets: ${natalPlanets || 'not provided'}\n\n${transitContext}\n\nIMPORTANT: Use ONLY the actual transit positions and dates above. Do not hallucinate planet signs. Use precise aspect terms (trine, square, sextile, conjunction, opposition); never use "alignment" as a synonym for conjunction.\n\nReturn JSON with a "topics" array — one entry per theme in the list above. Each entry must include: topic_key, overview (2-3 sentences referencing specific transit dates), best_windows (short note on 2-3 date ranges), key_transits (2-3 most relevant transits copied VERBATIM from the ALL TRANSIT EVENTS list with description/date/type fields), and highlight_days (4-8 day numbers 1-${daysInMonth} that are especially powerful for this theme based on the dated transit events and lunations).`,
-          response_json_schema: {
-            type: 'object',
-            properties: {
-              topics: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    topic_key: { type: 'string', enum: TOPICS.map(t => t.key) },
-                    overview: { type: 'string' },
-                    best_windows: { type: 'string' },
-                    key_transits: {
-                      type: 'array',
-                      items: {
-                        type: 'object',
-                        properties: {
-                          description: { type: 'string' },
-                          date: { type: 'string' },
-                          type: { type: 'string', enum: ['natal', 'mundane'] },
-                        },
-                        required: ['description', 'date', 'type'],
-                      },
-                    },
-                    highlight_days: { type: 'array', items: { type: 'integer' } },
-                  },
-                  required: ['topic_key', 'overview', 'best_windows', 'key_transits', 'highlight_days'],
-                },
-              },
-            },
-            required: ['topics'],
-          },
+        const res = await invokeLLMTask('month-topics', {
+          monthName,
+          topicList,
+          sunSign: raw.sun_sign,
+          natalMoonSign: raw.moon_sign,
+          ascSign: raw.ascendant_sign,
+          natalPlanets,
+          transitContext,
+          daysInMonth,
         });
         if (cancelled) return;
         const highlights = {};

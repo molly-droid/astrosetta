@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SignName from '@/components/ui/SignName';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { highlightSynthesisText } from '@/lib/transitUtils';
 import { ECLIPSE_META } from '@/lib/eclipseUtils';
 import { getHouseName } from '@/lib/houseUtils';
@@ -101,42 +101,20 @@ export default function LunarHighlight({ lunation, chart, date, autoExpand = fal
       ? `Active Moon aspects to natal chart (may include angles): ${lunarAspects.map(a => `Moon ${a.aspect} natal ${a.natal_planet} (${a.orb?.toFixed(1)}°)`).join(', ')}`
       : '';
 
-    const eclipseContext = meta
-      ? `This ${phase} is also a ${meta.label}. Eclipses amplify and catalyze the lunation — they are fated turning points whose effects can unfold for 6+ months. Solar eclipses seed dramatic new beginnings; lunar eclipses culminate, illuminate, and release. Frame the reading through this eclipse lens with extra weight and long-arc significance.`
-      : '';
-
-    const prompt = `You are a skilled astrologer. Today is ${dateStr} and there is a ${phase} in ${moonSign}${meta ? ' — a ' + meta.label : ''}.
-
-NATAL CHART:
-Sun: ${raw.sun_sign}, Moon: ${raw.moon_sign}, Rising: ${raw.ascendant_sign}
-Planets: ${natalPlanets || 'not provided'}
-Angles: ${natalAngles || 'not provided'}
-House cusps: ${natalHouses || 'not provided'}
-${moonHouseContext}
-${conjunctionNote}
-${lunarAspectContext}
-${eclipseContext}
-
-Write a focused reading for this ${phase} in ${moonSign}${meta ? ', through the lens of the eclipse' : ''}.
-
-IMPORTANT: Use ONLY the natal chart data and transit data provided above. Do NOT mention any aspects, planetary placements, or lunar events that are not explicitly listed in the data above.
-
-Return JSON:
-- collective: 2 sentences on what this ${phase} means for everyone collectively — themes, archetypes, what is illuminated/released/seeded
-- personal: 2-3 sentences on how this specifically activates THIS person's natal chart. You have their full chart above — reference the specific house it activates, any natal planets OR angles (ASC/DC/MC/IC) in ${moonSign} that are being hit, and any active Moon aspects listed. Be concrete and personal, not generic.
-- ritual: 1 short practical suggestion for honoring this moon phase today`;
-
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          collective: { type: 'string' },
-          personal: { type: 'string' },
-          ritual: { type: 'string' },
-        },
-        required: ['collective', 'personal', 'ritual'],
-      },
+    const result = await invokeLLMTask('lunar-highlight', {
+      dateStr,
+      phase,
+      moonSign,
+      eclipseLabel: meta?.label || '',
+      sunSign: raw.sun_sign,
+      natalMoonSign: raw.moon_sign,
+      ascSign: raw.ascendant_sign,
+      natalPlanets,
+      natalAngles,
+      natalHouses,
+      moonHouseContext,
+      conjunctionNote,
+      lunarAspectContext,
     });
     if (cacheKey) lunarCache[cacheKey] = result;
     setReading(result);

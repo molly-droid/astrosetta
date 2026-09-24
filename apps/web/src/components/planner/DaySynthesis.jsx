@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Sparkles, ChevronDown, ChevronRight, RefreshCw, ThumbsUp, ThumbsDown, Bookmark, Globe, Layers, Lightbulb, Share2 } from 'lucide-react';
-import { formatTransitLabelProse as formatTransitLabel, PERSONA, highlightSynthesisText, getChartRuler, PLANET_GLYPHS, mergeNatalPoints } from '@/lib/transitUtils';
+import { invokeLLMTask } from '@/api/llmTasks';
+import { formatTransitLabelProse as formatTransitLabel, highlightSynthesisText, getChartRuler, PLANET_GLYPHS, mergeNatalPoints } from '@/lib/transitUtils';
 import { getMoonPhaseName, getMoonPhaseEmoji } from '@/lib/moonPhase';
 import { detectEclipse, ECLIPSE_META } from '@/lib/eclipseUtils';
 import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
@@ -12,7 +13,6 @@ import { getMundanePatterns } from '@/lib/mundanePatterns';
 import { getEffectiveTier } from '@/lib/permissions';
 import { useAuth } from '@/lib/AuthContext';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
-import { densityPromptSuffix } from '@/lib/knowledgeDensity';
 import { fetchExplanation } from '@/lib/explainIt';
 import ShareSheet from '@/components/share/ShareSheet';
 import { buildRisingSignCardData, formatCollectiveContext } from '@/lib/shareCard';
@@ -279,15 +279,9 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
     const rulerStation = rulerPlanet
       ? (t?.stations || []).some(s => s.planet === rulerPlanet)
       : false;
-    const rulerActive = rulerInTransits || rulerIngress || rulerStation;
-
-    const rulerInstruction = ruler && rulerActive
-      ? `⭐ CHART RULER ACTIVE: Your chart ruler ${ruler.planet} is directly activated today (${[
-          rulerInTransits ? 'transits' : null, rulerIngress ? 'ingress' : null, rulerStation ? 'station' : null
-        ].filter(Boolean).join(' + ')}). Call special attention to this — chart ruler transits are personally significant because they directly activate your identity, life path, and sense of self. Weave this into your reading prominently.`
-      : ruler
-      ? `Your chart ruler is ${ruler.planet}. If none of today's transits directly involve ${ruler.planet}, you may briefly note what area of life ${ruler.planet} governs for you (based on its natal placement), but don't force it.`
-      : '';
+    const rulerActiveVia = [
+      rulerInTransits ? 'transits' : null, rulerIngress ? 'ingress' : null, rulerStation ? 'station' : null,
+    ].filter(Boolean);
 
     // Chart dynamics — stelliums, oppositions, patterns activated by today's transits
     const dynamics = analyzeChartDynamics(raw);
@@ -348,99 +342,27 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
       .map(p => `${p.name}: ${p.sign} ${p.degree?.toFixed(0)}°`)
       .join(', ');
 
-    const prompt = `${PERSONA}
-
-${densityPromptSuffix(knowledgeDepth)}
-
-Today: ${dateStr}
-NATAL: ☉ ${raw.sun_sign} · ☽ ${raw.moon_sign} · ASC ${raw.ascendant_sign}
-NATAL PLACEMENTS: ${natalPlanets.map(p => `${p.name} in ${p.sign || '?'}${p.house ? ` (${p.house}H)` : ''}`).join(', ')}
-${rulerLine}
-${moonInfo}
-${lunationSection ? `\nLUNAR EVENTS TODAY:\n${lunationSection}` : ''}
-
-AUTHORITATIVE TRANSIT POSITIONS (use these exact signs — do NOT use your own knowledge of where planets are):
-${transitPositions || 'Data unavailable.'}
-
-=== TODAY'S TRANSITS (THIS IS THE CORE DATA TO INTERPRET) ===
-PERSONAL (transit planet aspecting natal planet):
-${fmtNatal.join('\n') || 'None today.'}
-
-MUNDANE (transit planet aspecting another transit planet):
-${fmtMundane.join('\n') || 'None today.'}
-
-LUNAR (Moon aspecting natal planet):
-${fmtLunar.join('\n') || 'None today.'}
-
-STATIONS:
-${fmtStations.join('\n') || 'None today.'}
-
-INGRESSES:
-${fmtIngresses.join('\n') || 'None today.'}
-
-=== SUPPLEMENTARY CONTEXT (secondary — do NOT let this dominate the reading) ===
-${rulerInstruction}
-${dynamicsSection ? `Chart dynamics note: ${dynamicsSection}` : ''}
-${dignitySection ? `Dignities note: ${dignitySection}` : ''}
-${mundaneSection ? `Mundane patterns note: ${mundaneSection}` : ''}
-
-Rules:
-- THE PERSONAL_READING IS ABOUT TRANSITS, NOT NATAL STRUCTURE. Every bullet in personal_reading MUST interpret a specific transit from TODAY'S TRANSITS above. Do NOT describe natal stelliums, Barbut's basket, chart patterns, or natal chart structure unless a specific transit is directly activating them. If you want to mention a stellium, you MUST first name the transit that is activating it.
-- Every personal_reading bullet MUST begin by copying the exact transit label from TODAY'S TRANSITS above (which already includes transiting planet, sign, aspect, natal planet, natal sign, and house when available). If the label has no house, do NOT invent one.
-- If PERSONAL transits say "None today," return an empty personal_reading array. Do NOT fill it with natal pattern descriptions.
-- One bullet per transit. Do NOT combine multiple transits into one bullet.
-- COVERAGE & ORDER LOCK: personal_reading MUST contain EXACTLY ONE bullet for EVERY transit listed in the PERSONAL section above, in the exact order they appear. Do not skip, add, or reorder any transit. Knowledge Density changes only the prose depth and vocabulary of each bullet — never which transits are covered.
-- personal_reading_core is a SUBSET of personal_reading: include ONLY the bullets for transits whose natal target is the Sun, Moon, or Ascendant (the "Big Three"). Use the exact same label and interpretation as in personal_reading. If none of today's personal transits hit the Big Three, return an empty personal_reading_core array.
-- After the label, write 2-3 sentences explaining the astrological mechanic in depth — name what the transiting planet represents (its drive/domain), how the sign it's in colors that energy, what the aspect does (flow/friction/merger), what the natal placement means in its sign and house, and the real-world life area activated. Teach the reader how the symbols combine so they learn to make their own interpretations. E.g. "Mercury in Cancer conjunction natal Chiron in Aries in your 8th house — Mercury is the mind and communication; in Cancer it speaks with emotional sensitivity and memory. A conjunction merges its energy with your natal Chiron wound in Aries (the wound to your sense of self and courage), sitting in the 8th house of shared resources and intimacy. Today, conversations can surface old pain around self-assertion within intimate or financial bonds — and naming it gently is what begins to heal it."
-- Use ONLY the transit data listed above. Do NOT mention any aspects, ingresses, stations, or lunar events not listed. If a category says "None today," do NOT invent any.
-- CRITICAL: Use ONLY the signs from AUTHORITATIVE TRANSIT POSITIONS above. Do NOT rely on your own knowledge of where planets currently are. Every time you mention a transiting planet, use the exact sign listed there.
-- Use ONLY the Moon sign and phase provided above. Never substitute a different zodiac sign for the Moon.
-- If a planet stations or ingresses today, mention it prominently — these are high-impact events.
-- LUNAR EVENTS: If the LUNAR EVENTS TODAY section names a New Moon, Full Moon, or eclipse, you MUST mention it prominently in the overview and weave its meaning into the reading — lunations are the most visible sky events of the month and the user is reading this day specifically to understand them. Name the lunation type, the sign it falls in, and what it initiates or culminates. For eclipses, convey the added weight (a fated turning point rippling out over six months).
-- LUNAR NODES: Transits to your natal North Node or South Node are karmically significant — the North Node marks your evolutionary direction and the South Node marks past-pattern comfort. When any transit aspects a node, you MUST include it in personal_reading AND name the nodal activation explicitly in the overview (e.g. "the Sun opposing your North Node..."). Never bury or omit a node transit.
-- Use FULL planet names and FULL aspect names. Never use abbreviations.
-- Do NOT include raw glyph symbols or the em-dash label format in your output. Write only prose.
-- Do NOT include "applying" or "separating."
-- PERSONALIZATION LOCK: The overview and personal_reading must feel like they belong to no one else. Every personal_reading bullet MUST name the user's natal placement it touches inside the prose — e.g. "Because your natal Mars in Scorpio sits in your 5th house, you may experience this transit Venus as..." or "With your Virgo Midheaven, you may experience this Virgo Moon as...". When the transit lands on an angle (Ascendant, Midheaven, IC, Descendant), name that angle in the sentence. If a bullet could be true for anyone with any chart, rewrite it until it couldn't.
-- INVITING TONE: Speak directly to the user in warm possibility language — "you may experience," "you might notice," "for you, this can show up as." Never commands, guarantees, or collective phrasing ("everyone," "we all") in the overview or personal_reading.
-- No platitudes, no generic horoscope language. Every sentence must be traceable to a specific transit configuration in the data above.
-
-Return JSON:
-{
-  "overview": "3-4 sentences synthesizing the WHOLE of what is happening for this person today — weave the day's personal transits and the collective sky into one coherent narrative. Name the key transit configurations and how they interact (which life areas are lit up, what the overall tone is). Speak directly to the user and name their natal reference points (e.g. \"your Virgo Midheaven\") where relevant. This is the headline the user reads first.",
-  "personal_reading": ["TransitLabel — 2-3 sentence deep interpretation of the astrological mechanic", "..."],
-  "personal_reading_core": ["Same format as personal_reading, but ONLY for transits to the natal Sun, Moon, or Ascendant. If none hit those three today, return an empty array."],
-  "collective_reading": ["PlanetName in Sign aspectName PlanetName — 1 sentence on collective meaning", "..."],
-  "collective_highlight": "1 sentence on single most significant mundane transit",
-  "maximize": "1 action sentence tied to a specific transit",
-  "focus": "1 attention sentence tied to a specific transit",
-  "watch": "1 caution sentence tied to a specific transit",
-  "best_areas": ["area1", "area2"],
-  "power_planet": "planet name",
-  "key_themes": ["theme1", "theme2", "theme3"],
-  "dynamics_insight": "Only if chart dynamics activated: 1-2 sentences on how a specific transit interacts with the activated pattern. Omit if no dynamics activated."
-}`;
-
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          overview: { type: 'string' },
-          personal_reading: { type: 'array', items: { type: 'string' } },
-          personal_reading_core: { type: 'array', items: { type: 'string' } },
-          collective_reading: { type: 'array', items: { type: 'string' } },
-          collective_highlight: { type: 'string' },
-          maximize: { type: 'string' },
-          focus: { type: 'string' },
-          watch: { type: 'string' },
-          best_areas: { type: 'array', items: { type: 'string' } },
-          power_planet: { type: 'string' },
-          key_themes: { type: 'array', items: { type: 'string' } },
-          dynamics_insight: { type: 'string' },
-        },
-        required: ['overview', 'personal_reading', 'collective_reading', 'maximize', 'focus', 'watch', 'best_areas'],
-      },
+    const result = await invokeLLMTask('day-synthesis', {
+      knowledgeDepth,
+      dateStr,
+      sunSign: raw.sun_sign,
+      moonSign: raw.moon_sign,
+      ascSign: raw.ascendant_sign,
+      natalPlacements: natalPlanets.map(p => `${p.name} in ${p.sign || '?'}${p.house ? ` (${p.house}H)` : ''}`).join(', '),
+      rulerLine,
+      rulerPlanet: ruler?.planet || '',
+      rulerActiveVia,
+      moonInfo,
+      lunationSection,
+      transitPositions,
+      personalTransits: fmtNatal.join('\n'),
+      mundaneTransits: fmtMundane.join('\n'),
+      lunarTransits: fmtLunar.join('\n'),
+      stations: fmtStations.join('\n'),
+      ingresses: fmtIngresses.join('\n'),
+      dynamicsSection,
+      dignitySection,
+      mundaneSection,
     });
     // Attach lunation metadata for UI rendering (not part of the LLM schema)
     if (t?.isEclipse || t?.isExactNewMoon || t?.isExactFullMoon) {

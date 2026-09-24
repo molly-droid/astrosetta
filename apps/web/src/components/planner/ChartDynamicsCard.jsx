@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, Layers, Flame, Mountain, Wind, Droplet, Loader2, Sparkles } from 'lucide-react';
 import { analyzeChartDynamics, SIGN_RULERS_MODERN, SIGN_ELEMENTS, SIGN_MODALITIES } from '@/lib/chartDynamics';
-import { PLANET_GLYPHS, SIGN_GLYPHS, highlightSynthesisText, PERSONA } from '@/lib/transitUtils';
+import { PLANET_GLYPHS, SIGN_GLYPHS, highlightSynthesisText } from '@/lib/transitUtils';
 import { getHouseShort, ordinal, HOUSE_NAMES } from '@/lib/houseUtils';
 import { useDynamicsInterpretation } from './useDynamicsInterpretation';
 import SpotlightCallout from '@/components/shared/SpotlightCallout';
@@ -68,33 +68,15 @@ function ChartRulerSection({ chart, dynamics, onHighlight }) {
   const { chartRuler } = dynamics;
 
   const rulerPlanet = chartRuler ? (chart?.raw_data?.planets || []).find(p => p.name === chartRuler.planet) : null;
-  const prompt = `${PERSONA}
-
-Analyze the chart ruler for this person.
-
-IMPORTANT: Use ONLY the data explicitly provided in this prompt. Do NOT reference any planets, signs, houses, or aspects other than those listed above.
-
-Ascendant: ${chartRuler?.sign || 'unknown'} ${chartRuler ? SIGN_GLYPHS[chartRuler.sign] : ''}
+  const facts = `Ascendant: ${chartRuler?.sign || 'unknown'} ${chartRuler ? SIGN_GLYPHS[chartRuler.sign] : ''}
 Chart ruler: ${chartRuler ? `${PLANET_GLYPHS[chartRuler.planet]} ${chartRuler.planet}` : 'unknown'}
 Ruler placement: ${chartRuler?.placement || 'unknown'}
 ${rulerPlanet ? `Ruler's house: ${rulerPlanet.house}H (${HOUSE_THEMES_LIST[rulerPlanet.house] || ''})` : ''}
-${rulerPlanet ? `Ruler's sign: ${rulerPlanet.sign} (${SIGN_ELEMENTS[rulerPlanet.sign]} / ${SIGN_MODALITIES[rulerPlanet.sign]})` : ''}
-
-Provide a deep interpretation of how this chart ruler shapes the person's identity, life direction, and self-expression. Reference the specific house and sign placement.
-
-Return JSON:
-{
-  "summary": "2-3 sentences on what the chart ruler placement means for identity and life direction",
-  "strengths": ["strength1", "strength2"],
-  "challenges": ["challenge1", "challenge2"],
-  "life_theme": "1 sentence on the overarching life theme this ruler creates"
-}`;
+${rulerPlanet ? `Ruler's sign: ${rulerPlanet.sign} (${SIGN_ELEMENTS[rulerPlanet.sign]} / ${SIGN_MODALITIES[rulerPlanet.sign]})` : ''}`;
 
   const sectionKey = chartRuler ? `ruler_${chartRuler.planet}_${chartRuler.sign}` : 'ruler_none';
   const { reading, loading } = useDynamicsInterpretation(
-    chart, sectionKey, prompt,
-    { type: 'object', properties: { summary: {type:'string'}, strengths: {type:'array',items:{type:'string'}}, challenges: {type:'array',items:{type:'string'}}, life_theme: {type:'string'} }, required: ['summary'] },
-    expanded
+    chart, sectionKey, 'dynamics-chart-ruler', { facts }, expanded
   );
 
   if (!chartRuler) return null;
@@ -128,30 +110,12 @@ function StelliumSection({ chart, stellium, onHighlight }) {
     ? `${SIGN_GLYPHS[stellium.sign]} ${stellium.sign} Stellium${stellium.house ? ` · ${ordinal(stellium.house)} House` : ''}`
     : `${ordinal(stellium.house)} House Stellium (${getHouseShort(stellium.house)})`;
 
-  const prompt = `${PERSONA}
-
-Analyze this natal stellium.
-
-IMPORTANT: Use ONLY the data explicitly provided in this prompt. Do NOT reference any planets, signs, houses, or aspects other than those listed above.
-
-Type: ${stellium.type === 'sign' ? `Sign stellium in ${stellium.sign}${stellium.house ? ` (${ordinal(stellium.house)} house)` : ''}` : `House stellium in the ${ordinal(stellium.house)} house`}
+  const facts = `Type: ${stellium.type === 'sign' ? `Sign stellium in ${stellium.sign}${stellium.house ? ` (${ordinal(stellium.house)} house)` : ''}` : `House stellium in the ${ordinal(stellium.house)} house`}
 Planets involved: ${stellium.planets.join(', ')}
-${stellium.type === 'sign' ? `Element: ${SIGN_ELEMENTS[stellium.sign]}, Modality: ${SIGN_MODALITIES[stellium.sign]}${stellium.house ? `, House theme: ${HOUSE_THEMES_LIST[stellium.house] || ''}` : ''}` : `House theme: ${HOUSE_THEMES_LIST[stellium.house] || ''}`}
-
-Provide a deep interpretation of what this stellium means for the person — the concentrated energy, how these planets interact, and the life area most affected.
-
-Return JSON:
-{
-  "overview": "2-3 sentences on what this stellium concentration means",
-  "expression": "1-2 sentences on how this stellium expresses in daily life",
-  "shadow": "1 sentence on the potential shadow/challenge of this concentration",
-  "integration": "1 sentence on how to best work with this energy"
-}`;
+${stellium.type === 'sign' ? `Element: ${SIGN_ELEMENTS[stellium.sign]}, Modality: ${SIGN_MODALITIES[stellium.sign]}${stellium.house ? `, House theme: ${HOUSE_THEMES_LIST[stellium.house] || ''}` : ''}` : `House theme: ${HOUSE_THEMES_LIST[stellium.house] || ''}`}`;
 
   const { reading, loading } = useDynamicsInterpretation(
-    chart, key, prompt,
-    { type: 'object', properties: { overview: {type:'string'}, expression: {type:'string'}, shadow: {type:'string'}, integration: {type:'string'} }, required: ['overview'] },
-    expanded
+    chart, key, 'dynamics-stellium', { facts }, expanded
   );
 
   return (
@@ -185,29 +149,13 @@ function EmptyHouseRow({ house, chart, onHighlight }) {
   const key = `empty_house_${house.house}`;
   const theme = HOUSE_THEMES_LIST[house.house] || '';
 
-  const prompt = `${PERSONA}
-
-Analyze a single empty house in this person's natal chart.
-
-IMPORTANT: Use ONLY the data explicitly provided in this prompt. Do NOT reference any planets, signs, or houses other than those listed above.
-
-${ordinal(house.house)} House — theme: ${theme}
+  const facts = `${ordinal(house.house)} House — theme: ${theme}
 Cusp sign: ${house.cuspSign} ${SIGN_GLYPHS[house.cuspSign]}
 Modern ruler: ${house.ruler} ${house.rulerPlacement.includes('unknown') ? '(placement unknown)' : `— placed ${house.rulerPlacement}`}
-${house.tradRuler ? `Traditional ruler: ${house.tradRuler}` : ''}
-
-This house is empty (no natal planets in it), which means it's governed by the planet that rules its cusp sign. Explain what this empty house means for the person practically — how the ruling planet's placement shapes this life area. Be specific and personal.
-
-Return JSON:
-{
-  "how_it_shows_up": "2 sentences on how this empty house manifests in the person's life based on where its ruler is placed",
-  "practical_tip": "1 sentence on how to work with this house's energy consciously"
-}`;
+${house.tradRuler ? `Traditional ruler: ${house.tradRuler}` : ''}`;
 
   const { reading, loading } = useDynamicsInterpretation(
-    chart, key, prompt,
-    { type: 'object', properties: { how_it_shows_up: {type:'string'}, practical_tip: {type:'string'} }, required: ['how_it_shows_up'] },
-    expanded
+    chart, key, 'dynamics-empty-house', { facts }, expanded
   );
 
   return (
@@ -242,28 +190,11 @@ function EmptyHousesSection({ chart, emptyHouses, onHighlight }) {
   const [overviewExpanded, setOverviewExpanded] = useState(false);
 
   const houses = emptyHouses || [];
-  const prompt = `${PERSONA}
-
-Analyze the empty houses in this person's natal chart.
-
-IMPORTANT: Use ONLY the data explicitly provided in this prompt. Do NOT reference any planets, signs, or houses other than those listed above.
-
-Empty houses (${houses.length} total):
-${houses.map(h => `- ${ordinal(h.house)} House: cusp in ${h.cuspSign} ${SIGN_GLYPHS[h.cuspSign]}, ruled by ${h.ruler}${h.rulerPlacement.includes('unknown') ? '' : ` (${h.rulerPlacement})`}${h.tradRuler ? `, trad ruler: ${h.tradRuler}` : ''}`).join('\n') || 'None'}
-
-Explain how empty houses work in astrology (they are NOT inactive — they are ruled by the planet governing their cusp). Focus on the 2-3 most significant empty houses and what their ruling planet's placement reveals about that life area.
-
-Return JSON:
-{
-  "principle": "2 sentences explaining how empty houses work astrologically",
-  "key_insights": ["insight about specific empty house and its ruler", "..."],
-  "balance_note": "1 sentence on what the pattern of empty houses reveals about the chart's overall energy distribution"
-}`;
+  const facts = `Empty houses (${houses.length} total):
+${houses.map(h => `- ${ordinal(h.house)} House: cusp in ${h.cuspSign} ${SIGN_GLYPHS[h.cuspSign]}, ruled by ${h.ruler}${h.rulerPlacement.includes('unknown') ? '' : ` (${h.rulerPlacement})`}${h.tradRuler ? `, trad ruler: ${h.tradRuler}` : ''}`).join('\n') || 'None'}`;
 
   const { reading, loading } = useDynamicsInterpretation(
-    chart, `empty_houses_overview`, prompt,
-    { type: 'object', properties: { principle: {type:'string'}, key_insights: {type:'array',items:{type:'string'}}, balance_note: {type:'string'} }, required: ['principle'] },
-    overviewExpanded
+    chart, `empty_houses_overview`, 'dynamics-empty-houses-overview', { facts }, overviewExpanded
   );
 
   if (!emptyHouses.length) return null;
@@ -307,36 +238,17 @@ function ElementBalanceSection({ chart, elementBalance, modalityBalance, onHighl
   const dominant = elementBalance[0];
   const weakest = elementBalance[elementBalance.length - 1];
 
-  const prompt = `${PERSONA}
-
-Analyze the elemental and modality balance in this natal chart.
-
-IMPORTANT: Use ONLY the data explicitly provided in this prompt. Do NOT reference any planets, signs, or houses other than those listed above.
-
-Element distribution (out of ${elementBalance.reduce((s, e) => s + e.count, 0)} planets):
+  const facts = `Element distribution (out of ${elementBalance.reduce((s, e) => s + e.count, 0)} planets):
 ${elementBalance.map(e => `- ${e.element}: ${e.count} (${e.percentage}%)`).join('\n')}
 
 Modality distribution:
 ${modalityBalance.map(m => `- ${m.modality}: ${m.count} (${m.percentage}%)`).join('\n')}
 
 Dominant element: ${dominant.element}
-Weakest element: ${weakest.element}
-
-Provide a deep interpretation of what this balance reveals about the person's temperament, energy, and approach to life.
-
-Return JSON:
-{
-  "temperament": "2-3 sentences on the dominant element's influence on personality",
-  "strengths": ["strength1", "strength2"],
-  "growth_areas": ["area1", "area2"],
-  "shadow": "1 sentence on how the weakest element manifests as a blind spot",
-  "modality_note": "1 sentence on what the modality balance reveals about how they initiate and sustain"
-}`;
+Weakest element: ${weakest.element}`;
 
   const { reading, loading } = useDynamicsInterpretation(
-    chart, `element_balance`, prompt,
-    { type: 'object', properties: { temperament: {type:'string'}, strengths: {type:'array',items:{type:'string'}}, growth_areas: {type:'array',items:{type:'string'}}, shadow: {type:'string'}, modality_note: {type:'string'} }, required: ['temperament'] },
-    expanded
+    chart, `element_balance`, 'dynamics-element-balance', { facts }, expanded
   );
 
   return (
@@ -420,46 +332,20 @@ Return JSON:
   );
 }
 
-const PATTERN_GUIDANCE = {
-  'Grand Trine': 'Focus on the flowing talent and its potential complacency.',
-  'T-Square': "Focus on the apex planet's tension and the growth edge it demands.",
-  'Grand Cross': 'Focus on the multi-directional pressure and the resilience it builds.',
-  'Kite': 'Focus on how the opposition gives the Grand Trine direction, with the focal (apex) planet as the release point where talent turns into purpose.',
-  'Mystic Rectangle': 'Focus on how the two oppositions create productive tension that the trines and sextiles channel into constructive resolution.',
-  'Yod': 'Focus on the apex planet as a fated focal point requiring the integration of incompatible forces — a special mission demanding constant adjustment.',
-};
-
 // ── Aspect Pattern Section ──────────────────────────────────────────────────
+// (Pattern-specific interpretation guidance lives with the
+// 'dynamics-aspect-pattern' task server-side.)
 function AspectPatternSection({ chart, pattern, onHighlight }) {
   const [expanded, setExpanded] = useState(false);
   const key = `pattern_${pattern.type}_${pattern.planets.join('_')}`;
 
-  const prompt = `${PERSONA}
-
-Analyze this natal aspect pattern.
-
-IMPORTANT: Use ONLY the data explicitly provided in this prompt. Do NOT invent specific aspects between the listed planets — describe the pattern's general meaning based on the pattern type and planets involved only.
-
-Pattern type: ${pattern.type}
+  const facts = `Pattern type: ${pattern.type}
 Planets involved: ${pattern.planets.join(', ')}
 ${pattern.apex ? `Apex planet (where tension concentrates): ${pattern.apex}` : ''}
-${pattern.element ? `Elemental theme: ${pattern.element}` : ''}
-
-Provide a deep interpretation of what this pattern means psychologically and practically. ${PATTERN_GUIDANCE[pattern.type] || 'Focus on the gifts and challenges this pattern creates, and how the planets interact within it.'}
-
-Return JSON:
-{
-  "overview": "2-3 sentences on what this pattern represents",
-  "dynamics": "1-2 sentences on how the planets interact within this pattern",
-  "gift": "1 sentence on the natural talent or opportunity this pattern provides",
-  "challenge": "1 sentence on the tension or growth edge this pattern creates",
-  "integration": "1 sentence on how to work with this pattern constructively"
-}`;
+${pattern.element ? `Elemental theme: ${pattern.element}` : ''}`;
 
   const { reading, loading } = useDynamicsInterpretation(
-    chart, key, prompt,
-    { type: 'object', properties: { overview: {type:'string'}, dynamics: {type:'string'}, gift: {type:'string'}, challenge: {type:'string'}, integration: {type:'string'} }, required: ['overview'] },
-    expanded
+    chart, key, 'dynamics-aspect-pattern', { facts, patternType: pattern.type }, expanded
   );
 
   return (
@@ -494,27 +380,10 @@ function StelliumOppositionSection({ chart, opposition, onHighlight }) {
   const [expanded, setExpanded] = useState(false);
   const key = `stellium_opp_${opposition.sign1}_${opposition.sign2}`;
 
-  const prompt = `${PERSONA}
-
-Analyze this stellium opposition in the natal chart.
-
-IMPORTANT: Use ONLY the data explicitly provided in this prompt. Do NOT reference any planets, signs, or houses other than those listed above.
-
-${opposition.sign1} stellium (planets: ${opposition.planets1.join(', ')}) opposes ${opposition.sign2} stellium (planets: ${opposition.planets2.join(', ')}).
-
-These two signs are opposites — they represent a polarity axis. Explain how this opposition creates tension and complementarity, and how the two stelliums interact.
-
-Return JSON:
-{
-  "polarity": "2-3 sentences on what this opposition axis represents",
-  "tension": "1 sentence on the core tension between the two stelliums",
-  "integration": "1 sentence on how to work with this polarity constructively"
-}`;
+  const facts = `${opposition.sign1} stellium (planets: ${opposition.planets1.join(', ')}) opposes ${opposition.sign2} stellium (planets: ${opposition.planets2.join(', ')}).`;
 
   const { reading, loading } = useDynamicsInterpretation(
-    chart, key, prompt,
-    { type: 'object', properties: { polarity: {type:'string'}, tension: {type:'string'}, integration: {type:'string'} }, required: ['polarity'] },
-    expanded
+    chart, key, 'dynamics-stellium-opposition', { facts }, expanded
   );
 
   return (

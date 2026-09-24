@@ -1,10 +1,9 @@
 // Base44 Core integrations -> Supabase equivalents.
 //
-// InvokeLLM: bridged through the invoke-llm Edge Function so the provider
-// key stays server-side. NOTE: this is a transitional bridge that preserves
-// the app's current client-composed prompts; per the migration scope these
-// call sites are to be converted to named server-side tasks (with tier
-// checks and usage logging) — see SCOPE_DRAFTING_HANDOFF.md.
+// InvokeLLM: RETIRED on the client. Every former call site now uses a named
+// server-side task via @/api/llmTasks (tier checks + usage logging enforced
+// in the llm-task Edge Function); the invoke-llm endpoint is service-role
+// only. The stub below fails loudly if new code reaches for the old surface.
 // SendEmail: send-email Edge Function (Resend).
 // UploadPublicFile: Supabase Storage "public" bucket.
 import { supabase } from './supabase.js';
@@ -21,9 +20,11 @@ async function invokeEdge(slug, payload) {
 }
 
 const Core = {
-  // Base44 InvokeLLM returns the model output directly (an object when
-  // response_json_schema is set, otherwise a string).
-  InvokeLLM: (params) => invokeEdge('invoke-llm', params),
+  InvokeLLM: () => {
+    throw new Error(
+      'Client-side InvokeLLM is retired — use invokeLLMTask(name, params) from @/api/llmTasks (named server-side tasks with tier checks and usage logging)'
+    );
+  },
 
   SendEmail: (params) => invokeEdge('send-email', params),
 

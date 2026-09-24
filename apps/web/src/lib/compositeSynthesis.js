@@ -13,28 +13,9 @@
  */
 import { base44 } from '@/api/base44Client';
 import { processTransits } from '@/components/planner/useTransits';
-import {
-  mergeNatalPoints,
-  PERSONA,
-  formatTransitLabelProse,
-  PLANET_GLYPHS,
-  ASPECT_GLYPHS,
-  TONE_DIRECTIVE,
-} from '@/lib/transitUtils';
+import { mergeNatalPoints, formatTransitLabelProse } from '@/lib/transitUtils';
 import { getMoonPhaseName } from '@/lib/moonPhase';
 import { buildCompositeRaw } from '@/lib/compositeChart';
-
-/**
- * Framing directive — the composite chart is read as the relationship itself,
- * not either person. Distinct from the synastry directive, which weaves two
- * individual charts together.
- */
-export const COMPOSITE_DIRECTIVE = `COMPOSITE LENS — THE RELATIONSHIP AS ONE ENTITY:
-- The composite chart is the chart of the RELATIONSHIP ITSELF: a single entity born from the midpoint of two people's placements. It is NOT either person.
-- Transits to the composite chart show what is ACTIVATING THE RELATIONSHIP as a whole — not either individual. Frame every effect through the relationship as the subject ("the relationship is being asked to…", "this transit lands on the relationship's Venus…").
-- The composite's internal aspects are the relationship's BUILT-IN DYNAMICS — its wired-in chemistry and tension points. The transits are what's activating those dynamics now. Connect them: a transit hitting a composite planet that sits in a tight internal aspect names exactly where the relationship gets lit up.
-- Use "the relationship" or "your bond with [partner name]" as the subject. Use "you" only when directly addressing the user. Never speak as if you know what either person is experiencing — keep the invitational tone from the TONE directive.
-- Composite Sun = the relationship's core identity; composite Moon = the relationship's emotional climate; composite Ascendant = how the relationship presents to the world; composite Venus = how the relationship loves; composite Saturn = the relationship's structure, limits, and commitments.`;
 
 /** Wrap a composite raw_data in a chart-like object (mirrors SavedChart/Chart shape). */
 export function buildCompositeChartObject(userChart, partnerChart, hiddenPoints) {
@@ -122,58 +103,21 @@ Stations: ${stations.length ? stations.join('; ') : 'none today.'}
 Ingresses: ${ingresses.length ? ingresses.join('; ') : 'none today.'}`;
 }
 
-// ── Prompt builder ──────────────────────────────────────────────────────────
-export function buildCompositeDayPrompt({ date, partnerChart, compositeRaw, compositeTransits }) {
+// ── Task-param builder ──────────────────────────────────────────────────────
+// Assembles the composite fact blocks for the 'composite-day-synthesis'
+// server task (supabase/functions/_shared/llm_tasks/tasks_relationship.ts),
+// which owns the composite directive, rules, and JSON schema.
+export function buildCompositeDayParams({ date, partnerChart, compositeRaw, compositeTransits }) {
   const partnerName = partnerChart?.name || 'your partner';
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  const transitPositions = transitPositionsLine(compositeTransits);
 
-  return `${PERSONA}
-
-${COMPOSITE_DIRECTIVE}
-
-Today: ${dateStr}
-Reading the relationship between you and ${partnerName} as a single composite entity.
-
-COMPOSITE CHART (the relationship itself):
-Big 3: ${compositeBig3(compositeRaw)}
-Composite planets: ${compositePlanetsLine(compositeRaw) || 'unavailable'}
-
-COMPOSITE INTERNAL ASPECTS (the relationship's built-in dynamics — its wired-in chemistry and tension points):
-${compositeAspectsLine(compositeRaw)}
-
-AUTHORITATIVE TRANSIT POSITIONS (use these exact signs — do NOT use your own knowledge of where planets are):
-${transitPositions || 'Data unavailable.'}
-
-=== TODAY'S TRANSITS, TO THE COMPOSITE CHART ===
-${transitsForPrompt(compositeTransits)}
-
-Rules:
-- THIS IS A COMPOSITE READ. The subject is the RELATIONSHIP, not either person. Frame every transit through what it activates in the relationship as a whole.
-- Use ONLY the transit data listed above. Do NOT mention any aspect, ingress, station, or lunar event not listed. If a category says "none," do NOT invent any.
-- CRITICAL: Use ONLY the signs from AUTHORITATIVE TRANSIT POSITIONS above.
-- Every time you name a transit, name the transiting planet, its current sign, the aspect, and the composite planet + house — in full WORDS (no glyph symbols; the frontend adds glyphs). Then explain how it activates the relationship.
-- Connect transits to the composite's internal aspects where charged: if a transit hits a composite planet that sits in a tight internal aspect, name it — that's where the relationship gets activated.
-- Use "the relationship" or "your bond with ${partnerName}" as the subject. Never use bare "your" for either person's placements.
-- Do NOT include raw glyph symbols, em-dash labels, "applying," or "separating." Write only prose.
-
-Return JSON:
-{
-  "overview": "3-4 sentences synthesizing the WHOLE of what is happening for the relationship today — weave transits to the composite chart into one coherent narrative naming the key configurations and where the relationship is lit up.",
-  "relationship_focus": "1-2 sentences on the single most important relationship theme today, framed through the composite chart.",
-  "personal_reading": ["TransitLabel — 2-3 sentence interpretation of the mechanic and how it activates the relationship's built-in dynamics", "..."],
-  "collective_reading": ["PlanetName aspectName PlanetName — 1 sentence on collective meaning", "..."],
-  "collective_highlight": "1 sentence on the single most significant mundane transit",
-  "maximize": "1 action sentence for the relationship today",
-  "focus": "1 attention sentence for the relationship today",
-  "watch": "1 caution sentence for the relationship today",
-  "best_areas": ["area1", "area2"],
-  "power_planet": "planet name",
-  "key_themes": ["theme1", "theme2", "theme3"]
-}`;
+  return {
+    partnerName,
+    dateStr,
+    compositeBig3: compositeBig3(compositeRaw),
+    compositePlanets: compositePlanetsLine(compositeRaw),
+    compositeAspects: compositeAspectsLine(compositeRaw),
+    transitPositions: transitPositionsLine(compositeTransits),
+    transitsBlock: transitsForPrompt(compositeTransits),
+  };
 }
-
-// Reuse the synastry day schema — the composite read returns the same shape so
-// the rendering component can stay identical.
-export { DAY_SCHEMA } from '@/lib/relationshipSynthesis';
-export { PLANET_GLYPHS, ASPECT_GLYPHS, TONE_DIRECTIVE };

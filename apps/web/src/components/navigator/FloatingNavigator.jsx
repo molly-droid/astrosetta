@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { X, Send, Sparkles, Loader2, Copy, Mail, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import ReactMarkdown from 'react-markdown';
 import { motion, AnimatePresence } from 'framer-motion';
 import { track, EVENTS } from '@/lib/analytics';
@@ -303,14 +304,7 @@ async function extractDateFromMessage(message) {
   if (!planningWords.test(message)) return null;
   try {
     const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `Extract the specific date the user is referring to from their message. Today is ${todayStr}.\n\nUser message: "${message}"\n\nIf the user is referring to a specific date or a range, respond with the START date in YYYY-MM-DD format. If they say "this week" or "next week", give the Monday of that week. If no specific date is found, respond with "NONE".`,
-      response_json_schema: {
-        type: 'object',
-        properties: { date: { type: 'string' } },
-        required: ['date'],
-      },
-    });
+    const result = await invokeLLMTask('extract-date', { todayStr, message });
     if (!result.date || result.date === 'NONE') return null;
     const parsed = new Date(result.date + 'T12:00:00');
     if (isNaN(parsed.getTime())) return null;

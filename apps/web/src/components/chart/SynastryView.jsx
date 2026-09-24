@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { highlightSynthesisText } from '@/lib/transitUtils';
 import { Loader2, ChevronDown, ChevronRight, Users, Calendar } from 'lucide-react';
 import SignName from '@/components/ui/SignName';
@@ -53,55 +54,24 @@ function CrossAspectRow({ aspect, person1Name, person2Name, chart1Data, chart2Da
           ? `At this moment, ${aspect.person2_planet} falls in ${person1Name}'s ${getHouseName(p2InC1)}`
           : `${person2Name}'s ${aspect.person2_planet} falls in ${person1Name}'s ${getHouseName(p2InC1)}${p1InC2 ? `; ${person1Name}'s ${aspect.person1_planet} falls in ${person2Name}'s ${getHouseName(p1InC2)}` : ''}`
         : '';
-      let prompt;
-      if (isEvent) {
-        prompt = `You are a warm, insightful astrologer. ${person1Name} wants to understand the moment of "${person2Name}"${relationship ? ` (${relationship})` : ''} against their natal chart.
-- ${person1Name}'s natal placement: ${p1Info}  ← THIS IS ${person1Name.toUpperCase()}'S NATAL PLACEMENT
-- At this moment: ${p2Info}  ← THIS IS THE EVENT'S PLACEMENT (not ${person1Name}'s)
-- Cross-chart aspect: ${aspect.aspect} (${aspect.orb?.toFixed(1)}° orb)
-${overlayInfo ? `- House overlays: ${overlayInfo}` : ''}
-
-Write 2 sentences. Sentence 1: explain what this ${aspect.aspect} between ${person1Name}'s natal placement and the moment's placement activates. Name the signs and houses.${overlayInfo ? ` You may reference the house overlay: ${overlayInfo}.` : ''}
-
-PRONOUN ATTRIBUTION — CRITICAL:
-- Use "your" ONLY for ${person1Name}'s ${aspect.person1_planet} (the ${p1?.sign || '?'} natal placement).
-- Use "at this moment" for the event's ${aspect.person2_planet} (the ${p2?.sign || '?'} placement). NEVER use "your" for the event's placement.
-- WRONG: "Your ${aspect.person2_planet} activates your ${aspect.person1_planet}" (the ${aspect.person2_planet} is the event's, not yours)
-- RIGHT: "At this moment, ${aspect.person2_planet} in ${p2?.sign || '?'} ${aspect.aspect} your natal ${aspect.person1_planet} in ${p1?.sign || '?'}"
-
-Sentence 2: one concrete insight about what this moment's energy means for ${person1Name}.
-
-CRITICAL: Only reference the exact placements provided above. Do not invent signs, houses, degrees, or planetary positions not listed. Do NOT reference retrograde status unless explicitly marked (℞) in the data.${overlayInfo ? ` Only reference house overlays from the data above — never invent where a planet falls in the other's houses.` : ''}`;
-      } else {
-        const relContext = relationship && relationship !== 'Other'
-          ? `${person2Name} is ${person1Name}'s ${relationship.toLowerCase()}. Frame the interpretation through the lens of a ${relationship.toLowerCase()} dynamic.`
-          : '';
-        const pronounNote = person2Pronouns ? ` Use ${person2Pronouns} pronouns for ${person2Name}.` : '';
-        const deceasedContext = person2Deceased
-          ? `${person2Name} has passed away${person2DateOfDeath ? ` on ${person2DateOfDeath}` : ''}. This is a soul-level reading. Frame the insight through remembrance, the enduring bond, and what this aspect continues to mean for ${person1Name} now that ${person2Name} has transitioned. Speak with reverence.`
-          : '';
-        prompt = `You are a warm, insightful relationship astrologer. In a synastry comparison between ${person1Name} and ${person2Name}:
-- ${person1Name}'s placement: ${p1Info}  ← THIS IS ${person1Name.toUpperCase()}'S PLACEMENT
-- ${person2Name}'s placement: ${p2Info}  ← THIS IS ${person2Name.toUpperCase()}'S PLACEMENT
-- Cross-chart aspect: ${aspect.aspect} (${aspect.orb?.toFixed(1)}° orb)
-${overlayInfo ? `- House overlays: ${overlayInfo}` : ''}
-${relContext}
-${deceasedContext}
-
-Write 2 sentences. Sentence 1: explain the astrological dynamic — WHY this cross-chart ${aspect.aspect} between these two placements creates this relational pattern. Name the signs and houses.${overlayInfo ? ` You may reference the house overlay: ${overlayInfo}.` : ''}
-
-PRONOUN ATTRIBUTION — CRITICAL:
-- Use "your" ONLY for ${person1Name}'s ${aspect.person1_planet} (the ${p1?.sign || '?'} placement). Example: "your ${aspect.person1_planet} in ${p1?.sign || '?'}".
-- Use "${person2Name}'s" for ${person2Name}'s ${aspect.person2_planet} (the ${p2?.sign || '?'} placement). Example: "${person2Name}'s ${aspect.person2_planet} in ${p2?.sign || '?'}".
-${pronounNote ? `- ${pronounNote.trim()}\n` : ''}- NEVER use bare "your" for ${person2Name}'s placement.
-- WRONG: "Your ${aspect.person2_planet} aspects your ${aspect.person1_planet}" (whose is whose?)
-- RIGHT: "${person2Name}'s ${aspect.person2_planet} in ${p2?.sign || '?'} ${aspect.aspect} your ${aspect.person1_planet} in ${p1?.sign || '?'}"
-
-Sentence 2: one concrete insight about how this manifests in the relationship.${person2Deceased ? ` Since ${person2Name} has passed, speak to what this aspect meant in life and what it continues to offer ${person1Name} in memory and spirit.` : ''} No clichés, speak directly. Keep it specific to these placements.${relContext ? ` Speak to the ${relationship.toLowerCase()} nature of the bond.` : ''}
-
-CRITICAL: Only reference the exact placements provided above. Do not invent signs, houses, degrees, or planetary positions not listed. Do NOT reference retrograde status unless explicitly marked (℞) in the data.${overlayInfo ? ` Only reference house overlays from the data above — never invent where a planet falls in the other's houses.` : ''}`;
-      }
-      const result = await base44.integrations.Core.InvokeLLM({ prompt });
+      const result = await invokeLLMTask('synastry-aspect-detail', {
+        isEvent,
+        person1Name,
+        person2Name,
+        relationship,
+        person2Pronouns,
+        person2Deceased,
+        person2DateOfDeath,
+        person1Planet: aspect.person1_planet,
+        person2Planet: aspect.person2_planet,
+        aspect: aspect.aspect,
+        orb: aspect.orb,
+        p1Info,
+        p2Info,
+        p1Sign: p1?.sign || '',
+        p2Sign: p2?.sign || '',
+        overlayInfo,
+      });
       setText(result);
       setLoading(false);
     } else {

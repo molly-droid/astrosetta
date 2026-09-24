@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, Sparkles, Globe, RefreshCw, Heart } from 'lucide-react';
 import { highlightSynthesisText, PLANET_GLYPHS } from '@/lib/transitUtils';
 import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
@@ -8,8 +8,7 @@ import SynthesisCategoryCard from '@/components/planner/SynthesisCategoryCard';
 import {
   fetchTransitsForChart,
   fetchNatalCrossAspects,
-  buildDayPrompt,
-  DAY_SCHEMA,
+  buildDayParams,
 } from '@/lib/relationshipSynthesis';
 import { useAuth } from '@/lib/AuthContext';
 import { getHiddenChartPoints } from '@/lib/chartPointVisibility';
@@ -81,8 +80,8 @@ export default function RelationshipDaySynthesis({ date, userChart, partnerChart
       const visibleCross = (crossAspects || []).filter(
         (a) => !hidden.has(a.person1_planet) && !hidden.has(a.person2_planet),
       );
-      const prompt = buildDayPrompt({ date, userChart, partnerChart, userTransits, partnerTransits, crossAspects: visibleCross });
-      const result = await base44.integrations.Core.InvokeLLM({ prompt, response_json_schema: DAY_SCHEMA });
+      const params = buildDayParams({ date, userChart, partnerChart, userTransits, partnerTransits, crossAspects: visibleCross });
+      const result = await invokeLLMTask('relationship-day-synthesis', params);
       if (cacheKey) synthesisCache[cacheKey] = result;
       setSynthesis(result);
       onSynthesis?.(result);

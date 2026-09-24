@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, X } from 'lucide-react';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
 import { findNatalHouseForSign, ordinal } from '@/lib/houseUtils';
-import { highlightSynthesisText, PERSONA } from '@/lib/transitUtils';
+import { highlightSynthesisText } from '@/lib/transitUtils';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
-import { densityPromptSuffix } from '@/lib/knowledgeDensity';
 
 const SIGN_NAMES = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 const HOUSE_THEMES = [
@@ -53,8 +52,6 @@ export default function MovementReading({ item, chart, periodLabel = 'this perio
     crossed.forEach(p => { signCounts[p.sign] = (signCounts[p.sign] || 0) + 1; });
     const stelliumSign = Object.keys(signCounts).find(s => signCounts[s] >= 3);
 
-    const periodWord = /week/.test(periodLabel) ? 'week' : /month/.test(periodLabel) ? 'month' : 'period';
-
     const context = [
       crossedNames ? `Natal placements it will cross (conjunct): ${crossedNames}.` : 'It does not form exact conjunctions with natal planets this period.',
       startHouse ? `It begins in the ${ordinal(startHouse)} house (${HOUSE_THEMES[startHouse] || ''}).` : '',
@@ -62,11 +59,15 @@ export default function MovementReading({ item, chart, periodLabel = 'this perio
       stelliumSign ? `It activates a stellium in ${stelliumSign}.` : '',
     ].filter(Boolean).join(' ');
 
-    const prompt = `${PERSONA}
-
-You are a concise, warm astrologer. Over ${periodLabel}, ${planet} will ${retrograde ? 'retrograde' : 'move'} from ${startSign} to ${endSign}. ${context} In 3-4 sentences, tell the user what this means for them personally — which life areas and placements it activates, and how to work with it. Be specific and practical; no clichés or generic horoscope filler. Begin "This ${periodWord}, ${planet}". ${densityPromptSuffix(knowledgeDepth)}`;
-
-    base44.integrations.Core.InvokeLLM({ prompt }).then(res => {
+    invokeLLMTask('movement-reading', {
+      periodLabel,
+      planet,
+      retrograde,
+      startSign,
+      endSign,
+      context,
+      knowledgeDepth,
+    }).then(res => {
       if (cancelled) return;
       setReading(typeof res === 'string' ? res : (res?.text || (res?.overview) || 'Unable to generate this reading right now.'));
       setLoading(false);

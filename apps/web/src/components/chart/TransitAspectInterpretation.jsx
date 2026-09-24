@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { HOUSE_THEMES, PERSONA, highlightSynthesisText } from '@/lib/transitUtils';
+import { invokeLLMTask } from '@/api/llmTasks';
+import { HOUSE_THEMES, highlightSynthesisText } from '@/lib/transitUtils';
 import { Loader2 } from 'lucide-react';
 import Eli5Button from '@/components/ui/Eli5Button';
 
@@ -45,16 +45,9 @@ export default function TransitAspectInterpretation({ item, natalPlanets, transi
 
     const label = `Transiting ${item.transit_planet}${tP?.sign ? ` in ${tP.sign}` : ''} ${item.aspect} natal ${item.natal_planet}${nP?.sign ? ` in ${nP.sign}` : ''}${nP?.house ? `, ${ordinal(nP.house)} house` : ''} (orb ${item.orb?.toFixed(1)}°)`;
 
-    const prompt = `${PERSONA}
+    const natalDetail = `${nP?.sign || ''}${nP?.house ? `, ${ordinal(nP.house)} house` : ''}${houseTheme ? ` (${houseTheme})` : ''}`;
 
-${label}
-Natal ${item.natal_planet}: ${nP?.sign || ''}${nP?.house ? `, ${ordinal(nP.house)} house` : ''}${houseTheme ? ` (${houseTheme})` : ''}
-
-Write 2 sentences. Be specific to the house themes. Name one concrete awareness or action. No clichés.
-
-CRITICAL: Use ONLY the signs, houses, and aspects provided above. Do NOT rely on your own knowledge of where planets currently are — your training data is outdated. Do NOT invent additional aspects, signs, or planetary positions not listed in the data above.`;
-
-    base44.integrations.Core.InvokeLLM({ prompt })
+    invokeLLMTask('transit-aspect-interpretation', { label, natalPlanet: item.natal_planet, natalDetail })
       .then(res => {
         if (!cancelled) {
           cache[cacheKey] = res;

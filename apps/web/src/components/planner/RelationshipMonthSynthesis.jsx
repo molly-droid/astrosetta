@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, Sparkles, ChevronDown, ChevronRight, RefreshCw, Globe, Heart } from 'lucide-react';
 import { highlightSynthesisText } from '@/lib/transitUtils';
 import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
@@ -7,8 +7,7 @@ import SynthesisCategoryCard from '@/components/planner/SynthesisCategoryCard';
 import {
   fetchTransitsForChart,
   fetchNatalCrossAspects,
-  buildMonthPrompt,
-  MONTH_SCHEMA,
+  buildMonthParams,
 } from '@/lib/relationshipSynthesis';
 
 const CACHE_VERSION = 'rel-v1';
@@ -75,8 +74,8 @@ export default function RelationshipMonthSynthesis({ date, userChart, partnerCha
         fetchNatalCrossAspects(userChart, partnerChart),
       ]);
       // Use the 1st as the representative transit snapshot for the prompt
-      const prompt = buildMonthPrompt({ date, userChart, partnerChart, userTransits: userT1, partnerTransits: partnerT1, crossAspects });
-      const result = await base44.integrations.Core.InvokeLLM({ prompt, response_json_schema: MONTH_SCHEMA });
+      const params = buildMonthParams({ date, userChart, partnerChart, userTransits: userT1, partnerTransits: partnerT1, crossAspects });
+      const result = await invokeLLMTask('relationship-month-synthesis', params);
       monthSynthesisCache[periodKey] = result;
       setSynthesis(result);
       if (userId) {

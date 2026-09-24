@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, Users, Sparkles } from 'lucide-react';
 import CollapsibleCardHeader from '@/components/ui/CollapsibleCardHeader';
 import { highlightSynthesisText, PLANET_GLYPHS } from '@/lib/transitUtils';
@@ -40,37 +40,12 @@ export default function CompositeView({ userChart, partnerChart, user, composite
           .slice(0, 16)
           .map((a) => `${a.planet1} ${a.aspect} ${a.planet2} (orb ${a.orb?.toFixed(1)}°)`)
           .join('; ');
-        const prompt = `You are a warm, insightful relationship astrologer. Read the COMPOSITE CHART (the midpoint of two people's charts) as the chart of the RELATIONSHIP ITSELF — a single entity, not either person.
-- Composite Sun = the relationship's core identity; Moon = its emotional climate; Ascendant = how it presents to the world; Venus = how it loves; Saturn = its structure, limits, and commitments.
-- The composite's internal aspects are the relationship's BUILT-IN dynamics — its wired-in chemistry and tension points.
-
-Relationship: ${userName} and ${partnerName}.
-
-COMPOSITE CHART:
-Big 3: ☉ ${raw.sun_sign || '?'} · ☽ ${raw.moon_sign || '?'} · ASC ${raw.ascendant_sign || '?'}
-Planets: ${planetsLine || 'unavailable'}
-Internal aspects: ${aspectsLine || 'none notable'}
-
-Write a warm, insightful static composite reading. Frame every insight through the relationship as the subject ("the relationship...", "your bond..."). Do not speak for either person's individual experience. No raw glyph symbols.
-
-Return JSON:
-{
-  "essence": "3-4 sentences on the relationship's core identity, emotional climate, and how it presents to the world",
-  "strengths": ["1 sentence each — 2-3 built-in gifts of this bond"],
-  "tensions": ["1 sentence each — 0-3 wired-in friction points to navigate"],
-  "north_star": "1 sentence on what this relationship is here to become"
-}`;
-        const res = await base44.integrations.Core.InvokeLLM({
-          prompt,
-          response_json_schema: {
-            type: 'object',
-            properties: {
-              essence: { type: 'string' },
-              strengths: { type: 'array', items: { type: 'string' } },
-              tensions: { type: 'array', items: { type: 'string' } },
-              north_star: { type: 'string' },
-            },
-          },
+        const res = await invokeLLMTask('composite-overview', {
+          userName,
+          partnerName,
+          big3: `☉ ${raw.sun_sign || '?'} · ☽ ${raw.moon_sign || '?'} · ASC ${raw.ascendant_sign || '?'}`,
+          planetsLine,
+          aspectsLine,
         });
         if (!cancelled) { setReading(res); setLoading(false); }
       } catch {

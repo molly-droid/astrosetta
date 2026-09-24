@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 
 /**
  * Generates 2–3 follow-up question suggestions based on the conversation so far.
@@ -42,19 +42,7 @@ export default function ContextualSuggestions({ messages, sending, onSelect }) {
       })
       .join('\n');
 
-    base44.integrations.Core.InvokeLLM({
-      prompt: `You are an astrology chat assistant. Based on this conversation, suggest 2 short follow-up questions the user might want to ask next. Make them specific to their chart details or the topics discussed. Each question should be 12 words or fewer, genuinely curious, and written in the user's voice.\n\nConversation:\n${recent}\n\nReturn only the questions as a JSON array of strings.`,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          questions: {
-            type: 'array',
-            items: { type: 'string' },
-          },
-        },
-        required: ['questions'],
-      },
-    })
+    invokeLLMTask('navigator-suggestions', { conversation: recent })
       .then(result => {
         if (cancelled) return;
         const qs = (result?.questions || []).filter(Boolean).slice(0, 3);

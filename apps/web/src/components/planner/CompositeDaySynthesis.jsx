@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, Sparkles, Globe, RefreshCw, Heart } from 'lucide-react';
 import { highlightSynthesisText, PLANET_GLYPHS } from '@/lib/transitUtils';
 import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
@@ -8,8 +8,7 @@ import SynthesisCategoryCard from '@/components/planner/SynthesisCategoryCard';
 import {
   buildCompositeChartObject,
   fetchCompositeTransits,
-  buildCompositeDayPrompt,
-  DAY_SCHEMA,
+  buildCompositeDayParams,
 } from '@/lib/compositeSynthesis';
 import { useAuth } from '@/lib/AuthContext';
 import { getHiddenChartPoints } from '@/lib/chartPointVisibility';
@@ -82,13 +81,13 @@ export default function CompositeDaySynthesis({ date, userChart, partnerChart, u
     setLoading(true);
     try {
       const compositeTransits = await fetchCompositeTransits(date, compositeChartObj.raw_data, userChart, hidden);
-      const prompt = buildCompositeDayPrompt({
+      const params = buildCompositeDayParams({
         date,
         partnerChart,
         compositeRaw: compositeChartObj.raw_data,
         compositeTransits,
       });
-      const result = await base44.integrations.Core.InvokeLLM({ prompt, response_json_schema: DAY_SCHEMA });
+      const result = await invokeLLMTask('composite-day-synthesis', params);
       if (cacheKey) synthesisCache[cacheKey] = result;
       setSynthesis(result);
       onSynthesis?.(result);

@@ -8,8 +8,9 @@ import PeriodHighlights from './PeriodHighlights';
 import NavigatorPrompts from './NavigatorPrompts';
 import PlannerJournal from './PlannerJournal';
 import DaySynthesisPopover from './DaySynthesisPopover';
-import { PLANET_GLYPHS, ASPECT_GLYPHS, isApplying, highlightSynthesisText, formatTransitLabel, PERSONA } from '@/lib/transitUtils';
+import { PLANET_GLYPHS, ASPECT_GLYPHS, isApplying, highlightSynthesisText, formatTransitLabel } from '@/lib/transitUtils';
 import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { getMoonPhaseIcon } from '@/lib/moonPhase';
 import { ECLIPSE_META } from '@/lib/eclipseUtils';
 import { isSolarReturn } from '@/lib/solarReturn';
@@ -18,7 +19,6 @@ import SynthesisCategoryCard from './SynthesisCategoryCard';
 import { TOPICS } from '@/lib/plannerTopics';
 
 const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const TOPIC_KEYS = TOPICS.map(t => t.key);
 const TOPIC_BY_KEY = Object.fromEntries(TOPICS.map(t => [t.key, t]));
 
 // White body text with gold glossary/highlighted terms
@@ -239,84 +239,12 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
 
     const weekRange = `${days[0].toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' })} – ${days[6].toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}`;
 
-    const prompt = `${PERSONA}
-
-Week: ${weekRange}
-NATAL: ☉ ${raw.sun_sign} · ☽ ${raw.moon_sign} · ASC ${raw.ascendant_sign}
-
-DAILY TRANSITS (slow planets ≤2.5° orb):
-${dayContexts.join('\n')}
-
-Rules:
-- Use ONLY the Moon sign provided in the daily transits data above. Never substitute a different zodiac sign for the Moon.
-- If a day has a STATION (planet turning retrograde or direct), mention it prominently — this is a rare, high-impact event.
-- If a day has an INGRESS (planet entering a new zodiac sign), mention it prominently — especially for outer planets. This is a major collective shift.
-- overview: 2-3 sentences summarizing the overall energy of the week for this person, referencing specific slow planet transits and lunations
-- personal_focus: 1-2 sentences on the most significant personal transit theme this week and which life area it activates
-- collective_theme: 1 sentence on the collective/mundane backdrop for everyone
-- collective_tags: 2-3 short thematic tags for the collective energy this week, e.g. ["Clarity", "Tension"]
-- maximize: 3 specific opportunities or actions for this week
-- focus: 1 attention sentence tied to a specific transit this week
-- watch: 2 challenges or cautions for this week
-- best_areas: top 3 from [Love, Career, Finances, Creativity, Health, Spirituality, Relationships, Transformation]
-- day_sentences: one sentence per day stating the key focus or caution for that day — what to maximize, lean into, or watch out for. Max 15 words. Never repeat the same energy across days.
-- day_sentences must NOT open by restating the Moon's sign or phase (never write "Moon in Leo...") — the moon's sign is displayed separately on the day card. Lead with the day's key transit, station, ingress, or lunation theme.
-- day_topics: for each day, 0-3 keys from [love, career, money, health, communication, creativity, spirituality, home] representing which life themes are most activated by that day's transits or lunations. Only include a theme when a supporting transit or lunation is present that day.
-
-Return JSON:
-{
-  "overview": "2-3 sentences on the overall energy of the week",
-  "personal_focus": "1-2 sentences on the key personal transit theme",
-  "collective_theme": "1 sentence on the collective backdrop",
-  "collective_tags": ["theme1", "theme2"],
-  "maximize": ["opportunity1", "opportunity2", "opportunity3"],
-  "focus": "1 attention sentence tied to a specific transit this week",
-  "watch": ["caution1", "caution2"],
-  "best_areas": ["area1", "area2", "area3"],
-  "day_sentences": {
-    "0": "Sun sentence", "1": "Mon sentence", "2": "Tue sentence",
-    "3": "Wed sentence", "4": "Thu sentence", "5": "Fri sentence", "6": "Sat sentence"
-  }
-}`;
-
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          overview: { type: 'string' },
-          personal_focus: { type: 'string' },
-          collective_theme: { type: 'string' },
-          collective_tags: { type: 'array', items: { type: 'string' } },
-          maximize: { type: 'array', items: { type: 'string' } },
-          focus: { type: 'string' },
-          watch: { type: 'array', items: { type: 'string' } },
-          best_areas: { type: 'array', items: { type: 'string' } },
-          day_sentences: {
-            type: 'object',
-            properties: {
-              '0': { type: 'string' }, '1': { type: 'string' }, '2': { type: 'string' },
-              '3': { type: 'string' }, '4': { type: 'string' }, '5': { type: 'string' },
-              '6': { type: 'string' },
-            },
-            required: ['0', '1', '2', '3', '4', '5', '6'],
-            additionalProperties: false,
-          },
-          day_topics: {
-            type: 'object',
-            properties: {
-              '0': { type: 'array', items: { type: 'string', enum: TOPIC_KEYS } },
-              '1': { type: 'array', items: { type: 'string', enum: TOPIC_KEYS } },
-              '2': { type: 'array', items: { type: 'string', enum: TOPIC_KEYS } },
-              '3': { type: 'array', items: { type: 'string', enum: TOPIC_KEYS } },
-              '4': { type: 'array', items: { type: 'string', enum: TOPIC_KEYS } },
-              '5': { type: 'array', items: { type: 'string', enum: TOPIC_KEYS } },
-              '6': { type: 'array', items: { type: 'string', enum: TOPIC_KEYS } },
-            },
-          },
-        },
-        required: ['overview', 'personal_focus', 'collective_theme', 'collective_tags', 'maximize', 'focus', 'watch', 'best_areas', 'day_sentences', 'day_topics'],
-      },
+    const result = await invokeLLMTask('planner-week-synthesis', {
+      weekRange,
+      sunSign: raw.sun_sign,
+      natalMoonSign: raw.moon_sign,
+      ascSign: raw.ascendant_sign,
+      dailyTransits: dayContexts.join('\n'),
     });
 
     if (cacheKey) weekSynthesisCache[cacheKey] = result;

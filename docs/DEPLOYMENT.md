@@ -9,8 +9,8 @@ cutover order. Items marked **[client]** need Molly's accounts/credentials.
 
 ```bash
 supabase link --project-ref <ref>
-supabase db push                      # applies the three migrations
-supabase functions deploy             # all 37 functions (config.toml sets verify_jwt=false)
+supabase db push                      # applies the four migrations
+supabase functions deploy             # all 38 functions (config.toml sets verify_jwt=false)
 ```
 
 Secrets (`supabase secrets set NAME=value`):
@@ -89,7 +89,14 @@ interpretation dependency remains).
   supabase/functions/navigator-chat.
 - Chart engine: Astrology-API.io behind the adapter once the client
   subscribes; then recalc all charts again.
-- The 31 client-side InvokeLLM call sites → named server-side tasks with
-  tier checks and usage limits (scope requirement; the invoke-llm bridge
-  keeps parity until then).
+- Per-tier daily LLM limits: `DAILY_LIMITS` in
+  supabase/functions/_shared/llm_tasks/core.ts proposes free 50 / Core 300 /
+  Premium 600 calls per day (admins unlimited) — **[client]** confirm or
+  supply the desired numbers, along with the task→tier map (each task in
+  _shared/llm_tasks/tasks_*.ts declares its gate) as part of the final
+  feature-entitlement matrix.
+- At launch, flip `GATING_ADMIN_ONLY` to false in BOTH
+  apps/web/src/lib/permissions.js and _shared/llm_tasks/core.ts (the
+  soft-launch flag currently grants non-admins full access on web and in
+  the llm-task tier gate alike).
 - Mobile (Capacitor) + RevenueCat: separate phase per the scope.

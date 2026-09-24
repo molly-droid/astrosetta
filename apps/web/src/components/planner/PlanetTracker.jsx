@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
 import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, X } from 'lucide-react';
 import PlanetBreakdownPopover from './PlanetBreakdownPopover';
 
@@ -75,9 +76,7 @@ function SignInterpPopover({ planet, sign, rx, onClose }) {
 
   useEffect(() => {
     let cancelled = false;
-    const rxNote = rx ? ' (currently retrograde)' : '';
-    const prompt = `You are a concise astrologer. In 2 sentences, describe the energy of ${planet} transiting through ${sign}${rxNote} for the collective. Be specific and practical, no clichés.`;
-    base44.integrations.Core.InvokeLLM({ prompt }).then(result => {
+    invokeLLMTask('planet-sign-collective', { planet, sign, rx: !!rx }).then(result => {
       if (!cancelled) { setText(result); setLoading(false); }
     });
     return () => { cancelled = true; };

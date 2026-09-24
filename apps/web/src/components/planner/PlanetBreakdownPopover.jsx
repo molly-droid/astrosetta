@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, X } from 'lucide-react';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
 import { findNatalHouseForSign, ordinal } from '@/lib/houseUtils';
@@ -28,15 +28,11 @@ export default function PlanetBreakdownPopover({ planet, sign, rx, chart, onClos
     const { entryHouse } = findNatalHouseForSign(sign, raw.houses || [], houseSystem, ascendantSign);
     const houseTheme = entryHouse ? HOUSE_THEMES[entryHouse] : '';
     const natalInSign = (raw.planets || []).filter(p => p.sign === sign).map(p => `${p.name} (house ${p.house || '?'})`).join(', ');
-    const rxNote = rx ? ' (currently retrograde)' : '';
-
-    const personalPrompt = `You are a concise astrologer. ${planet} is transiting through ${sign}${rxNote}, which falls in this person's ${entryHouse ? ordinal(entryHouse) + ' house of ' + houseTheme : 'chart'}. Natal planets in ${sign}: ${natalInSign || 'none'}. In 2-3 sentences, describe how this transit personally affects them — which life area it activates and how to work with it. Be specific and practical, no clichés.`;
-
-    const collectivePrompt = `You are a concise astrologer. In 2 sentences, describe the collective energy of ${planet} transiting through ${sign}${rxNote} for everyone — the archetypal theme. Be specific and practical, no clichés.`;
+    const houseContext = entryHouse ? ordinal(entryHouse) + ' house of ' + houseTheme : '';
 
     Promise.all([
-      base44.integrations.Core.InvokeLLM({ prompt: personalPrompt }).catch(() => null),
-      base44.integrations.Core.InvokeLLM({ prompt: collectivePrompt }).catch(() => null),
+      invokeLLMTask('planet-breakdown-personal', { planet, sign, rx: !!rx, houseContext, natalInSign }).catch(() => null),
+      invokeLLMTask('planet-breakdown-collective', { planet, sign, rx: !!rx }).catch(() => null),
     ]).then(([p, c]) => {
       if (cancelled) return;
       setPersonal(p || 'Unable to generate.');

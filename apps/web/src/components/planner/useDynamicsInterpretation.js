@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
 
 // Module-level memory cache: `${chartId}_${sectionKey}` → LLM result
@@ -14,11 +14,11 @@ const dynamicsCache = {};
  *
  * @param {object} chart      - The chart entity (needs .id and .user_id)
  * @param {string} sectionKey - Unique key for this section, e.g. "stellium_Scorpio"
- * @param {string} prompt     - The full LLM prompt
- * @param {object} schema     - response_json_schema for the LLM call
+ * @param {string} task       - Named server-side LLM task (see llm_tasks registry)
+ * @param {object} params     - Fact params for the task's server-side template
  * @param {boolean} expanded  - Whether the parent section is expanded
  */
-export function useDynamicsInterpretation(chart, sectionKey, prompt, schema, expanded) {
+export function useDynamicsInterpretation(chart, sectionKey, task, params, expanded) {
   const [reading, setReading] = useState(null);
   const [loading, setLoading] = useState(false);
   const [cacheChecked, setCacheChecked] = useState(false);
@@ -61,13 +61,10 @@ export function useDynamicsInterpretation(chart, sectionKey, prompt, schema, exp
   }, [memKey, chart?.user_id, sectionKey]);
 
   const generate = useCallback(async () => {
-    if (!prompt || !schema) return;
+    if (!task) return;
     setLoading(true);
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        response_json_schema: schema,
-      });
+      const result = await invokeLLMTask(task, params);
       if (memKey) dynamicsCache[memKey] = result;
       setReading(result);
       if (chart?.user_id) {
@@ -80,7 +77,7 @@ export function useDynamicsInterpretation(chart, sectionKey, prompt, schema, exp
     } finally {
       setLoading(false);
     }
-  }, [prompt, schema, memKey, chart?.user_id, dbKey, sectionKey]);
+  }, [task, params, memKey, chart?.user_id, dbKey, sectionKey]);
 
   // Auto-generate when expanded and not yet generated
   useEffect(() => {

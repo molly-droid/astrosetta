@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { getTransitNatalFormations } from '@/lib/transitNatalFormations';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
-import { PERSONA, highlightSynthesisText } from '@/lib/transitUtils';
+import { highlightSynthesisText } from '@/lib/transitUtils';
 import { useDynamicsInterpretation } from './useDynamicsInterpretation';
 import { ChevronDown, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
 import CollapsibleCardHeader from '@/components/ui/CollapsibleCardHeader';
@@ -47,7 +47,10 @@ function sanitizeReading(reading, formation) {
  * body completing or triggering a configuration against the natal chart.
  * Pure computation — no LLM call. Instant.
  */
-function buildFormationPrompt(p) {
+// Assembles the fact block for the 'transit-formation' server task — the
+// grounding rules and JSON schema live with the task in
+// supabase/functions/_shared/llm_tasks/tasks_dynamics.ts.
+function buildFormationFacts(p) {
   const planetLines = (p.planetDetails || [])
     .map(pd => {
       const house = pd.source === 'natal' && pd.house ? ` · ${pd.house}H` : '';
@@ -57,47 +60,14 @@ function buildFormationPrompt(p) {
   const aspectLines = (p.aspects || [])
     .map(a => `- ${a.planet1} ${a.aspect} ${a.planet2} (${a.orb?.toFixed(1)}° orb${a.transitInvolved ? ', transit-involved' : ''})`)
     .join('\n');
-  return `${PERSONA}
-
-Interpret this transit-activated aspect pattern forming TODAY against the person's natal chart.
-
-IMPORTANT — GROUNDING RULES:
-- Use ONLY the planets, signs, natal houses, aspects, and orbs explicitly listed below.
-- Do NOT introduce any additional planet, celestial body, aspect, or house that is not listed.
-- Natal planets show their natal house (e.g. 8H). Transiting planets have NO natal house listed — do NOT assign one.
-- Do NOT invent retrograde status, degrees, or orbs beyond those provided.
-
-Pattern type: ${p.type}
+  return `Pattern type: ${p.type}
 Planets involved (transiting vs natal tagged):
 ${planetLines}
 ${p.apex ? `Apex planet: ${p.apex}` : ''}
 ${p.element ? `Elemental theme: ${p.element}` : ''}
 Aspect web:
-${aspectLines}
-
-Explain how this pattern is being activated by the transiting planet(s) today — what the formation means, how the transit triggers the natal configuration, and how the person can work with this energy in the next ~24 hours.
-
-Return JSON:
-{
-  "overview": "2-3 sentences on what this pattern represents and how the transit activates it today",
-  "dynamics": "1-2 sentences on how the planets interact within the pattern",
-  "opportunity": "1 sentence on the specific opportunity or gift available today",
-  "challenge": "1 sentence on the tension or caution to watch for today",
-  "today_focus": "1 sentence on the practical way to work with this energy in the next 24 hours"
-}`;
+${aspectLines}`;
 }
-
-const FORMATION_SCHEMA = {
-  type: 'object',
-  properties: {
-    overview: { type: 'string' },
-    dynamics: { type: 'string' },
-    opportunity: { type: 'string' },
-    challenge: { type: 'string' },
-    today_focus: { type: 'string' },
-  },
-  required: ['overview'],
-};
 
 const READING_ORDER = [
   ['overview', 'Overview'],
@@ -122,8 +92,8 @@ function FormationReading({ reading }) {
 
 function FormationInterpretation({ chart, dateKey, formation, expanded }) {
   const sectionKey = `tnf_${dateKey || 'today'}_${formation.type}_${[...formation.planets].sort().join('_')}`;
-  const prompt = buildFormationPrompt(formation);
-  const { reading, loading } = useDynamicsInterpretation(chart, sectionKey, prompt, FORMATION_SCHEMA, expanded);
+  const facts = buildFormationFacts(formation);
+  const { reading, loading } = useDynamicsInterpretation(chart, sectionKey, 'transit-formation', { facts }, expanded);
   if (!expanded) return null;
   return (
     <div className="mt-2 pt-2 border-t border-white/10 space-y-1.5">

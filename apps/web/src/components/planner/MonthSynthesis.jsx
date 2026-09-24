@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, Sparkles, ChevronDown, ChevronRight, RefreshCw, Globe, Lightbulb, Share2 } from 'lucide-react';
-import { highlightSynthesisText, TONE_DIRECTIVE } from '@/lib/transitUtils';
+import { highlightSynthesisText } from '@/lib/transitUtils';
 import { getMoonPhaseName } from '@/lib/moonPhase';
 import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
@@ -181,47 +182,13 @@ export default function MonthSynthesis({ date, chart }) {
       .map(p => `${p.name} in ${p.sign} (House ${p.house})`)
       .join('; ');
 
-    const prompt = `You are a skilled astrologer. Write a monthly astrological synthesis for ${monthName}.
-
-${TONE_DIRECTIVE}
-
-NATAL CHART:
-Sun: ${raw.sun_sign}, Moon: ${raw.moon_sign}, Rising: ${raw.ascendant_sign}
-Planets: ${natalPlanets || 'not provided'}
-
-${planetContext}
-
-Rules:
-- Use ONLY the transit data provided above. Do NOT mention or reference any planetary transits, aspects, or lunations that are not explicitly listed in the data provided.
-- CRITICAL: Use ONLY the signs from AUTHORITATIVE TRANSIT POSITIONS above. Do NOT rely on your own knowledge of where planets currently are — your training data is outdated. Every time you mention a transiting planet, you MUST use the exact sign listed there.
-- The Part of Fortune (⊕, Pars Fortunae) is a calculated lot marking where ease, luck, and material opportunity express; Tyche (asteroid 258) is the lot of fortunate coincidence; Juno (asteroid 3) governs committed partnership and soul-contracts; Pallas (asteroid 2) is creative intelligence and strategy; Vesta (asteroid 4) is devotion and the inner flame. If any of these appear among the natal planets, weave them in where relevant.
-
-Return JSON:
-- overview: 2-3 sentences summarizing the overall energy of the month for this person, referencing specific slow planet transits and lunations
-- personal_focus: 1-2 sentences on the most significant personal transit theme this month and which life area it activates
-- collective_theme: 1 sentence on the collective/mundane backdrop for everyone
-- collective_tags: array of 2-3 one-or-two-word thematic labels for the collective energy this month (e.g. ["Restructuring", "Bold Moves", "Clarity"])
-- maximize: array of 3 specific opportunities or actions for this month
-- focus: 1 attention sentence tied to a specific transit this month
-- watch: array of 2 challenges or cautions for this month
-- best_areas: top 3 from [Love, Career, Finances, Creativity, Health, Spirituality, Relationships, Transformation]`;
-
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          overview: { type: 'string' },
-          personal_focus: { type: 'string' },
-          collective_theme: { type: 'string' },
-          collective_tags: { type: 'array', items: { type: 'string' } },
-          maximize: { type: 'array', items: { type: 'string' } },
-          focus: { type: 'string' },
-          watch: { type: 'array', items: { type: 'string' } },
-          best_areas: { type: 'array', items: { type: 'string' } },
-        },
-        required: ['overview', 'personal_focus', 'collective_theme', 'collective_tags', 'maximize', 'focus', 'watch', 'best_areas'],
-      },
+    const result = await invokeLLMTask('month-synthesis', {
+      monthName,
+      sunSign: raw.sun_sign,
+      natalMoonSign: raw.moon_sign,
+      ascSign: raw.ascendant_sign,
+      natalPlanets,
+      planetContext,
     });
     setSynthesis(result);
     setLoading(false);

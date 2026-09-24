@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, Sparkles, ChevronDown, ChevronRight, RefreshCw, Lightbulb, Share2 } from 'lucide-react';
-import { formatTransitLabelProse as formatTransitLabel, PERSONA, highlightSynthesisText } from '@/lib/transitUtils';
+import { formatTransitLabelProse as formatTransitLabel, highlightSynthesisText } from '@/lib/transitUtils';
 import { getMoonPhaseName } from '@/lib/moonPhase';
 import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
@@ -191,69 +192,13 @@ export default function WeekSynthesis({ days, chart }) {
       isExactNewMoon: false,
     });
 
-    const prompt = `${PERSONA}
-
-Week: ${weekRange}
-NATAL: ☉ ${raw.sun_sign} · ☽ ${raw.moon_sign} · ASC ${raw.ascendant_sign}
-
-AUTHORITATIVE TRANSIT POSITIONS (use these exact signs — do NOT use your own knowledge of where planets are):
-${transitPositions || 'Data unavailable.'}
-
-DAILY TRANSITS (slow planets ≤2.5° orb):
-${dayContexts.join('\n')}
-
-Rules:
-- Use ONLY the transit data listed above. Do NOT mention or reference any planetary aspects, ingresses, or lunar events that are not explicitly listed in the data provided.
-- CRITICAL: Use ONLY the signs from AUTHORITATIVE TRANSIT POSITIONS above. Do NOT rely on your own knowledge of where planets currently are — your training data is outdated. Every time you mention a transiting planet, you MUST use the exact sign listed there.
-- For days with no personal aspects, write day_sentence about Moon sign energy + any active mundane aspects
-- Never write the same energy twice across day_sentences
-- Each day_sentences entry max 15 words
-- When naming aspects in prose, ALWAYS write them as "PlanetName aspectName PlanetName" using FULL planet names and FULL aspect names (e.g. "Mercury conjunction Jupiter", "Mars square Saturn"). Never use abbreviations.
-- Do NOT include raw glyph symbols (☉☽☿♀♂♃♄♅♆♇ etc.) or the em-dash label format in your output. Write only prose using full planet and aspect names — glyphs are added automatically by the frontend.
-
-Return JSON:
-{
-  "overview": "2 sentences summarizing the week's overall energy, referencing specific transit labels",
-  "day_sentences": {
-    "0": "Monday sentence",
-    "1": "Tuesday sentence",
-    "2": "Wednesday sentence",
-    "3": "Thursday sentence",
-    "4": "Friday sentence",
-    "5": "Saturday sentence",
-    "6": "Sunday sentence"
-  },
-  "best_days": ["DayName", "DayName"],
-  "best_areas": ["area1", "area2"],
-  "maximize": "1 action sentence tied to a specific transit this week",
-  "focus": "1 attention sentence tied to a specific transit this week",
-  "watch": "1 caution sentence tied to a specific transit this week"
-}`;
-
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          overview: { type: 'string' },
-          day_sentences: {
-            type: 'object',
-            properties: {
-              '0': { type: 'string' }, '1': { type: 'string' }, '2': { type: 'string' },
-              '3': { type: 'string' }, '4': { type: 'string' }, '5': { type: 'string' },
-              '6': { type: 'string' },
-            },
-            required: ['0', '1', '2', '3', '4', '5', '6'],
-            additionalProperties: false,
-          },
-          best_days: { type: 'array', items: { type: 'string' } },
-          best_areas: { type: 'array', items: { type: 'string' } },
-          maximize: { type: 'string' },
-          focus: { type: 'string' },
-          watch: { type: 'string' },
-        },
-        required: ['overview', 'day_sentences', 'best_days', 'best_areas', 'maximize', 'focus', 'watch'],
-      },
+    const result = await invokeLLMTask('week-synthesis', {
+      weekRange,
+      sunSign: raw.sun_sign,
+      natalMoonSign: raw.moon_sign,
+      ascSign: raw.ascendant_sign,
+      transitPositions,
+      dailyTransits: dayContexts.join('\n'),
     });
 
     if (cacheKey) weekSynthesisCache[cacheKey] = result;

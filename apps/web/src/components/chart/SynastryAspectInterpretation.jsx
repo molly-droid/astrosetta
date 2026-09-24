@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { HOUSE_THEMES, PERSONA, highlightSynthesisText } from '@/lib/transitUtils';
+import { invokeLLMTask } from '@/api/llmTasks';
+import { HOUSE_THEMES, highlightSynthesisText } from '@/lib/transitUtils';
 import { getHouseForLongitude } from '@/lib/chartUtils';
 import { Loader2 } from 'lucide-react';
 import Eli5Button from '@/components/ui/Eli5Button';
@@ -57,37 +57,23 @@ export default function SynastryAspectInterpretation({ item, natalPlanets, trans
       ? `${overlayName}'s ${item.transit_planet} falls in your ${ordinal(p2InYourHouse)} house${p1InTheirHouse ? `; your ${item.natal_planet} falls in ${overlayName}'s ${ordinal(p1InTheirHouse)} house` : ''}`
       : '';
 
-    const relContext = relationship && relationship !== 'Other'
-      ? `${overlayName} is ${userName}'s ${relationship.toLowerCase()}. Frame the interpretation through the lens of a ${relationship.toLowerCase()} relationship.`
-      : '';
-    const deceasedContext = deceased
-      ? `${overlayName} has passed away${dateOfDeath ? ` on ${dateOfDeath}` : ''}. This is a soul-level reading. Frame the insight through the lens of remembrance, the enduring bond, and what this aspect continues to mean for ${userName} now that ${overlayName} has transitioned. Speak with reverence.`
-      : '';
-
-    const prompt = `${PERSONA}
-
-In a synastry comparison between ${userName} and ${overlayName}:
-- ${userName}'s ${youInfo}  ← THIS IS ${userName.toUpperCase()}'S PLACEMENT
-- ${overlayName}'s ${themInfo}  ← THIS IS ${overlayName.toUpperCase()}'S PLACEMENT
-- Cross-chart aspect: ${item.aspect} (orb ${item.orb?.toFixed(1)}°)
-${overlayInfo ? `- House overlays: ${overlayInfo}` : ''}
-${relContext}
-${deceasedContext}
-
-Write 2 sentences. Sentence 1: explain the relational dynamic — WHY ${overlayName}'s ${themInfo} making a ${item.aspect} to ${userName}'s ${youInfo} creates this pattern between them. Name the signs and houses.${overlayInfo ? ` You may reference the house overlay: ${overlayInfo}.` : ''}
-
-PRONOUN ATTRIBUTION — CRITICAL:
-- Use "your" ONLY for ${userName}'s ${item.natal_planet} (the ${p1?.sign || '?'} placement). Example: "your ${item.natal_planet} in ${p1?.sign || '?'}".
-- Use "${overlayName}'s" for ${overlayName}'s ${item.transit_planet} (the ${p2?.sign || '?'} placement). Example: "${overlayName}'s ${item.transit_planet} in ${p2?.sign || '?'}".
-- ${partnerPronouns ? `You may also use ${partnerPronouns} pronouns for ${overlayName} (e.g., "${partnerPronouns.split('/')[0]} ${item.transit_planet}"). ` : ''}NEVER use bare "your" for ${overlayName}'s placement.
-- WRONG: "Your ${item.transit_planet} aspects your ${item.natal_planet}" (whose is whose?)
-- RIGHT: "${overlayName}'s ${item.transit_planet} in ${p2?.sign || '?'} ${item.aspect} your ${item.natal_planet} in ${p1?.sign || '?'}"
-
-Sentence 2: one concrete insight about how this manifests in the relationship.${deceased ? ` Since ${overlayName} has passed, speak to what this aspect meant in life and what it continues to offer ${userName} in memory and spirit.` : ''} No clichés, no generic horoscope language. Speak directly about these two people.${relContext ? ` Speak to the ${relationship.toLowerCase()} nature of the bond.` : ''}
-
-CRITICAL: Only reference the exact placements provided above. Do not invent signs, houses, degrees, or planetary positions not listed. Do NOT reference retrograde status unless explicitly marked (℞) in the data.${overlayInfo ? ` Only reference house overlays from the data above — never invent where a planet falls in the other's houses.` : ''}`;
-
-    base44.integrations.Core.InvokeLLM({ prompt })
+    invokeLLMTask('synastry-aspect-interpretation', {
+      userName,
+      overlayName,
+      youInfo,
+      themInfo,
+      aspect: item.aspect,
+      orb: item.orb,
+      natalPlanet: item.natal_planet,
+      transitPlanet: item.transit_planet,
+      p1Sign: p1?.sign || '',
+      p2Sign: p2?.sign || '',
+      overlayInfo,
+      relationship,
+      deceased,
+      dateOfDeath,
+      partnerPronouns,
+    })
       .then(res => {
         if (!cancelled) {
           cache[cacheKey] = res;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
-import { highlightSynthesisText, PERSONA, PLANET_GLYPHS } from '@/lib/transitUtils';
+import { invokeLLMTask } from '@/api/llmTasks';
+import { highlightSynthesisText, PLANET_GLYPHS } from '@/lib/transitUtils';
 import { findChartPoint, getHouseForLongitude } from '@/lib/chartUtils';
 import { Loader2, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
 import OrnamentDivider from '@/components/ui/OrnamentDivider';
@@ -292,110 +292,21 @@ ${overlaysP2inP1.map(p => `- ${partnerName}'s ${p.name} in ${p.sign} → your ${
 ${userName}'s placements in ${partnerName}'s houses:
 ${overlaysP1inP2.map(p => `- your ${p.name} in ${p.sign} → ${partnerName}'s ${ordinal(p.house)} house`).join('\n')}`;
 
-      const areas = getAreas(relationship, isEvent);
-      const relLabel = relationship && relationship !== 'Other' ? relationship.toLowerCase() : (isEvent ? 'significant moment' : 'general connection');
-      const pronounNote = !isEvent && partnerPronouns ? ` Refer to ${partnerName} using ${partnerPronouns} pronouns.` : '';
-      const deceasedContext = !isEvent && deceased
-        ? `${partnerName} has passed away${dateOfDeath ? ` on ${dateOfDeath}` : ''}. This is a soul-level reading between the living and the departed. Frame every insight through the lens of the enduring bond, remembrance, grief, and what ${partnerName}'s soul continues to teach ${userName} from beyond the veil. Speak with reverence for the transition. The relationship lives on in memory, spirit, and the lessons it forged — honor both what was lived and what remains. If the date of death is known, you may reflect on what the transition may have meant astrologically, but keep the focus on the enduring soul connection.`
-        : '';
-
-      const intro = isEvent
-        ? `You are analyzing what the moment of "${partnerName}"${relationship ? ` (${relationship})` : ''} means for ${userName}. This is an event chart — a snapshot of the sky at a specific moment — compared against ${userName}'s natal chart.`
-        : `You are analyzing the synastry (relationship astrology) between ${userName} and ${partnerName}. Their relationship type: ${relLabel}.${pronounNote}${deceasedContext ? `\n\n${deceasedContext}` : ''}`;
-
-      const p1Label = isEvent ? `${userName} (natal)` : userName;
-      const p2Label = isEvent ? 'At this moment' : partnerName;
-
-      const areaIntro = isEvent
-        ? `Write a synthesis organized by these key areas for this moment: ${areas.join(', ')}.`
-        : `Write a relationship synthesis organized by these key areas for a ${relLabel}: ${areas.join(', ')}.`;
-
-      const houseRule = isEvent
-        ? `When referencing a house, use the planet name and house (e.g., "Mars in the 7th house"). Clarify which is natal vs at this moment — the house context reveals WHERE in life the moment is felt.`
-        : `When referencing a house, use the planet name and house (e.g., "Mars in the 7th house"). Both charts' houses are provided — reference which person's house is activated when it adds depth (e.g., "${partnerName}'s Venus in your 7th house" or "your Mars falls in ${partnerName}'s 4th house"). The house context reveals WHERE in each person's life the connection is felt.`;
-
-      const attributionRule = isEvent
-        ? `Use "your" ONLY for ${userName}'s natal placements (e.g., "your Venus in Aries"). Use "at this moment" for the event's placements (e.g., "Mars at this moment in Scorpio"). Never use ambiguous "their". WRONG: "your Mars at this moment" (Mars belongs to the event, not to ${userName}). RIGHT: "Mars at this moment in Scorpio aspects your Venus in Aries".`
-        : `PRONOUN ATTRIBUTION — CRITICAL:
-- Use "your" ONLY for ${userName}'s placements. ${userName}'s chart is the inner/natal chart.
-- Use "${partnerName}'s" for ${partnerName}'s placements.${partnerPronouns ? ` You may also use ${partnerPronouns} pronouns for ${partnerName} (e.g., "${partnerPronouns.split('/')[0]} Mars in Scorpio").` : ''}
-- NEVER use bare "your" when referring to ${partnerName}'s placement. This is the most common error — always double-check.
-- WRONG: "Your Venus trines your Mars" (if Mars is ${partnerName}'s, the second "your" is wrong)
-- RIGHT: "Your Venus trines ${partnerName}'s Mars" or "${partnerName}'s Venus in your 7th house"
-- When mentioning a house overlay, always clarify whose house: "${partnerName}'s Venus falls in your 7th house" (not "Venus in your 7th house" without context).`;
-
-      const areaInsight = isEvent
-        ? `Write a 2-3 sentence insight synthesizing the relevant aspects. Name the supporting planets, signs, aspects, and houses as evidence using the formats above. Speak directly to ${userName} about what this moment activates for them. Be specific — no generic horoscope language. Weave in house placements where they illuminate which life domain is activated.`
-        : `Write a 2-3 sentence insight that synthesizes the relevant aspects into specific, actionable understanding. Name the supporting planets, signs, aspects, and houses as evidence using the formats above. Speak directly to ${userName} about how to best navigate this area with ${partnerName}. Be specific — no generic horoscope language. Weave in house placements where they illuminate which life domain is activated.${deceased ? ` Since ${partnerName} has passed, frame these insights as what the bond taught, what endures in memory, and how the soul connection continues to shape ${userName}'s path.` : ''}`;
-
-      const overviewInstruction = isEvent
-        ? `Also write a 2-sentence overview capturing the core theme of what this moment means for ${userName}.`
-        : `Also write a 2-sentence overview capturing the core dynamic of this relationship — the overarching theme that defines how ${userName} and ${partnerName} connect.${deceased ? ` For a deceased loved one, speak to the eternal nature of the bond and what it continues to mean.` : ''}`;
-
-      const prompt = `${PERSONA}
-
-${intro}
-
-Key placements:
-- ${p1Label}: Sun in ${sun1}, Moon in ${moon1}, Rising ${asc1}, MC ${mc1}
-- ${p2Label}: Sun in ${sun2}, Moon in ${moon2}, Rising ${asc2}, MC ${mc2}
-
-Full ${isEvent ? 'placements' : 'natal placements'} (with houses):
-- ${p1Label}: ${chart1Planets}
-- ${p2Label}: ${chart2Planets}
-
-Cross-chart aspects (tightest orbs first, with houses):
-${aspectsList}
-
-${overlayText}
-
-${areaIntro}
-
-CRITICAL FORMATTING RULES for educational reinforcement:
-- When referencing an aspect${isEvent ? '' : ' between charts'}, ALWAYS use the format "Planet aspect Planet" (e.g., "Venus trine Mars", "Sun square Moon", "Mercury conjunct Mercury").
-- When referencing a placement, use "Planet in Sign" (e.g., "Sun in Aries", "Moon in Taurus").
-- ${houseRule}
-- PRONOUN ATTRIBUTION: ${attributionRule}
-- Always use full planet names: Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, North Node, South Node, Chiron, Ascendant, Descendant, Midheaven, IC.
-- Always use full aspect words: conjunction, opposition, trine, square, sextile, quincunx.
-- These will be automatically rendered with astrological glyphs alongside the text.
-
-CRITICAL — NO HALLUCINATION:
-- ONLY reference cross-chart aspects from the list provided above. Do NOT invent or reference any aspect that is not in the provided list.
-- ONLY reference placements (planet, sign, house) from the data provided above. Do NOT invent signs, houses, or planetary positions not listed.
-- ONLY reference house overlays from the Cross-House Overlays list above. NEVER invent where a planet falls in the other person's houses — always use the exact overlay data provided. If you mention "X falls in your Yth house", it MUST come from the overlay list.
-- If an area has no relevant aspects from the provided list, acknowledge this directly rather than fabricating supporting aspects.
-- Do NOT reference retrograde status (℞) unless it is explicitly marked in the data above. If a planet is not marked retrograde, it is direct.
-- Do NOT invent specific degree positions. If referencing a degree, it must match the data above exactly.
-- Do NOT reference aspect patterns (e.g., "grand trine", "T-square", "kite") unless they are directly derivable from the aspects listed above.
-- Every planet, sign, house, aspect, and retrograde status you mention MUST come from the data above.
-
-For each area:
-1. ${areaInsight}
-2. List supporting aspects in "Planet1 aspect Planet2" format (e.g., "Venus trine Mars", "Sun square Moon"). Only include aspects that genuinely support the insight.
-
-${overviewInstruction} Use the same formatting rules for referencing planets, signs, and aspects.`;
-
       try {
-        const res = await base44.integrations.Core.InvokeLLM({
-          prompt,
-          response_json_schema: {
-            type: "object",
-            properties: {
-              overview: { type: "string", description: "2-sentence summary of the relationship's core dynamic" },
-              areas: {
-                type: "array",
-                items: {
-                  type: "object",
-                  properties: {
-                    name: { type: "string" },
-                    insight: { type: "string" },
-                    supporting_aspects: { type: "array", items: { type: "string" } }
-                  }
-                }
-              }
-            }
-          }
+        const res = await invokeLLMTask('synastry-synthesis', {
+          isEvent,
+          userName,
+          partnerName,
+          relationship,
+          partnerPronouns,
+          deceased,
+          dateOfDeath,
+          areas: getAreas(relationship, isEvent),
+          sun1, moon1, asc1, mc1, sun2, moon2, asc2, mc2,
+          chart1Planets,
+          chart2Planets,
+          aspectsList,
+          overlayText,
         });
         if (!cancelled) {
           setData(res);

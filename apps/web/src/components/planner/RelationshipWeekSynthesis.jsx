@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, Sparkles, ChevronDown, ChevronRight, RefreshCw, Heart, CalendarDays } from 'lucide-react';
 import { highlightSynthesisText } from '@/lib/transitUtils';
 import { getMoonPhaseEmoji } from '@/lib/moonPhase';
@@ -8,8 +8,7 @@ import SynthesisCategoryCard from '@/components/planner/SynthesisCategoryCard';
 import {
   fetchTransitsForChart,
   fetchNatalCrossAspects,
-  buildWeekPrompt,
-  WEEK_SCHEMA,
+  buildWeekParams,
 } from '@/lib/relationshipSynthesis';
 import { useAuth } from '@/lib/AuthContext';
 import { getHiddenChartPoints } from '@/lib/chartPointVisibility';
@@ -73,8 +72,8 @@ export default function RelationshipWeekSynthesis({ days, userChart, partnerChar
       const userDayTransits = await Promise.all(days.map((d) => fetchTransitsForChart(d, userChart)));
       const partnerDayTransits = await Promise.all(days.map((d) => fetchTransitsForChart(d, partnerChart)));
       const crossAspects = await fetchNatalCrossAspects(userChart, partnerChart);
-      const prompt = buildWeekPrompt({ days, userChart, partnerChart, userDayTransits, partnerDayTransits, crossAspects });
-      const result = await base44.integrations.Core.InvokeLLM({ prompt, response_json_schema: WEEK_SCHEMA });
+      const params = buildWeekParams({ days, userChart, partnerChart, userDayTransits, partnerDayTransits, crossAspects });
+      const result = await invokeLLMTask('relationship-week-synthesis', params);
       if (cacheKey) weekSynthesisCache[cacheKey] = result;
       setSynthesis(result);
       if (userId && dbKey) {

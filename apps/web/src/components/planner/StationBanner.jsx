@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
 import { highlightSynthesisText, getChartRuler } from '@/lib/transitUtils';
 import SignName from '@/components/ui/SignName';
@@ -104,11 +104,7 @@ function StationCard({ station, chart, autoExpandKey }) {
       .map(p => `${p.name} in ${p.sign} (House ${p.house}${p.retrograde ? ', Rx' : ''})`)
       .join('; ');
 
-    const isRx = station.type === 'retrograde';
     const duration = PLANET_DURATIONS[station.planet] || 'several weeks';
-    const timing = station.approaching
-      ? `${station.planet} is currently ${isRx ? 'direct' : 'retrograde'} and will station ${station.type} in approximately ${station.days_until} day${station.days_until === 1 ? '' : 's'} (est. ${station.expected_date}).`
-      : `${station.planet} stations ${station.type} today.`;
 
     const natalMatches = (raw.planets || []).filter(p => p.sign === station.sign);
     const conjunctionNote = natalMatches.length
@@ -116,51 +112,25 @@ function StationCard({ station, chart, autoExpandKey }) {
       : '';
 
     const ruler = getChartRuler(raw.ascendant_sign);
-    const isChartRuler = ruler && station.planet === ruler.planet;
-    const rulerNote = isChartRuler
-      ? `⭐ This is YOUR CHART RULER — ${ruler.planet} rules your ${raw.ascendant_sign} Ascendant. This station is personally significant because it directly activates your identity, life direction, and how you meet the world.`
-      : '';
-
-    const prompt = `You are a skilled astrologer. Today is ${dateStr}. ${timing}
-
-${station.planet} is at ${station.degree?.toFixed(1)}° in ${station.sign}.
-
-NATAL CHART:
-Sun: ${raw.sun_sign}, Moon: ${raw.moon_sign}, Rising: ${raw.ascendant_sign}
-Planets: ${natalPlanets || 'not provided'}
-${conjunctionNote}
-
-${station.planet} will remain ${isRx ? 'retrograde' : 'direct'} for ${duration}.
-
-Write a focused reading for this ${station.planet} station ${station.type}.
-
-${station.approaching
-  ? `Since the station is approaching in ${station.days_until} days, focus on: (1) what to prepare for, (2) what themes are already surfacing, (3) what this station will ask of the person. Frame it as a heads-up.`
-  : `Since the station is happening today, focus on: (1) what this directional shift means, (2) what themes are activated now, (3) how to work with this energy.`}
-
-IMPORTANT: Use ONLY the natal chart data provided above. Do NOT mention any aspects or placements not explicitly listed.
-
-${rulerNote}
-
-Return JSON:
-- headline: a short evocative title (max 6 words)
-- collective: 2 sentences on what this station means for everyone collectively — the archetypal shift
-- personal: 2-3 sentences on how this specifically activates THIS person's natal chart. Reference which natal planets/houses are affected. Be concrete.
-- ritual: 1 short practical suggestion for working with this station energy`;
+    const isChartRuler = !!(ruler && station.planet === ruler.planet);
 
     try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            headline: { type: 'string' },
-            collective: { type: 'string' },
-            personal: { type: 'string' },
-            ritual: { type: 'string' },
-          },
-          required: ['headline', 'collective', 'personal', 'ritual'],
-        },
+      const result = await invokeLLMTask('station-reading', {
+        dateStr,
+        planet: station.planet,
+        sign: station.sign,
+        degree: station.degree,
+        stationType: station.type,
+        approaching: !!station.approaching,
+        daysUntil: station.days_until,
+        expectedDate: station.expected_date,
+        sunSign: raw.sun_sign,
+        natalMoonSign: raw.moon_sign,
+        ascSign: raw.ascendant_sign,
+        natalPlanets,
+        conjunctionNote,
+        duration,
+        isChartRuler,
       });
       if (cacheKey) moduleCache[cacheKey] = result;
       setReading(result);

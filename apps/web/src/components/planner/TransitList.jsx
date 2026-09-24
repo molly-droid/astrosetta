@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
 import SignName from '@/components/ui/SignName';
-import { PERSONA, formatTransitLabel, HOUSE_THEMES, ASPECT_ANGLES, highlightSynthesisText, estimateTransitTime, formatTime } from '@/lib/transitUtils';
+import { formatTransitLabel, HOUSE_THEMES, ASPECT_ANGLES, highlightSynthesisText, estimateTransitTime, formatTime } from '@/lib/transitUtils';
 import { useAuth } from '@/lib/AuthContext';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
-import { densityPromptSuffix } from '@/lib/knowledgeDensity';
 import Eli5Button from '@/components/ui/Eli5Button';
-import { base44 } from '@/api/base44Client';
+import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, ChevronDown, ChevronRight, SlidersHorizontal, Lock, ArrowUpDown } from 'lucide-react';
 import PaywallModal from '@/components/paywall/PaywallModal';
 import { usePermissions } from '@/lib/permissions';
@@ -218,16 +217,12 @@ function AspectRow({ a, chart, date, transitPlanets, natalPlanets, canViewInterp
 
       const houseTheme = nP?.house ? HOUSE_THEMES[nP.house] || '' : '';
 
-      const prompt = `${PERSONA}
-
-${densityPromptSuffix(knowledgeDepth)}
-
-${formatTransitLabel(a, transitPlanets, natalPlanets, !isNatal)}
-Natal ${a.natal_planet}: ${nP?.sign || ''}${nP?.house ? `, ${ordinal(nP.house)} house` : ''}${houseTheme ? ` (${houseTheme})` : ''}
-
-Write 2 sentences. Sentence 1: explain the astrological mechanic — WHY this transiting planet in its current sign making this aspect to this natal planet in this house creates this effect. Name the sign and house. Sentence 2: one concrete awareness or action. No clichés, no generic horoscope language.`;
-
-      const result = await base44.integrations.Core.InvokeLLM({ prompt });
+      const result = await invokeLLMTask('transit-list-interpretation', {
+        knowledgeDepth,
+        label: formatTransitLabel(a, transitPlanets, natalPlanets, !isNatal),
+        natalPlanet: a.natal_planet,
+        natalDetail: `${nP?.sign || ''}${nP?.house ? `, ${ordinal(nP.house)} house` : ''}${houseTheme ? ` (${houseTheme})` : ''}`,
+      });
       setText(result);
       setLoading(false);
     } else {

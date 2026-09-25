@@ -17,6 +17,9 @@
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <!-- Android 12+ system splash: navy behind the icon so boot doesn't
+             flash light before Capacitor's (also navy) splash takes over. -->
+        <item name="windowSplashScreenBackground">#0f1a2e</item>
         <item name="android:background">@drawable/splash</item>
     </style>
 </resources>

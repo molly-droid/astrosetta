@@ -1,0 +1,72 @@
+{
+  "name": "GlossaryItem",
+  "type": "object",
+  "properties": {
+    "term_key": {
+      "type": "string",
+      "description": "Unique lowercase key, e.g. 'square', 'conjunction', 'house_8', 'ascendant', 'retrograde', 'essential_dignity'"
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Human-readable label shown in the popover, e.g. 'Square', 'Ascendant'"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "planet",
+        "sign",
+        "house",
+        "aspect",
+        "angle",
+        "node",
+        "technique",
+        "concept"
+      ],
+      "description": "Category of the term for styling and grouping"
+    },
+    "definition_essential": {
+      "type": "string",
+      "description": "Simple 1-2 sentence layperson explanation shown in Essential/Insightful mode"
+    },
+    "definition_technical": {
+      "type": "string",
+      "description": "Deeper mechanical/traditional explanation revealed via progressive disclosure or shown by default in Technical mode"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Alternative spellings/forms the term matcher should also recognize, e.g. ['sq','squares','squaring'] for square"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "term_key",
+    "display_name",
+    "category",
+    "definition_essential"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

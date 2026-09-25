@@ -1,0 +1,33 @@
+// Base44 entity name -> Postgres table name.
+// Keep in sync with apps/web/src/api/shim/tables.js (the frontend copy).
+export const ENTITY_TABLES: Record<string, string> = {
+  AccountDeletionRequest: 'account_deletion_request',
+  CalendarSynthesis: 'calendar_synthesis',
+  Chart: 'chart',
+  DailyQuiz: 'daily_quiz',
+  ErrorLog: 'error_log',
+  EventOrder: 'event_order',
+  Feedback: 'feedback',
+  FeatureHighlight: 'feature_highlight',
+  FoundingPatron: 'founding_patron',
+  GlossaryItem: 'glossary_item',
+  IncentiveSKU: 'incentive_sku',
+  Interpretation: 'interpretation',
+  LLMUsageLog: 'llm_usage_log',
+  LearningModule: 'learning_module',
+  Placement: 'placement',
+  PlanetCorrection: 'planet_correction',
+  PlannerJournalEntry: 'planner_journal_entry',
+  PopupEvent: 'popup_event',
+  RoadmapItem: 'roadmap_item',
+  SavedChart: 'saved_chart',
+  StreakBonusContent: 'streak_bonus_content',
+  SynthesisRating: 'synthesis_rating',
+  User: 'users', // "user" is reserved in Postgres
+  UserInterpretationRating: 'user_interpretation_rating',
+  UserModuleProgress: 'user_module_progress',
+  UserPlacementProgress: 'user_placement_progress',
+  UserProgress: 'user_progress',
+  WaitlistEmail: 'waitlist_email',
+  XPEvent: 'xp_event',
+};

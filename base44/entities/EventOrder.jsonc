@@ -1,0 +1,145 @@
+{
+  "name": "EventOrder",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "FK to User"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "FK to PopupEvent.event_id"
+    },
+    "first_name": {
+      "type": "string",
+      "maxLength": 40,
+      "description": "Name shown to the booth team in the fulfillment queue"
+    },
+    "sku_id": {
+      "type": "string",
+      "description": "FK to IncentiveSKU.sku_id"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "core",
+        "premium"
+      ]
+    },
+    "billing_cycle": {
+      "type": "string",
+      "enum": [
+        "monthly",
+        "yearly"
+      ]
+    },
+    "item_type": {
+      "type": "string",
+      "enum": [
+        "keychain",
+        "bracelet",
+        "necklace",
+        "gift"
+      ]
+    },
+    "metal": {
+      "type": "string",
+      "enum": [
+        "silver",
+        "gold"
+      ]
+    },
+    "pickup_status": {
+      "type": "string",
+      "enum": [
+        "ready",
+        "pending",
+        "picked_up",
+        "remote_fulfillment"
+      ],
+      "default": "ready",
+      "description": "Core = ready (premade), Premium = pending (custom-built), promo-code = remote_fulfillment, marked picked_up at the booth"
+    },
+    "signup_channel": {
+      "type": "string",
+      "enum": [
+        "qr_link",
+        "promo_code"
+      ]
+    },
+    "remote": {
+      "type": "boolean",
+      "default": false,
+      "description": "True for promo-code redemptions fulfilled by mail"
+    },
+    "sold_out": {
+      "type": "boolean",
+      "default": false,
+      "description": "True when the chosen SKU ran out before payment completed \u2014 item will be mailed once restocked (make-good)"
+    },
+    "shipping_address": {
+      "type": "object",
+      "description": "{name, line1, line2, city, state, zip} \u2014 captured only for promo-code (remote) redemptions"
+    },
+    "sun_sign": {
+      "type": "string",
+      "description": "Shown on the confirmation screen and booth queue"
+    },
+    "moon_sign": {
+      "type": "string",
+      "description": "Premium orders only"
+    },
+    "rising_sign": {
+      "type": "string",
+      "description": "Premium orders only"
+    },
+    "picked_up_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "fulfillment_notified_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the booth team notification email fired"
+    }
+  },
+  "required": [
+    "user_id",
+    "event_id",
+    "first_name",
+    "sku_id",
+    "tier",
+    "billing_cycle",
+    "pickup_status",
+    "signup_channel"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

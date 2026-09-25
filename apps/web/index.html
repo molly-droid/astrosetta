@@ -1,13 +1,85 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Natal chart and transit learning application" />
-    <title>Astrosetta</title>
+    <!-- viewport-fit=cover lets env(safe-area-inset-*) resolve on notched devices in the Capacitor WebView -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Primary Meta -->
+    <title>Astrosetta — Learn to Read Your Own Birth Chart</title>
+    <meta name="description" content="Astrosetta turns your natal chart and daily transits into personalized astrology lessons. Build real chart-reading fluency with daily quizzes, AI-powered synthesis, and calendar sync — free during beta." />
+    <meta name="keywords" content="astrology app, learn astrology, natal chart, birth chart reading, daily transits, astrology education, chart synthesis, astrology quiz, horoscope, planetary transits, astrozetta" />
+    <meta name="author" content="Astrosetta" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://astrosetta.com/" />
+
+    <!-- Open Graph (Facebook, LinkedIn, WhatsApp, iMessage) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://astrosetta.com/" />
+    <meta property="og:title" content="Astrosetta — Learn to Read Your Own Birth Chart" />
+    <meta property="og:description" content="Stop relying on someone else's interpretation. Astrosetta gives you daily personalized readings, progressive astrology lessons, and an AI navigator — all grounded in your actual natal chart." />
+    <meta property="og:image" content="https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/d75841296_IMG_3018.jpeg" />
+    <meta property="og:image:secure_url" content="https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/d75841296_IMG_3018.jpeg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:alt" content="Astrosetta — Learn to Read Your Own Birth Chart" />
+    <meta property="og:site_name" content="Astrosetta" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@astrosetta" />
+    <meta name="twitter:title" content="Astrosetta — Learn to Read Your Own Birth Chart" />
+    <meta name="twitter:description" content="Personalized daily readings, astrology quizzes, and AI chart synthesis — built around your real natal chart, not generic horoscopes." />
+    <meta name="twitter:image" content="https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/d75841296_IMG_3018.jpeg" />
+
+    <!-- Theme & App -->
+    <meta name="theme-color" content="#07101e" />
+    <meta name="application-name" content="Astrosetta" />
+    <meta name="apple-mobile-web-app-title" content="Astrosetta" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/f96f92f62_generated_image.png" />
+    <link rel="apple-touch-icon" href="https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/f96f92f62_generated_image.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Astrosetta",
+      "alternateName": "Astrozetta",
+      "url": "https://astrosetta.com",
+      "description": "Astrosetta is a personalized astrology learning platform that turns your natal chart and daily transits into progressive lessons, daily readings, and AI-powered chart synthesis.",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
+        "description": "Free during beta"
+      },
+      "featureList": [
+        "Personalized natal chart calculation",
+        "Daily transit readings",
+        "Progressive astrology quiz system",
+        "AI chart navigator",
+        "Google Calendar sync",
+        "Astrological planner"
+      ],
+      "screenshot": "https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/d75841296_IMG_3018.jpeg",
+      "author": {
+        "@type": "Organization",
+        "name": "Astrosetta"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

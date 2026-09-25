@@ -1,0 +1,66 @@
+{
+  "name": "AccountDeletionRequest",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "FK to User requesting deletion"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "Email the confirmation link was sent to"
+    },
+    "token_hash": {
+      "type": "string",
+      "description": "SHA-256 hash of the one-time deletion token. The raw token only ever travels by email and is never stored."
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the confirmation link expires (24 hours after request)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "completed",
+        "expired"
+      ],
+      "default": "pending"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the deletion was confirmed and carried out"
+    }
+  },
+  "required": [
+    "user_id",
+    "user_email",
+    "token_hash",
+    "expires_at",
+    "status"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

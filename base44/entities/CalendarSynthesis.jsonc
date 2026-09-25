@@ -1,0 +1,101 @@
+{
+  "name": "CalendarSynthesis",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "FK to User"
+    },
+    "period_type": {
+      "type": "string",
+      "enum": [
+        "day",
+        "week",
+        "month",
+        "topic",
+        "lunar",
+        "ingress"
+      ],
+      "description": "Type of synthesis period"
+    },
+    "period_key": {
+      "type": "string",
+      "description": "Unique key, e.g. day-2026-07-02, week-2026-06-29, month-2026-07, lunar-2026-07-02-Full_Moon, ingress-2026-07-02-Jupiter-Gemini. Relationship-layer reads include the target saved-chart id in the key so they cache separately from personal reads."
+    },
+    "target_chart_id": {
+      "type": "string",
+      "description": "SavedChart id this synthesis is framed against. Empty/absent for the user's own personal reads; set for relationship-layer (synastry) reads so they never collide with or overwrite personal reads."
+    },
+    "topic_key": {
+      "type": "string",
+      "description": "Only for topic type, e.g. love, career"
+    },
+    "date_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "date_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Calendar event title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Plain-text synthesis for email/calendar ICS feeds"
+    },
+    "data": {
+      "type": "object",
+      "description": "Structured JSON synthesis result for instant frontend rendering \u2014 matches each component's expected response_json_schema"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "user_id",
+    "period_type",
+    "period_key",
+    "date_start",
+    "date_end",
+    "summary",
+    "description"
+  ],
+  "rls": {
+    "create": {
+      "data.user_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "data.user_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

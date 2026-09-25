@@ -1,0 +1,82 @@
+{
+  "name": "SynthesisRating",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "date_key": {
+      "type": "string",
+      "description": "YYYY-MM-DD"
+    },
+    "chart_id": {
+      "type": "string"
+    },
+    "rating": {
+      "type": "string",
+      "enum": [
+        "thumbs_up",
+        "thumbs_down"
+      ],
+      "description": "User rating of synthesis quality"
+    },
+    "bookmarked": {
+      "type": "boolean",
+      "default": false
+    },
+    "synthesis_overview": {
+      "type": "string",
+      "description": "Snapshot of synthesis overview text"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "user_id",
+    "date_key"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

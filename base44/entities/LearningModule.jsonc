@@ -1,0 +1,75 @@
+{
+  "name": "LearningModule",
+  "type": "object",
+  "properties": {
+    "section": {
+      "type": "string",
+      "enum": [
+        "foundations",
+        "planets",
+        "signs",
+        "houses",
+        "elements_modalities",
+        "aspects",
+        "dynamics",
+        "classical_techniques",
+        "traditions"
+      ],
+      "description": "Which top-level section this module belongs to"
+    },
+    "subject_key": {
+      "type": "string",
+      "description": "e.g. 'sun', 'moon', 'aries', 'house_1', 'natal_vs_mundane', 'essential_dignities_intro'"
+    },
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "glyph": {
+      "type": "string"
+    },
+    "order_index": {
+      "type": "integer"
+    },
+    "content_blocks": {
+      "type": "array",
+      "description": "Ordered array of {type: 'text'|'quiz'|'fact'|'tradition_note', content/question/options/answer, tradition}. tradition_note blocks carry a 'tradition' key ('modern'|'hellenistic'|'vedic') and are rendered as a collapsible 'Tradition lens' within the module.",
+      "items": {
+        "type": "object"
+      }
+    },
+    "mastery_blocks": {
+      "type": "array",
+      "description": "Harder scenario-based quiz blocks that unlock at Practitioner level (500+ XP). Each block has {type:'quiz', scenario, question, options, answer, explanation}.",
+      "items": {
+        "type": "object"
+      }
+    },
+    "mastery_xp_reward": {
+      "type": "integer",
+      "default": 100,
+      "description": "XP awarded for completing the mastery challenge"
+    },
+    "xp_reward": {
+      "type": "integer",
+      "default": 50
+    },
+    "color_theme": {
+      "type": "string",
+      "description": "Tailwind color token or hex"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "section",
+    "subject_key",
+    "title",
+    "order_index"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "name": "ErrorLog",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "FK to User, null if unauthenticated"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error message"
+    },
+    "stack_trace": {
+      "type": "string",
+      "description": "Stack trace if available"
+    },
+    "page_url": {
+      "type": "string",
+      "description": "URL where the error occurred"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "Browser user agent"
+    },
+    "component_stack": {
+      "type": "string",
+      "description": "React component stack for render errors"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "error_message"
+  ],
+  "rls": {
+    "create": {},
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

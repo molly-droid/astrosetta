@@ -1,0 +1,59 @@
+{
+  "name": "StreakBonusContent",
+  "type": "object",
+  "properties": {
+    "date_key": {
+      "type": "string",
+      "description": "YYYY-MM-DD \u2014 shared across all users"
+    },
+    "headline": {
+      "type": "string",
+      "description": "Short cheat-code hook, e.g. 'The Saturn-in-Pisces Cheat-Code'"
+    },
+    "transit_subject": {
+      "type": "string",
+      "description": "e.g. Saturn in Pisces"
+    },
+    "scenario": {
+      "type": "string",
+      "description": "One relatable sentence framing the transit as a real-world question, e.g. \"A friend asks: 'Saturn's in Pisces right now \u2014 what should I watch for?'\""
+    },
+    "transit_context": {
+      "type": "string",
+      "description": "Snapshot of today's actual outer-planet transit positions (e.g. 'Saturn in Aries, Jupiter in Cancer (Rx), Pluto in Aquarius') \u2014 shown in the card so the cheat-code is visibly tied to the live sky"
+    },
+    "content": {
+      "type": "string",
+      "description": "2-3 sentence practitioner cheat-code: the actionable tip astrologers reach for when reading this transit"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "date_key"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

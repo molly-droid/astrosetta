@@ -1,0 +1,76 @@
+{
+  "name": "PopupEvent",
+  "type": "object",
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "description": "Unique slug used in QR src param and order tagging, e.g. raven2026"
+    },
+    "event_name": {
+      "type": "string",
+      "description": "Display name, e.g. Raven Party"
+    },
+    "promo_code": {
+      "type": "string",
+      "description": "Code users enter at checkout to tag this event during the grace window, e.g. RAVEN2026"
+    },
+    "qr_src_param": {
+      "type": "string",
+      "description": "Value of the ?src= param on QR signage links"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Last day of the in-person event"
+    },
+    "promo_valid_until": {
+      "type": "string",
+      "format": "date",
+      "description": "Last day the promo code tags signups (event end + grace period, e.g. 7 days)"
+    },
+    "pickup_deadline_note": {
+      "type": "string",
+      "description": "Human phrase for the Premium pickup badge, e.g. '9 PM tonight'"
+    },
+    "notify_email": {
+      "type": "string",
+      "description": "Team email that receives one notification per completed event order"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Only active events accept new QR-tagged signups"
+    }
+  },
+  "required": [
+    "event_id",
+    "event_name",
+    "promo_code",
+    "qr_src_param",
+    "start_date",
+    "end_date",
+    "promo_valid_until"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -4,22 +4,22 @@
 project_id = "sqdpawyqvgqadflezxxk"
 
 [api]
-port = 54321
+port = 54341
 schemas = ["public", "storage", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 54322
+port = 54342
 major_version = 15
 
 [studio]
-port = 54323
+port = 54343
 
 [inbucket]
-port = 54324
-smtp_port = 54325
-pop3_port = 54326
+port = 54344
+smtp_port = 54345
+pop3_port = 54346
 
 [storage]
 file_size_limit = "50MiB"
@@ -39,3 +39,86 @@ enable_confirmations = false  # Set to true in production
 [functions]
 # Path to your Edge Functions
 # Each function should be in its own directory under supabase/functions/
+
+# Every function verifies auth in-function (user JWT via getAuthUser,
+# service key via isServiceRole, or its own token scheme, matching the
+# Base44 originals). Gateway JWT verification is off because several
+# callers cannot present a user JWT: Stripe webhooks, Google Calendar
+# ICS fetches, account-deletion email links, scheduled jobs, and
+# function-to-function calls using the (non-JWT) secret API key.
+[functions.account-deletion]
+verify_jwt = false
+[functions.astro-engine]
+verify_jwt = false
+[functions.calendar-icsfeed]
+verify_jwt = false
+[functions.chart-calculator]
+verify_jwt = false
+[functions.create-checkout-session]
+verify_jwt = false
+[functions.create-customer-portal-session]
+verify_jwt = false
+[functions.cross-check-ephemeris]
+verify_jwt = false
+[functions.debug-angles]
+verify_jwt = false
+[functions.debug-chiron]
+verify_jwt = false
+[functions.debug-houses]
+verify_jwt = false
+[functions.fix-chiron]
+verify_jwt = false
+[functions.generate-bonus-quiz]
+verify_jwt = false
+[functions.generate-calendar-synthesis]
+verify_jwt = false
+[functions.generate-daily-quiz]
+verify_jwt = false
+[functions.generate-rising-sign-card]
+verify_jwt = false
+[functions.get-daily-streak-bonus]
+verify_jwt = false
+[functions.get-interpretations]
+verify_jwt = false
+[functions.invoke-llm]
+verify_jwt = false
+[functions.llm-task]
+verify_jwt = false
+[functions.log-frontend-error]
+verify_jwt = false
+[functions.navigator-chat]
+verify_jwt = false
+[functions.notify-admin-bug-report]
+verify_jwt = false
+[functions.pre-generate-synthesis]
+verify_jwt = false
+[functions.recalc-all-charts]
+verify_jwt = false
+[functions.recompute-xp-totals]
+verify_jwt = false
+[functions.send-chart-recap-email]
+verify_jwt = false
+[functions.send-daily-email]
+verify_jwt = false
+[functions.send-email]
+verify_jwt = false
+[functions.send-feedback-digest]
+verify_jwt = false
+[functions.send-monthly-email]
+verify_jwt = false
+[functions.send-weekly-email]
+verify_jwt = false
+[functions.send-welcome-email]
+verify_jwt = false
+[functions.stamp-founding-member]
+verify_jwt = false
+[functions.stripe-webhook]
+verify_jwt = false
+[functions.submit-quiz-answer]
+verify_jwt = false
+[functions.submit-retake]
+verify_jwt = false
+[functions.sync-astro-to-calendar]
+verify_jwt = false
+[functions.validate-iap-receipt]
+verify_jwt = false

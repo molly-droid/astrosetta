@@ -1,0 +1,115 @@
+{
+  "name": "SavedChart",
+  "type": "object",
+  "properties": {
+    "chart_type": {
+      "type": "string",
+      "enum": [
+        "person",
+        "event"
+      ],
+      "default": "person",
+      "description": "Whether this is a person's birth chart or an event/moment chart"
+    },
+    "name": {
+      "type": "string",
+      "description": "Display name for this person or event"
+    },
+    "relationship": {
+      "type": "string",
+      "description": "e.g. partner, friend, child, mother, father \u2014 or event type (e.g. Wedding, First Date)"
+    },
+    "pronouns": {
+      "type": "string",
+      "description": "e.g. she/her, he/him, they/them (person only)"
+    },
+    "deceased": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether this person has passed away (person only)"
+    },
+    "date_of_death": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of passing, if known (person only)"
+    },
+    "birth_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "birth_time": {
+      "type": "string",
+      "description": "HH:MM:SS"
+    },
+    "birth_location": {
+      "type": "object",
+      "description": "{city, country, latitude, longitude, timezone}"
+    },
+    "utc_offset": {
+      "type": "number"
+    },
+    "raw_data": {
+      "type": "object",
+      "description": "Full chart calculation result"
+    },
+    "sun_sign": {
+      "type": "string"
+    },
+    "moon_sign": {
+      "type": "string"
+    },
+    "ascendant_sign": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Optional notes or context (up to 1000 characters)"
+    }
+  },
+  "required": [
+    "name",
+    "birth_date"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "FoundingPatron",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "FK to User with is_founding_member = true"
+    },
+    "display_name": {
+      "type": "string",
+      "maxLength": 40,
+      "description": "First name or username shown in the public landing-page ticker"
+    }
+  },
+  "required": [
+    "user_id",
+    "display_name"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {},
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

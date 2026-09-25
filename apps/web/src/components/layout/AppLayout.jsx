@@ -193,7 +193,9 @@ export default function AppLayout() {
   return (
     <div
       className="h-screen flex flex-col overflow-hidden relative bg-[#0f1a2e]"
-      style={{ overscrollBehavior: 'none' }}
+      // safe-area-inset-top keeps content out of the notch/status bar in the
+      // native apps (resolves to 0px in regular browsers).
+      style={{ overscrollBehavior: 'none', paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
       {/* Starfield background */}
       <StarfieldBg />

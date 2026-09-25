@@ -9,10 +9,24 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   backgroundColor: '#0f1a2e',
   ios: {
-    contentInset: 'automatic',
+    // 'never': safe areas are handled in CSS (viewport-fit=cover + env()
+    // insets). 'automatic' double-applies the inset on top of the CSS padding.
+    contentInset: 'never',
   },
   android: {
     allowMixedContent: false,
+  },
+  plugins: {
+    SplashScreen: {
+      // Hidden manually from initNative() once React has painted — avoids the
+      // white flash between the native splash and first render.
+      launchAutoHide: false,
+      backgroundColor: '#0f1a2e',
+      showSpinner: false,
+    },
+    Keyboard: {
+      resizeOnFullScreen: true, // Android: resize webview even in fullscreen
+    },
   },
 };
 

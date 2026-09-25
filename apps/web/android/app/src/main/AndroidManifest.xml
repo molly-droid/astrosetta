@@ -18,6 +18,16 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Deep links: astrosetta:// (auth redirects + in-app navigation).
+                 https://astrosetta.com app links get added at cutover once the
+                 domain serves the assetlinks.json. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="astrosetta" />
+            </intent-filter>
         </activity>
 
         <provider

@@ -66,7 +66,7 @@ export default function NotificationsBell() {
   );
 
   return (
-    <div ref={ref} className="fixed top-3 right-3 z-[9997]">
+    <div ref={ref} className="fixed right-3 z-[9997]" style={{ top: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}>
       <button
         onClick={() => setOpen(!open)}
         className="relative p-2 rounded-full border border-white/[0.06] transition-all hover:bg-gold-primary/10"

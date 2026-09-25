@@ -24,6 +24,11 @@ _Last updated: 2026-09-24_
       tier gates, daily quotas, usage logging) — smoke-tested 7/7 locally
 - [x] Navigator parity test: protocol, harness, and the frozen Claude baseline
       transcript (`scripts/navigator-parity/results/`)
+- [x] Mobile groundwork (no accounts needed): native runtime plugins wired
+      (status bar, splash, keyboard, back nav), `astrosetta://` deep links on
+      both platforms incl. Supabase auth callback handling, safe-area shell,
+      RevenueCat SDK staged behind a flag — iOS simulator + Android debug
+      builds verified compiling (see docs/MOBILE.md)
 - [x] Local dev sandbox proven (ports 5434x; Tony's Anthropic key local-only)
 
 ## In progress / partially unblocked
@@ -42,10 +47,10 @@ _Last updated: 2026-09-24_
 ## Remaining work, in order
 
 **Phase 1 — parallel, no dependencies (now):**
-1. Mobile groundwork needing no accounts: local iOS/Android builds against the
-   shim, safe areas / status bar / keyboard / back nav / deep links, splash +
-   icons, RevenueCat integration staged behind a flag
-2. Wire Google OAuth into Supabase Auth (when creds arrive)
+1. ~~Mobile groundwork needing no accounts~~ done (see above); an on-device
+   polish pass (safe areas/status bar/keyboard on real hardware) remains
+2. Wire Google OAuth into Supabase Auth (when creds arrive) — also add
+   `astrosetta://login` to the Auth redirect allowlist for native
 3. Stripe setup once team invite lands (products, webhook → secrets)
 4. Molly sign-off: AI daily limits + tier-gate map (proposal in DEPLOYMENT.md)
 

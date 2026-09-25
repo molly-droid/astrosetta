@@ -344,7 +344,7 @@ export default function MyChart() {
       {returnToLearn && (
         <button
           onClick={() => navigate('/learn', { state: { subjectKey: returnToLearn.subjectKey, section: returnToLearn.section, blockIndex: returnToLearn.blockIndex } })}
-          className="fixed top-3 left-3 z-40 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold-primary text-paper text-xs font-body font-semibold shadow-lg hover:bg-gold-accent transition-colors"
+          style={{ top: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }} className="fixed left-3 z-40 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gold-primary text-paper text-xs font-body font-semibold shadow-lg hover:bg-gold-accent transition-colors"
         >
           <ChevronLeft size={12} />
           <span className="max-w-[140px] truncate">{returnToLearn.title ? `Back to ${returnToLearn.title}` : 'Back to lesson'}</span>

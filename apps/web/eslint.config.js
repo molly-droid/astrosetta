@@ -5,6 +5,9 @@ import pluginReactHooks from "eslint-plugin-react-hooks";
 import pluginUnusedImports from "eslint-plugin-unused-imports";
 
 export default [
+  // Global ignores — native project build output (Capacitor generates JS into
+  // android/ and ios/ during gradle/xcodebuild runs) and the web bundle.
+  { ignores: ["android/**", "ios/**", "dist/**"] },
   {
     files: [
       "src/components/**/*.{js,mjs,cjs,jsx}",

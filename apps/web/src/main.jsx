@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
+import { initNative } from '@/lib/native.jsx'
 
 // ── Global error monitoring ─────────────────────────────────────────────────
 // Catches unhandled runtime errors and React render errors, sends them to the
@@ -78,3 +79,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <App />
   </ErrorBoundary>
 )
+
+// Native (Capacitor) chrome: status bar + splash hide. No-op on the web.
+initNative();

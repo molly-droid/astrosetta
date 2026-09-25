@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { UserPrefsProvider } from '@/lib/UserPrefsContext';
+import NativeBridge from '@/lib/native.jsx';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 // Page imports
@@ -115,6 +116,7 @@ function App() {
       <UserPrefsProvider>
         <QueryClientProvider client={queryClientInstance}>
           <Router>
+            <NativeBridge />
             <AuthenticatedApp />
           </Router>
           <Toaster />

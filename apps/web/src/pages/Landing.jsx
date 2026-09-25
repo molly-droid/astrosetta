@@ -152,7 +152,10 @@ export default function Landing() {
   };
 
   return (
-    <div className={`relative min-h-screen overflow-x-hidden ${sidebarCollapsed ? 'md:pl-16' : 'md:pl-56'}`} style={{ background: '#07101e' }}>
+    // safe-area top padding shifts the page below the notch in the native
+    // apps (0px on the web); the fixed mobile top bar pads itself the same
+    // way, so the hero clearance stays as designed.
+    <div className={`relative min-h-screen overflow-x-hidden ${sidebarCollapsed ? 'md:pl-16' : 'md:pl-56'}`} style={{ background: '#07101e', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <Starfield />
 
       <div className="relative" style={{ zIndex: 1 }}>

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Sparkles } from 'lucide-react';
 import { supabase } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
+import { isCapacitor } from '@/lib/platform';
 import AuthLayout from '@/components/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -91,6 +92,20 @@ export default function Login() {
 
   const signInWithGoogle = () =>
     run(async () => {
+      if (isCapacitor()) {
+        // Native: Google forbids OAuth inside embedded webviews, so open the
+        // provider URL in the system browser and return via the astrosetta://
+        // deep link (completed by NativeBridge in lib/native.jsx). The scheme
+        // URL must be in the Supabase Auth "Redirect URLs" allowlist.
+        const { data, error: err } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: 'astrosetta://login', skipBrowserRedirect: true },
+        });
+        if (err) throw err;
+        const { Browser } = await import('@capacitor/browser');
+        await Browser.open({ url: data.url });
+        return;
+      }
       const { error: err } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {

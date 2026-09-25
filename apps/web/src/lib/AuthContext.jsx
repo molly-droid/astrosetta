@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44, supabase } from '@/api/base44Client';
 import { pickBestProgress } from '@/lib/userProgress';
+import { initPurchases } from '@/lib/purchases';
 
 const AuthContext = createContext();
 
@@ -82,6 +83,10 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
       setAuthChecked(true);
+
+      // RevenueCat (native only; no-op until the phase-3 keys exist) — tie the
+      // store customer to the Supabase user id so webhooks reconcile.
+      initPurchases(currentUser.id).catch(() => {});
 
       // Count distinct login sessions so first-visit UI (e.g. the Navigator
       // nudge) can surface only during the user's first couple of logins.

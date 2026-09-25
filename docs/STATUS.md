@@ -33,9 +33,9 @@ _Last updated: 2026-09-24_
 
 ## In progress / partially unblocked
 
-- [ ] **Push the migration branch to GitHub** — blocked on collaborator invite
-      for `silexdev` (all work currently exists only on Tony's machine — top
-      risk item)
+- [x] **Pushed to GitHub and merged to `main`** (2026-09-25) — `main` is now
+      the trunk; work continues there. Go-live remains gated by the cutover
+      steps (data import + DNS), not by the merge.
 - [ ] Resend: key received → set as hosted secret; domain DNS verification
       still needed before real sends
 - [ ] Google OAuth: client created by Molly → client ID/secret still need to

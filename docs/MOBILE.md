@@ -63,6 +63,9 @@ Both platforms verified compiling with all plugins (2026-09-24).
 - Confirm bundle id / application id with the client; set display name,
   version, and build numbers.
 - On-device pass: safe areas, status bar, keyboard, splash on real hardware.
+- Android 12+ shows the SYSTEM splash (app icon on a light background) before
+  Capacitor's navy one — theme `windowSplashScreenBackground` in
+  android/app/src/main/res/values/styles.xml to #0f1a2e for a seamless boot.
 - RevenueCat phase (**client accounts**): keys into the env, offerings on the
   Subscribe page, rewire lib/restorePurchases.js to Purchases.restorePurchases.
 - Universal/app links for astrosetta.com at cutover; add astrosetta://login to

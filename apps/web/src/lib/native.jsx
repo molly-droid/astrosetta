@@ -19,6 +19,19 @@ import { supabase } from '@/api/shim/supabase.js';
 // Routes where Android back should minimize instead of popping history.
 const ROOT_ROUTES = new Set(['/', '/home', '/login']);
 
+// Light-background routes (AuthLayout pages) need dark status-bar text;
+// everything else is dark navy and needs light text.
+const LIGHT_ROUTES = new Set(['/login', '/delete-account']);
+
+async function syncStatusBarToRoute(pathname) {
+  try {
+    const { StatusBar, Style } = await import('@capacitor/status-bar');
+    const light = LIGHT_ROUTES.has(pathname);
+    await StatusBar.setStyle({ style: light ? Style.Light : Style.Dark }).catch(() => {});
+    await StatusBar.setBackgroundColor({ color: light ? '#faf7f2' : '#0f1a2e' }).catch(() => {}); // Android only
+  } catch { /* plugin missing (web) */ }
+}
+
 export async function initNative() {
   if (!isCapacitor()) return;
   // CSS hooks for native-only tweaks: html.native / html.native-ios / html.native-android
@@ -79,6 +92,12 @@ async function completeAuthCallback(rawUrl) {
 export default function NativeBridge() {
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Status-bar contrast follows the page theme (light auth pages vs dark app).
+  useEffect(() => {
+    if (!isCapacitor()) return;
+    syncStatusBarToRoute(location.pathname);
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!isCapacitor()) return;

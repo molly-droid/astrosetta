@@ -7,13 +7,16 @@
  * append it, and save — the client receives both appends via its realtime
  * subscription on agent_conversation.
  *
- * PROVIDER SEAM: generateReply() is the swap point. The migration scope's
- * proposed Navigator backend is Astrology-API.io's hosted chat/completions,
- * pending the ~30-question parity/quality validation. Until that decision,
- * this interim implementation uses Claude directly — the client-side context
- * injection ([CHART CONTEXT] blocks built by FloatingNavigator) already
- * supplies chart data in the messages, so behavior matches the Base44 agent.
- * Requires secret: ANTHROPIC_API_KEY (interim); model via NAVIGATOR_MODEL.
+ * PROVIDER SEAM: generateReply() dispatches on the NAVIGATOR_PROVIDER secret:
+ *   'claude' (default)  — Anthropic directly (ANTHROPIC_API_KEY; model via
+ *                         NAVIGATOR_MODEL). The interim/baseline provider.
+ *   'astrology-api'     — Astrology-API.io hosted chat (ASTROLOGY_API_KEY),
+ *                         the scope's proposed backend, subject to the
+ *                         30-question parity validation
+ *                         (docs/NAVIGATOR_PARITY_TEST.md).
+ * Either way the client-side context injection ([CHART CONTEXT] blocks built
+ * by FloatingNavigator) supplies chart data in the messages, so behavior
+ * matches the Base44 agent.
  */
 import Anthropic from 'npm:@anthropic-ai/sdk';
 import { json, handleOptions, getAuthUser, serviceClient } from '../_shared/edge.ts';
@@ -24,13 +27,14 @@ import { CHART_NAVIGATOR_INSTRUCTIONS } from '../_shared/chartNavigatorPersona.t
 // keep replay costs sane (flagged in the Navigator API evaluation).
 const HISTORY_LIMIT = 30;
 const MODEL = Deno.env.get('NAVIGATOR_MODEL') || 'claude-sonnet-5';
+const PROVIDER = Deno.env.get('NAVIGATOR_PROVIDER') || 'claude';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
-async function generateReply(history: ChatMessage[]): Promise<string> {
+async function generateClaudeReply(history: ChatMessage[]): Promise<string> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY secret is not set');
   const client = new Anthropic({ apiKey });
@@ -44,6 +48,39 @@ async function generateReply(history: ChatMessage[]): Promise<string> {
     .filter((b: { type: string }) => b.type === 'text')
     .map((b: { text: string }) => b.text)
     .join('');
+}
+
+// Astrology-API.io hosted chat — OpenAI Chat Completions protocol with the
+// astro-tuned hosted model. Flat 25 credits/turn (LLM included); billing is
+// the client's Astrology-API.io subscription, no Anthropic spend.
+async function generateAstrologyApiReply(history: ChatMessage[]): Promise<string> {
+  const apiKey = Deno.env.get('ASTROLOGY_API_KEY');
+  if (!apiKey) throw new Error('ASTROLOGY_API_KEY secret is not set');
+  const res = await fetch('https://api.astrology-api.io/api/v3/chat/completions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'astro-default',
+      stream: false,
+      messages: [
+        { role: 'system', content: CHART_NAVIGATOR_INSTRUCTIONS },
+        ...history.slice(-HISTORY_LIMIT).map((m) => ({ role: m.role, content: m.content })),
+      ],
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`astrology-api chat ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  }
+  const data = await res.json();
+  const content = data?.choices?.[0]?.message?.content;
+  if (!content) throw new Error('astrology-api chat returned no content');
+  return content;
+}
+
+function generateReply(history: ChatMessage[]): Promise<string> {
+  return PROVIDER === 'astrology-api'
+    ? generateAstrologyApiReply(history)
+    : generateClaudeReply(history);
 }
 
 Deno.serve(async (req) => {

@@ -54,12 +54,18 @@ _Last updated: 2026-09-24_
 3. Stripe setup once team invite lands (products, webhook → secrets)
 4. Molly sign-off: AI daily limits + tier-gate map (proposal in DEPLOYMENT.md)
 
-**Phase 2 — Astrology-API.io (when key arrives):**
-5. Implement provider in `navigator-chat` `generateReply()` behind
-   `NAVIGATOR_PROVIDER`; run parity test; score vs baseline → go/no-go
+**Phase 2 — Astrology-API.io (key received 2026-09-29):**
+5. ~~Provider + parity run~~ **done — candidate passed, client approved, and
+   the switch is LIVE in production (2026-09-30)**: `ASTROLOGY_API_KEY` +
+   `NAVIGATOR_PROVIDER=astrology-api` hosted secrets set, navigator-chat
+   redeployed. Navigator now runs on the client's Astrology-API.io
+   subscription (no per-message Anthropic bill); Claude remains the instant
+   rollback (`NAVIGATOR_PROVIDER=claude` + redeploy). See
+   docs/NAVIGATOR_PARITY_RESULTS.md.
 6. Implement chart engine behind the existing adapter (replacing the ported
-   hand-rolled ephemeris); validate against `packages/core` / cross-check
-   function. (Full recalc of cached charts happens at cutover regardless.)
+   hand-rolled ephemeris) — first cross-check: 10/10 planets exact sign+house
+   agreement. Extended points via `active_points`/`custom_bodies`. (Full
+   recalc of cached charts happens at cutover regardless.)
 
 **Phase 3 — subscriptions:**
 7. RevenueCat project + entitlements; Stripe/Apple/Google products mapped;

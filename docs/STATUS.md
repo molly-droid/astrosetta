@@ -36,12 +36,25 @@ _Last updated: 2026-09-24_
 - [x] **Pushed to GitHub and merged to `main`** (2026-09-25) — `main` is now
       the trunk; work continues there. Go-live remains gated by the cutover
       steps (data import + DNS), not by the merge.
-- [ ] Resend: key received → set as hosted secret; domain DNS verification
-      still needed before real sends
-- [ ] Google OAuth: client created by Molly → client ID/secret still need to
-      go into Supabase Auth (+ redirect URI in Google console)
-- [ ] Stripe: awaiting team invite (then we self-serve: products/prices,
-      restricted key, webhook, subscriber export)
+- [x] **Resend fully ready (confirmed 2026-10-02)**: send-only key installed
+      as hosted secret, and astrosetta.com was ALREADY verified in Molly's
+      Resend account (done ~2mo ago for the Base44 app) — @astrosetta.com
+      sends work now. Email round-trip test happens in the cutover smoke
+      pass (welcome email + one manual digest, per DEPLOYMENT.md §5).
+- [x] **Google OAuth verified working on web (2026-10-01)** — redirect URI
+      added, sign-in round-trip confirmed. Follow-ups: (1) secret pinning
+      DEFERRED by choice (2026-10-01) — if sign-in breaks when Molly deletes
+      her old client secret, paste the 9/18 secret into Supabase Auth →
+      Providers → Google and retest; (2) add `astrosetta://login` to Supabase
+      Auth → Redirect URLs for native Google sign-in (mobile phase).
+- [x] **Stripe sandbox configured (2026-10-01)**: four app-matching prices
+      (Core $5.55/mo+$55/yr, Premium $7.77/mo+$77/yr) on her existing
+      products, webhook registered (checkout.session.completed, invoice.paid,
+      customer.subscription.deleted), all six secrets set on the hosted
+      project. ⚠️ Ask Molly: her sandbox had $9/$14 prices — if that's
+      intended launch pricing, the app's UI copy + our price IDs need
+      updating; we matched what the app displays. Repeat the whole setup in
+      LIVE mode at cutover (runbook), incl. active-subscriber export.
 - [ ] Astrology-API.io: Molly generating key (backend-only restriction)
 
 ## Remaining work, in order
@@ -62,10 +75,16 @@ _Last updated: 2026-09-24_
    subscription (no per-message Anthropic bill); Claude remains the instant
    rollback (`NAVIGATOR_PROVIDER=claude` + redeploy). See
    docs/NAVIGATOR_PARITY_RESULTS.md.
-6. Implement chart engine behind the existing adapter (replacing the ported
-   hand-rolled ephemeris) — first cross-check: 10/10 planets exact sign+house
-   agreement. Extended points via `active_points`/`custom_bodies`. (Full
-   recalc of cached charts happens at cutover regardless.)
+6. ~~Chart engine swap~~ **done & LIVE (2026-09-30)**: chart-calculator's
+   position layer (planet longitudes, retrogrades, angles, cusps) now comes
+   from Astrology-API.io (Swiss Ephemeris) with the builtin ephemeris as
+   automatic fallback; all downstream math/response shape unchanged.
+   Cross-check over 5 charts: majors/angles agree ≤0.3°; the builtin's
+   asteroid errors (up to 5.7°, incl. a wrong-sign Pallas) are what the swap
+   fixes. Tyche stays builtin (not served by their deployment). Positions are
+   cached permanently in `ephemeris_cache` (~1 credit per unique moment,
+   shared across all users). Rollback: unset `CHART_ENGINE` secret. (Full
+   recalc of cached charts still happens at cutover.)
 
 **Phase 3 — subscriptions:**
 7. RevenueCat project + entitlements; Stripe/Apple/Google products mapped;

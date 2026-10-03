@@ -7,9 +7,18 @@
  *
  * ASC disambiguation: RA-based (pick candidate whose RA ≈ RAMC+90°).
  * MC disambiguation: pick candidate whose RA ≈ RAMC (upper meridian).
+ *
+ * ENGINE SEAM: when CHART_ENGINE=astrology-api (or per-request engine
+ * override), planetary longitudes/retrogrades + angles/cusps come from
+ * Astrology-API.io (Swiss Ephemeris) via _shared/astrologyApiEngine.ts and
+ * flow through the SAME downstream pipeline (lots, aspects, stations,
+ * ingresses) — identical response shape, accurate positions. The builtin
+ * hand-rolled ephemeris remains the fallback on any remote failure and
+ * still powers the day-resolution sampling (station/ingress detection).
  */
 import { json, handleOptions, getAuthUser, isServiceRole } from '../_shared/edge.ts';
 import { trueNode } from '../_shared/lunarNode.ts';
+import { remoteEngineEnabled, fetchRemoteMoment, toUtcParts } from '../_shared/astrologyApiEngine.ts';
 
 const D2R=Math.PI/180,R2D=180/Math.PI;
 const LOT_NAMES=new Set(['Part of Fortune','Part of Spirit','Part of Eros','Part of Necessity','Tyche','Juno','Pallas','Vesta']);
@@ -238,13 +247,18 @@ function wholeSignCusps(ascLon){
   for(let i=0;i<12;i++)cusps.push(n360(ascSignStart+i*30));
   return cusps;
 }
-function buildChart(jde,lat,lon,houseSystem){
+function buildChart(jde,lat,lon,houseSystem,remote=null){
+  // `remote` (astrologyApiEngine RemoteMoment) overrides the position layer;
+  // every downstream step below is engine-agnostic math over longitudes.
+  const rp=(nm)=>remote?.positions?.[nm];
   const T=(jde-2451545)/36525,PNAMES=['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','Chiron','Black Moon Lilith'];
-  const planets=PNAMES.map(nm=>({name:nm,...si(pLon(nm,T,jde)),retrograde:isRetro(nm,jde),house:null}));
-  const nn=trueNode(jde);
+  const planets=PNAMES.map(nm=>({name:nm,...si(rp(nm)?rp(nm).longitude:pLon(nm,T,jde)),retrograde:rp(nm)?rp(nm).retrograde:isRetro(nm,jde),house:null}));
+  const nn=rp('North Node')?rp('North Node').longitude:trueNode(jde);
   planets.push({name:'North Node',...si(nn),retrograde:true,house:null});
   planets.push({name:'South Node',...si(n360(nn+180)),retrograde:true,house:null});
-  const hc=houseCusps(jde,lat,lon);
+  const hc=(remote&&remote.asc!=null&&remote.mc!=null)
+    ?{ASC:remote.asc,MC:remote.mc,DSC:n360(remote.asc+180),IC:n360(remote.mc+180),cusps:remote.cusps??wholeSignCusps(remote.asc)}
+    :houseCusps(jde,lat,lon);
   const ASC=hc.ASC,MC=hc.MC,IC=hc.IC,DSC=hc.DSC;
   const cusps=houseSystem==='whole_sign'?wholeSignCusps(ASC):hc.cusps;
   // ── Lots & asteroid (premium-gated, computed for all charts) ──
@@ -256,10 +270,10 @@ function buildChart(jde,lat,lon,houseSystem){
   const venusP=planets.find(p=>p.name==='Venus'),saturnP=planets.find(p=>p.name==='Saturn');
   planets.push({name:'Part of Eros',...si(n360(ASC+venusP.longitude-sunP.longitude)),retrograde:false,house:null});
   planets.push({name:'Part of Necessity',...si(n360(ASC+saturnP.longitude-sunP.longitude)),retrograde:false,house:null});
-  planets.push({name:'Tyche',...si(pLon('Tyche',T,jde)),retrograde:false,house:null});
-  planets.push({name:'Juno',...si(pLon('Juno',T,jde)),retrograde:isRetro('Juno',jde),house:null});
-  planets.push({name:'Pallas',...si(pLon('Pallas',T,jde)),retrograde:isRetro('Pallas',jde),house:null});
-  planets.push({name:'Vesta',...si(pLon('Vesta',T,jde)),retrograde:isRetro('Vesta',jde),house:null});
+  planets.push({name:'Tyche',...si(rp('Tyche')?rp('Tyche').longitude:pLon('Tyche',T,jde)),retrograde:rp('Tyche')?rp('Tyche').retrograde:false,house:null});
+  planets.push({name:'Juno',...si(rp('Juno')?rp('Juno').longitude:pLon('Juno',T,jde)),retrograde:rp('Juno')?rp('Juno').retrograde:isRetro('Juno',jde),house:null});
+  planets.push({name:'Pallas',...si(rp('Pallas')?rp('Pallas').longitude:pLon('Pallas',T,jde)),retrograde:rp('Pallas')?rp('Pallas').retrograde:isRetro('Pallas',jde),house:null});
+  planets.push({name:'Vesta',...si(rp('Vesta')?rp('Vesta').longitude:pLon('Vesta',T,jde)),retrograde:rp('Vesta')?rp('Vesta').retrograde:isRetro('Vesta',jde),house:null});
   for(const p of planets)p.house=getHouse(p.longitude,cusps);
   const houses=cusps.map((c,i)=>({number:i+1,...si(c)}));
   const angles={ascendant:si(ASC),midheaven:si(MC),descendant:si(DSC),ic:si(IC)};
@@ -300,11 +314,14 @@ Deno.serve(async (req) => {
       const houseSystem = body.house_system ?? traditionDefaultHouseSystem(tradition);
       const tz = typeof body.utc_offset === 'number' ? body.utc_offset : (TZ[birth_location.timezone] ?? 0);
       const natalJDE = toJDE(birth_date, birth_time, tz);
-      let chart = buildChart(natalJDE, birth_location.latitude, birth_location.longitude, houseSystem);
+      const remote = remoteEngineEnabled(body.engine)
+        ? await fetchRemoteMoment({ utc: toUtcParts(birth_date, birth_time, tz), latitude: birth_location.latitude, longitude: birth_location.longitude, houseSystem })
+        : null;
+      let chart = buildChart(natalJDE, birth_location.latitude, birth_location.longitude, houseSystem, remote);
       if (tradition === 'vedic') chart = toSidereal(chart, natalJDE);
       chart.zodiac = tradition === 'vedic' ? 'sidereal' : 'tropical';
       chart.tradition = tradition;
-      return json({ chart_type: 'natal', birth_date, birth_time: birth_time ?? '12:00:00', birth_location, utc_offset: tz, house_system: houseSystem, ...chart });
+      return json({ chart_type: 'natal', birth_date, birth_time: birth_time ?? '12:00:00', birth_location, utc_offset: tz, house_system: houseSystem, engine: remote ? 'astrology-api' : 'builtin', ...chart });
     }
 
     if (ct === 'transit') {
@@ -316,7 +333,19 @@ Deno.serve(async (req) => {
       const houseSystem = body.house_system ?? traditionDefaultHouseSystem(tradition);
       const tz = typeof body.utc_offset === 'number' ? body.utc_offset : (TZ[birth_location.timezone] ?? 0);
       const natalJDE = toJDE(birth_date, birth_time, tz);
-      const natal = buildChart(natalJDE, birth_location.latitude, birth_location.longitude, houseSystem);
+      // Remote positions for both moments in parallel: the natal moment (with
+      // cusps) and the transit sky (location-independent, cached per instant
+      // across ALL users). Either may be null → builtin fallback for that part.
+      const tDateEarly = body.transit_date ?? new Date().toISOString().slice(0, 10);
+      const tzOffsetEarly = typeof body.utc_offset === 'number' ? body.utc_offset : 0;
+      const useRemote = remoteEngineEnabled(body.engine);
+      const [natalRemote, skyRemote] = useRemote
+        ? await Promise.all([
+            fetchRemoteMoment({ utc: toUtcParts(birth_date, birth_time, tz), latitude: birth_location.latitude, longitude: birth_location.longitude, houseSystem }),
+            fetchRemoteMoment({ utc: toUtcParts(tDateEarly, body.transit_time ?? '12:00:00', tzOffsetEarly), latitude: 0, longitude: 0, houseSystem, skyOnly: true }),
+          ])
+        : [null, null];
+      const natal = buildChart(natalJDE, birth_location.latitude, birth_location.longitude, houseSystem, natalRemote);
       if (tradition === 'vedic') toSidereal(natal, natalJDE);
       let natalPlanets = (natal_planets_override && natal_planets_override.length > 0) ? natal_planets_override : natal.planets;
       // Keep natal lots (Part of Fortune, Tyche) as transit targets so transits
@@ -346,11 +375,12 @@ Deno.serve(async (req) => {
       const tzOffset = typeof body.utc_offset === 'number' ? body.utc_offset : 0;
       const tJDE = toJDE(tDate, transit_time ?? '12:00:00', tzOffset);
       const Tt = (tJDE - 2451545) / 36525;
+      const trp = (nm) => skyRemote?.positions?.[nm];
       const tPlanets = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','Chiron','Black Moon Lilith'].map(nm => ({
-        name: nm, ...si(pLon(nm, Tt, tJDE)), retrograde: isRetro(nm, tJDE), house: null
+        name: nm, ...si(trp(nm) ? trp(nm).longitude : pLon(nm, Tt, tJDE)), retrograde: trp(nm) ? trp(nm).retrograde : isRetro(nm, tJDE), house: null
       }));
       // Transit nodes — true (osculating) lunar nodes (always retrograde)
-      const trnn = trueNode(tJDE);
+      const trnn = trp('North Node') ? trp('North Node').longitude : trueNode(tJDE);
       tPlanets.push({ name: 'North Node', ...si(trnn), retrograde: true, house: null });
       tPlanets.push({ name: 'South Node', ...si(n360(trnn + 180)), retrograde: true, house: null });
       // Siderealize transit planets for Vedic so transit-to-natal aspects are
@@ -498,7 +528,7 @@ Deno.serve(async (req) => {
           }
         } catch { /* non-critical — fall back to noon Moon */ }
       }
-      return json({ chart_type: 'transit', natal: { birth_date, birth_time, birth_location, ...natal }, transit_date: tDate, transit_planets: tPlanets, transit_aspects: tAspects, stations, ingresses, zodiac: tradition === 'vedic' ? 'sidereal' : 'tropical', tradition });
+      return json({ chart_type: 'transit', natal: { birth_date, birth_time, birth_location, ...natal }, transit_date: tDate, transit_planets: tPlanets, transit_aspects: tAspects, stations, ingresses, zodiac: tradition === 'vedic' ? 'sidereal' : 'tropical', tradition, engine: skyRemote ? 'astrology-api' : 'builtin' });
     }
 
     if (ct === 'synastry') {
@@ -507,8 +537,16 @@ Deno.serve(async (req) => {
         return json({ error: 'synastry requires chart1 and chart2' }, { status: 400 });
       }
       const houseSystem = body.house_system ?? 'placidus';
-      const bn = (c) => { const tz = typeof c.utc_offset === 'number' ? c.utc_offset : (TZ[c.birth_location?.timezone] ?? 0); return buildChart(toJDE(c.birth_date, c.birth_time, tz), c.birth_location.latitude, c.birth_location.longitude, houseSystem); };
-      const c1 = bn(chart1), c2 = bn(chart2), ca = [];
+      const useRemoteSyn = remoteEngineEnabled(body.engine);
+      const bn = async (c) => {
+        const tz = typeof c.utc_offset === 'number' ? c.utc_offset : (TZ[c.birth_location?.timezone] ?? 0);
+        const remote = useRemoteSyn
+          ? await fetchRemoteMoment({ utc: toUtcParts(c.birth_date, c.birth_time, tz), latitude: c.birth_location.latitude, longitude: c.birth_location.longitude, houseSystem })
+          : null;
+        return buildChart(toJDE(c.birth_date, c.birth_time, tz), c.birth_location.latitude, c.birth_location.longitude, houseSystem, remote);
+      };
+      const [c1, c2] = await Promise.all([bn(chart1), bn(chart2)]);
+      const ca = [];
       // Build points arrays including angles (ASC/DC/MC/IC) and nodes (NN/SN)
       // so cross-aspects cover the full axes, not just planets
       const synPoints = (chart) => {

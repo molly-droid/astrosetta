@@ -24,6 +24,9 @@ Secrets (`supabase secrets set NAME=value`):
 | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` **[client]** | stripe-webhook, checkout, portal | Stripe dashboard |
 | `STRIPE_INTERPRET_PRICE_ID`, `STRIPE_CALENDAR_PRICE_ID`, `STRIPE_INTERPRET_YEARLY_PRICE_ID`, `STRIPE_CALENDAR_YEARLY_PRICE_ID` **[client]** | checkout + webhook tier mapping | Stripe products |
 | `APPLE_SHARED_SECRET` **[client]** | validate-iap-receipt | App Store Connect |
+| `ASTROLOGY_API_KEY` **[client]** | navigator-chat (hosted chat), chart-calculator (Swiss Ephemeris positions) | dashboard.astrology-api.io (Ultra tier) |
+| `NAVIGATOR_PROVIDER` = `astrology-api` | navigator-chat provider switch (unset/`claude` = Anthropic fallback) | — |
+| `CHART_ENGINE` = `astrology-api` | chart-calculator position engine (unset = builtin ephemeris) | — |
 | `APP_URL` | account-deletion, customer portal return URL | `https://astrosetta.com` |
 
 Vault seeds (SQL editor, once):

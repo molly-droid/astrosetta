@@ -105,6 +105,17 @@ _Last updated: 2026-09-24_
 7. RevenueCat project + entitlements; Stripe/Apple/Google products mapped;
    webhooks, restore, reconciliation (needs Apple/Play/RevenueCat accounts +
    Apple shared secret)
+   — **Started 2026-10-05 via RevenueCat MCP**: project `proj2fbc6d7c`
+   (Molly's, Tony admin) already existed; created App Store app
+   `appe1bdbb0fac` (bundle `com.astrosetta.app`) + entitlements
+   `interpret`/"Core" and `calendar`/"Premium"; iOS public SDK key
+   (`appl_EnZ...`) wired into `apps/web/.env` as `VITE_REVENUECAT_IOS_KEY`
+   (+ placeholders in `.env.example`). Molly's old "Astrosetta Pro"
+   entitlement left untouched — confirm with her before archiving.
+   REMAINING: upload ASC In-App Purchase key (.p8) + ASC API key to the
+   RevenueCat app (dashboard, manual); Play Store app; Stripe app/connection;
+   products + offerings + packages (blocked on pricing); attach products to
+   entitlements; webhook → Supabase; wire purchase flow + restore in app.
 
 **Phase 4 — mobile release:**
 8. Release-candidate builds, signed store builds, one submission each

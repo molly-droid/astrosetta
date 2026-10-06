@@ -112,10 +112,13 @@ _Last updated: 2026-09-24_
    (`appl_EnZ...`) wired into `apps/web/.env` as `VITE_REVENUECAT_IOS_KEY`
    (+ placeholders in `.env.example`). Molly's old "Astrosetta Pro"
    entitlement left untouched — confirm with her before archiving.
-   REMAINING: upload ASC In-App Purchase key (.p8) + ASC API key to the
-   RevenueCat app (dashboard, manual); Play Store app; Stripe app/connection;
-   products + offerings + packages (blocked on pricing); attach products to
-   entitlements; webhook → Supabase; wire purchase flow + restore in app.
+   2026-10-05 later: ASC In-App Purchase key uploaded
+   (`subscription_key_configured: true` — Apple link live); Play Store app
+   `appd3e40d25f4` created (package `com.astrosetta.app`), Android SDK key
+   wired into `.env`. REMAINING: Play Console app + service-account JSON →
+   RevenueCat (manual); Stripe app/connection; products + offerings +
+   packages (blocked on pricing); attach products to entitlements;
+   webhook → Supabase; wire purchase flow + restore in app.
 
 **Phase 4 — mobile release:**
 8. Release-candidate builds, signed store builds, one submission each

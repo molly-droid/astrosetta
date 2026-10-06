@@ -219,7 +219,7 @@ export default function AppLayout() {
                 <Link to="/home" className="relative inline-flex items-center justify-center shrink-0">
                   <div className={`absolute bg-gold-primary/30 rounded-full blur-xl ${sidebarCollapsed ? 'w-10 h-10' : 'w-16 h-16'}`} />
                   <img
-                    src="https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/c4d622f89_Asset74x.png"
+                    src="/media/c4d622f89_Asset74x.png"
                     alt="Astrosetta"
                     className={`relative object-contain ${sidebarCollapsed ? 'w-9 h-9' : 'w-14 h-14'}`}
                   />

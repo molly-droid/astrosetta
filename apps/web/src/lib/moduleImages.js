@@ -1,4 +1,4 @@
-const BASE = 'https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/';
+const BASE = '/media/';
 
 // Sign card images (golden/warm background) — used as module header on first block
 export const SIGN_CARD_IMAGES = {

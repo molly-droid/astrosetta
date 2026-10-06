@@ -55,7 +55,22 @@ _Last updated: 2026-09-24_
       intended launch pricing, the app's UI copy + our price IDs need
       updating; we matched what the app displays. Repeat the whole setup in
       LIVE mode at cutover (runbook), incl. active-subscriber export.
-- [ ] Astrology-API.io: Molly generating key (backend-only restriction)
+- [x] **Apple App Store Connect set up, steps 1–3 (2026-10-05)**: App ID
+      `com.astrosetta.app` registered with In-App Purchase capability, app
+      "Astrosetta" created in ASC (SKU `astrosetta-ios`), App-Specific Shared
+      Secret generated and set as hosted `APPLE_SHARED_SECRET` (verified via
+      `secrets list`). Remaining: subscription group + 4 auto-renewables
+      (`com.astrosetta.{interpret,calendar}.{monthly,yearly}`) once pricing
+      is settled, then wire real product IDs into `lib/entitlements.js`.
+- [x] **App-code media re-hosted off media.base44.com (2026-10-05)**: all 57
+      assets referenced in code (module/sign/planet images, logos, favicon,
+      og/social images — 35MB) downloaded to `apps/web/public/media/` and all
+      refs switched to `/media/...` (index.html social tags use absolute
+      `https://astrosetta.com/media/...`). Build + `cap sync` done — zero
+      `media.base44.com` refs remain in src/dist/ios/android. Assets kept
+      byte-identical (no recompression). REMAINING for Base44 decommission:
+      media URLs living *inside data* (entity records) — handled at cutover
+      import (Phase 5.11).
 
 ## Remaining work, in order
 
@@ -116,12 +131,13 @@ _Last updated: 2026-09-24_
 
 | Item | Unblocks |
 |---|---|
-| GitHub collaborator invite (`silexdev`) | pushing all committed work (top priority) |
-| Stripe team invite (Tony's email, Admin) | Phase 1.3 + Phase 3 |
-| Astrology-API.io key (backend-only) | Phase 2 |
-| Google OAuth client ID/secret → Supabase | Google sign-in |
-| DNS access (or willingness to paste records) | Resend verification now; DNS cutover later |
+| **Launch pricing confirmation** (app shows Core $5.55/$55, Premium $7.77/$77; her Stripe had $9/$14; same on iOS?) | Apple subscriptions (ASC step 4) + RevenueCat products + Stripe live prices |
+| Google Play + RevenueCat accounts (Apple done 2026-10-05) | Phases 3–4 |
+| DNS access (or willingness to paste records) | DNS cutover |
 | Vercel access (or new project under her account) | Phase 5 |
-| Apple / Play / RevenueCat accounts + Apple shared secret + bundle-ID sign-off | Phases 3–4 |
 | Sign-off: AI daily limits + tier-gate map | closes the LLM-tasks item |
 | At cutover: fresh Base44 export + interpretations export + active-subscriber list | Phase 5 |
+
+Resolved: GitHub invite (push/merge done), Stripe team invite (sandbox configured
+2026-10-01), Astrology-API.io key (2026-09-29), Google OAuth creds (verified
+2026-10-01), Apple account + shared secret (2026-10-05).

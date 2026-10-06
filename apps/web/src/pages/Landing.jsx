@@ -539,7 +539,7 @@ export default function Landing() {
         <footer className="text-center pb-10 px-6" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '2rem' }}>
           <div className="flex items-center justify-center mb-3">
             <img
-              src="https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/8a82dfec1_Asset24x.png"
+              src="/media/8a82dfec1_Asset24x.png"
               alt="Astrosetta"
               className="h-12 w-auto"
             />

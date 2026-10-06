@@ -4,8 +4,8 @@
 import { SIGN_HEADER_IMAGES, PLANET_CELESTIAL_IMAGES, PLANET_PNG_IMAGES } from '@/lib/moduleImages';
 
 // Fallback images (kept for any subject not in the custom sets)
-export const MYTHOLOGY_IMAGE = 'https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/329f825b1_generated_image.png';
-export const ASSOCIATIONS_IMAGE = 'https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/cbc54307b_generated_image.png';
+export const MYTHOLOGY_IMAGE = '/media/329f825b1_generated_image.png';
+export const ASSOCIATIONS_IMAGE = '/media/cbc54307b_generated_image.png';
 
 // ──────────────────────────────────────────────
 // PLANETS

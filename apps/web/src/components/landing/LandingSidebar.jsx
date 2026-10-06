@@ -37,7 +37,7 @@ export default function LandingSidebar({ collapsed, setCollapsed, onSignIn, load
           <button onClick={onSignIn} className="relative inline-flex items-center justify-center shrink-0" title="Astrosetta">
             <div className={`absolute bg-gold-primary/30 rounded-full blur-xl ${collapsed ? 'w-10 h-10' : 'w-14 h-14'}`} />
             <img
-              src="https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/c4d622f89_Asset74x.png"
+              src="/media/c4d622f89_Asset74x.png"
               alt="Astrosetta"
               className={`relative object-contain ${collapsed ? 'w-9 h-9' : 'w-12 h-12'}`}
             />
@@ -79,7 +79,7 @@ export default function LandingSidebar({ collapsed, setCollapsed, onSignIn, load
       >
         <button onClick={onSignIn} className="flex items-center">
           <img
-            src="https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/8a82dfec1_Asset24x.png"
+            src="/media/8a82dfec1_Asset24x.png"
             alt="Astrosetta"
             className="h-8 w-auto"
           />

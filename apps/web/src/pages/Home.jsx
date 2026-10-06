@@ -153,7 +153,7 @@ export default function Home() {
         <div className="px-4 pt-5 pb-2 text-center space-y-2 relative">
           <p className="font-body text-[10px] text-white/40 uppercase tracking-widest">Your celestial curriculum</p>
           <img
-            src="https://media.base44.com/images/public/69fcbc50df58f65eac4fd0a6/8a82dfec1_Asset24x.png"
+            src="/media/8a82dfec1_Asset24x.png"
             alt="Astrosetta"
             className="h-14 w-auto object-contain mx-auto"
           />

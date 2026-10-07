@@ -149,10 +149,11 @@ function getWeekDays(startDay) {
 // house system than what's currently active.
 function reassignHouses(raw) {
   const planets = [...(raw?.planets || [])];
-  const houses = raw?.houses || [];
+  const unknownTime = !!raw?.unknown_time;
+  const houses = unknownTime ? [] : (raw?.houses || []);
   const houseSystem = raw?.house_system || 'whole_sign';
-  const ascSign = raw?.ascendant_sign;
-  if (houses.length < 12) return planets;
+  const ascSign = unknownTime ? null : raw?.ascendant_sign;
+  if (houses.length < 12) return unknownTime ? planets.map(p => ({ ...p, house: null })) : planets;
   const norm = v => ((v % 360) + 360) % 360;
   for (const np of planets) {
     if (np.longitude == null) continue;
@@ -175,9 +176,10 @@ function reassignHouses(raw) {
 
 // ── Synthesis generators ─────────────────────────────────────────────────────
 async function generateWeekSynthesis(base44, raw, weekDays, tradition = 'modern') {
-  const natalBig3 = `☉ ${raw.sun_sign || ''} · ☽ ${raw.moon_sign || ''} · ASC ${raw.ascendant_sign || ''}`;
+  const unknownTime = !!raw.unknown_time;
+  const natalBig3 = `☉ ${raw.sun_sign || ''} · ☽ ${raw.moon_sign || ''}${unknownTime ? ' · birth time unknown — rising and houses not determined' : ` · ASC ${raw.ascendant_sign || ''}`}`;
   const natalPlanets = reassignHouses(raw);
-  if (raw.angles?.ascendant) {
+  if (!unknownTime && raw.angles?.ascendant) {
     natalPlanets.push({ name: 'Ascendant', longitude: raw.angles.ascendant.longitude, sign: raw.angles.ascendant.sign, house: 1 });
   }
 
@@ -204,6 +206,7 @@ Rules:
 - Plain text only, no markdown
 - Use ONLY the transit data listed above. Do NOT mention or reference any planetary aspects, ingresses, or lunar events that are not explicitly listed in the data provided. Do NOT rely on your own knowledge of where planets currently are — your training data is outdated. Use only the signs and positions shown in the transit labels above.
 - ▲ = applying, ▽ = separating — shape advice accordingly
+${unknownTime ? '- BIRTH TIME UNKNOWN: Their birth time is unknown, so the rising sign, angles, and houses CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, or Descendant anywhere in your output. Interpret by planet, sign, and aspect only.' : ''}
 - SHOW YOUR WORK — this app teaches astrology. Each transit label already includes glyphs (planet + aspect + planet). Your interpretation sentence MUST explain the astrological mechanic: WHY this transiting planet in its current sign making this aspect to that natal planet in that house creates the described effect. Name the sign and house in your interpretation. No generic horoscope language.
 - Each day: label line + 1 interpretation sentence (max 25 words) explaining the mechanic
 - For no-transit days: write Moon sign energy only
@@ -239,7 +242,8 @@ async function generateMonthSynthesis(base44, raw, baseDate, tradition = 'modern
   const year = baseDate.getUTCFullYear();
   const month = baseDate.getUTCMonth();
   const monthName = baseDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-  const natalBig3 = `☉ ${raw.sun_sign || ''} · ☽ ${raw.moon_sign || ''} · ASC ${raw.ascendant_sign || ''}`;
+  const unknownTime = !!raw.unknown_time;
+  const natalBig3 = `☉ ${raw.sun_sign || ''} · ☽ ${raw.moon_sign || ''}${unknownTime ? ' · birth time unknown — rising and houses not determined' : ` · ASC ${raw.ascendant_sign || ''}`}`;
   const natalPlanets = reassignHouses(raw);
 
   const getLunation = (date) => {
@@ -282,10 +286,10 @@ Rules:
 - Use ONLY the transit data provided above. Do NOT mention or reference any planetary transits, aspects, or lunations that are not explicitly listed in the data provided.
 - CRITICAL: Do NOT rely on your own knowledge of where planets currently are — your training data is outdated. Use only the signs and positions shown in the data above.
 - Plain text only
-- Reason from the Sun/Moon/Rising combination together — not each placement in isolation
+${unknownTime ? '- BIRTH TIME UNKNOWN: Their birth time is unknown, so the rising sign, angles, and houses CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, or Descendant anywhere in your output. Interpret by planet, sign, and aspect only.' : '- Reason from the Sun/Moon/Rising combination together — not each placement in isolation'}
 - SHOW YOUR WORK — this app teaches astrology. When naming lunations and transits, use planet glyphs (☉☽☿♀♂♃♄♅♆♇). Explain the astrological mechanic: WHY the New or Full Moon in that sign aspecting that natal placement creates the described effect. Name the house involved. No generic horoscope language.
 - Anchor collective_theme to the New and Full Moon signs
-- personal_focus should reflect what this month's lunation axis activates for this Rising sign specifically
+- personal_focus should reflect what this month's lunation axis activates ${unknownTime ? 'for their natal planets by sign and aspect' : 'for this Rising sign specifically'}
 - No platitudes
 
 Return plain text in exactly this structure:

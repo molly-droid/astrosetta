@@ -66,13 +66,15 @@ function buildStructuredReference(raw, chart) {
   const angles = raw.angles || {};
   const nodes = raw.nodes || {};
 
-  const ascSign = chart.ascendant_sign || angles.ascendant?.sign || raw.ascendant_sign || '';
+  // Unknown birth time — rising/houses cannot be determined; report none.
+  const unknownTime = !!raw.unknown_time;
+  const ascSign = unknownTime ? '' : (chart.ascendant_sign || angles.ascendant?.sign || raw.ascendant_sign || '');
   const sun = signOf(planets, 'Sun');
   const moon = signOf(planets, 'Moon');
 
   // Chart ruler — the planet ruling the Ascendant sign
   let chartRuler = null;
-  const rulerName = CHART_RULERS[ascSign];
+  const rulerName = unknownTime ? null : CHART_RULERS[ascSign];
   if (rulerName) {
     const ruler = signOf(planets, rulerName);
     if (ruler) {
@@ -96,14 +98,14 @@ function buildStructuredReference(raw, chart) {
       glyph: PLANET_GLYPHS[name] || '',
       sign: p.sign,
       signGlyph: SIGN_GLYPHS[p.sign] || '',
-      house: p.house,
+      house: unknownTime ? null : p.house,
       retrograde: !!p.retrograde,
       degree: p.degree,
     };
   }).filter(Boolean);
 
-  // Houses — 12 with cusp sign
-  const houseRows = houses.map(h => ({
+  // Houses — 12 with cusp sign (none when birth time is unknown)
+  const houseRows = unknownTime ? [] : houses.map(h => ({
     number: h.number,
     sign: h.sign,
     signGlyph: SIGN_GLYPHS[h.sign] || '',
@@ -153,10 +155,12 @@ function buildStructuredReference(raw, chart) {
   const southNode = nodes.south_node || null;
 
   return {
-    ascSign, sun, moon, chartRuler,
+    unknownTime, ascSign, sun, moon, chartRuler,
     planetRows, houseRows, aspectRows, elements, modalities,
     northNode, southNode,
-    angles: { asc: angles.ascendant?.sign || '', mc: angles.midheaven?.sign || '' },
+    angles: unknownTime
+      ? { asc: '', mc: '' }
+      : { asc: angles.ascendant?.sign || '', mc: angles.midheaven?.sign || '' },
   };
 }
 
@@ -179,7 +183,7 @@ async function buildNarrative(base44, user, chart, ref) {
     ? `Chart ruler: ${ref.chartRuler.name}${ref.chartRuler.sign ? ` in ${ref.chartRuler.sign}` : ''}${ref.chartRuler.house ? ` (${ordinal(ref.chartRuler.house)} house)` : ''}${ref.chartRuler.retrograde ? ' retrograde' : ''}`
     : 'Chart ruler: unknown';
   const nodeLine = ref.northNode
-    ? `North Node in ${ref.northNode.sign}${ref.northNode.house ? ` (${ordinal(ref.northNode.house)} house)` : ''}, South Node in ${ref.southNode?.sign || ''}`
+    ? `North Node in ${ref.northNode.sign}${!ref.unknownTime && ref.northNode.house ? ` (${ordinal(ref.northNode.house)} house)` : ''}, South Node in ${ref.southNode?.sign || ''}`
     : '';
 
   const prompt = `You are a warm, insightful astrologer writing a welcoming onboarding email for ${user.full_name || 'a new student of astrology'} who just had their natal chart cast. This email recaps their full chart.
@@ -189,7 +193,7 @@ ${TONE_DIRECTIVE}
 THEIR CHART (authoritative — use ONLY these placements, do NOT invent any not listed):
 - Sun: ${sun}
 - Moon: ${moon}
-- Ascendant (Rising): ${asc}
+${ref.unknownTime ? '- Ascendant (Rising): unknown — their birth time was not provided, so houses, rising, and angles CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, or Descendant anywhere in your output.' : `- Ascendant (Rising): ${asc}`}
 - ${rulerLine}
 - Planets: ${planetLines}
 - Key aspects: ${aspectLines}
@@ -199,13 +203,15 @@ THEIR CHART (authoritative — use ONLY these placements, do NOT invent any not 
 
 Write ONLY these fields. Use full English words for every planet, sign, and aspect (no Unicode glyph symbols — the email inserts glyphs automatically). Do NOT mention any placement, aspect, or position not listed above.
 
-- greeting: one warm sentence welcoming them to their chart, naming the Sun/Moon/Rising combination.
+${ref.unknownTime ? `- greeting: one warm sentence welcoming them to their chart, naming their Sun and Moon signs.
+- big_three: 2-3 sentences on what their Sun and Moon together suggest — the blend of core identity and emotional nature. Invitational, not diagnostic. Do NOT mention rising or houses.
+- chart_ruler: 1-2 sentences noting their birth time was not provided, so the rising sign and chart ruler cannot be cast yet — invite them to add their birth time in the app to unlock them.` : `- greeting: one warm sentence welcoming them to their chart, naming the Sun/Moon/Rising combination.
 - big_three: 2-3 sentences on what their Sun, Moon, and Rising together suggest — the blend of core identity, emotional nature, and how they meet the world. Invitational, not diagnostic.
-- chart_ruler: 1-2 sentences on their chart ruler (name it) and what its placement may mean for their overall life direction.
+- chart_ruler: 1-2 sentences on their chart ruler (name it) and what its placement may mean for their overall life direction.`}
 - balance: 1 sentence on their element/modality balance and the temperament it may invite.
 - opportunities: 2-3 sentences naming their most supportive natal aspects (trines, sextiles, flowing conjunctions from the list above) — what comes naturally and where they have innate ease. Name the two planets and the aspect.
 - challenges: 2-3 sentences naming their most demanding natal aspects (squares, oppositions from the list above) — the growth edges, recurring tensions, and what they are learning to integrate. Name the two planets and the aspect.
-- transits_to_watch: 2-3 sentences on which transits to watch for given THIS chart specifically. Reference outer-planet transits to their Sun, Moon, or Ascendant; a Saturn or Jupiter return if age-relevant; and eclipse activations of their key placements. Name the natal placement that will be lit up. Be specific to their chart, not generic.
+- transits_to_watch: 2-3 sentences on which transits to watch for given THIS chart specifically. Reference outer-planet transits to their Sun${ref.unknownTime ? ' or Moon' : ', Moon, or Ascendant'}; a Saturn or Jupiter return if age-relevant; and eclipse activations of their key placements. Name the natal placement that will be lit up. Be specific to their chart, not generic.
 - closing: one warm sentence inviting them to explore their chart in the app and start today's quiz.
 
 Return JSON with: greeting, big_three, chart_ruler, balance, opportunities, challenges, transits_to_watch, closing.`;
@@ -242,7 +248,7 @@ Return JSON with: greeting, big_three, chart_ruler, balance, opportunities, chal
 
 // ── HTML renderer ──────────────────────────────────────────────────────────────
 function renderRecapHtml({ user, chart, ref, narrative, appUrl }) {
-  const BG = '#0f1a2e', CARD = '#16233d', GOLD = '#C9A961', GOLD2 = '#D4AF85', TEXT = '#ffffff', MUTED = '#9aa6bd', BLUE = '#9DB4C8';
+  const BG = '#FDFBF7', CARD = '#F5F1E8', GOLD = '#A07C3F', GOLD2 = '#B08D4A', TEXT = '#2C3E50', MUTED = '#8B7355', BLUE = '#4E6E8E';
   const home = appUrl ? `${appUrl}/home` : '#';
   const chartLink = appUrl ? `${appUrl}/chart` : '#';
   const quiz = appUrl ? `${appUrl}/home?tab=learn` : '#';
@@ -266,8 +272,8 @@ function renderRecapHtml({ user, chart, ref, narrative, appUrl }) {
     const planetsInHouse = ref.planetRows.filter(p => p.house === h.number);
     const planetsHtml = planetsInHouse.length
       ? planetsInHouse.map(p => `
-        <span style="display:inline-block;margin:3px 4px 0 0;padding:4px 10px;background:#1a2436;border:1px solid ${GOLD}22;border-radius:999px;font-family:Georgia,serif;font-size:12px;color:${TEXT};white-space:nowrap;">
-          <span style="color:${GOLD2};font-size:14px;margin-right:4px;">${p.glyph}</span>${p.name} <span style="color:${MUTED};">in</span> <span style="color:${GOLD2};">${p.signGlyph} ${p.sign}</span>${p.retrograde ? ` <span style="color:#D8B4C2;font-size:11px;">℞</span>` : ''}
+        <span style="display:inline-block;margin:3px 4px 0 0;padding:4px 10px;background:#EAE4D8;border:1px solid ${GOLD}22;border-radius:999px;font-family:Georgia,serif;font-size:12px;color:${TEXT};white-space:nowrap;">
+          <span style="color:${GOLD2};font-size:14px;margin-right:4px;">${p.glyph}</span>${p.name} <span style="color:${MUTED};">in</span> <span style="color:${GOLD2};">${p.signGlyph} ${p.sign}</span>${p.retrograde ? ` <span style="color:#A85D75;font-size:11px;">℞</span>` : ''}
         </span>`).join('')
       : `<span style="font-family:Georgia,serif;font-size:11px;color:${MUTED};font-style:italic;">No natal planets in this house</span>`;
     return `
@@ -284,15 +290,15 @@ function renderRecapHtml({ user, chart, ref, narrative, appUrl }) {
     <tr>
       <td style="font-family:Georgia,serif;font-size:12px;color:${TEXT};width:70px;vertical-align:middle;">${b.name}</td>
       <td style="vertical-align:middle;">
-        <div style="background:#1a2436;border-radius:999px;height:10px;overflow:hidden;">
+        <div style="background:#E5DECF;border-radius:999px;height:10px;overflow:hidden;">
           <div style="background:${b.color};height:10px;width:${b.pct}%;border-radius:999px;"></div>
         </div>
       </td>
       <td style="font-family:Georgia,serif;font-size:11px;color:${MUTED};width:36px;text-align:right;vertical-align:middle;">${b.count}</td>
     </tr><tr><td style="height:5px;line-height:5px;" colspan="3">&nbsp;</td></tr>`).join('');
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:${BG};">
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><style>:root{color-scheme:light;supported-color-schemes:light}</style></head>
+<body bgcolor="#FDFBF7" style="margin:0;padding:0;background:${BG};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BG};padding:32px 0;">
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
@@ -315,8 +321,8 @@ function renderRecapHtml({ user, chart, ref, narrative, appUrl }) {
         ${bigThreePill('Sun', chart.sun_sign || '')}
         <td style="width:8px;">&nbsp;</td>
         ${bigThreePill('Moon', chart.moon_sign || '')}
-        <td style="width:8px;">&nbsp;</td>
-        ${bigThreePill('Rising', ref.ascSign || '')}
+        ${ref.unknownTime ? '' : `<td style="width:8px;">&nbsp;</td>
+        ${bigThreePill('Rising', ref.ascSign || '')}`}
       </tr>
     </table>
   </td></tr>
@@ -339,7 +345,7 @@ function renderRecapHtml({ user, chart, ref, narrative, appUrl }) {
   <!-- Chart ruler callout -->
   ${ref.chartRuler ? `
   <tr><td style="padding:6px 28px 14px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,${CARD},#1d2c4a);border:1px solid ${GOLD}44;border-radius:12px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CARD};border:1px solid ${GOLD}44;border-radius:12px;">
       <tr><td style="padding:14px 18px;">
         <div style="font-family:Georgia,serif;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:${GOLD};margin-bottom:4px;">✦ Chart Ruler</div>
         <p style="font-family:Georgia,serif;font-size:14px;color:${TEXT};margin:0;">${highlight(`${ref.chartRuler.name}${ref.chartRuler.sign ? ` in ${ref.chartRuler.sign}` : ''}${ref.chartRuler.house ? ` (${ordinal(ref.chartRuler.house)} house)` : ''}${ref.chartRuler.retrograde ? ' retrograde' : ''}`)}</p>
@@ -348,6 +354,15 @@ function renderRecapHtml({ user, chart, ref, narrative, appUrl }) {
     </table>
   </td></tr>` : ''}
 
+  ${ref.unknownTime ? `
+  <!-- Unknown birth time notice -->
+  <tr><td style="padding:0 28px 14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CARD};border:1px solid ${GOLD}33;border-radius:12px;">
+      <tr><td style="padding:14px 18px;text-align:center;">
+        <p style="font-family:Georgia,serif;font-size:13px;color:${MUTED};line-height:1.5;margin:0;">Your birth time wasn't provided, so your rising sign and houses can't be determined yet. Add your birth time in the app to unlock them — your planets, signs, and aspects are all fully valid.</p>
+      </td></tr>
+    </table>
+  </td></tr>` : `
   <!-- House-by-house breakdown -->
   <tr><td style="padding:0 28px 8px;">
     <div style="font-family:Georgia,serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-bottom:6px;">✦ Your Houses, House by House</div>
@@ -355,15 +370,15 @@ function renderRecapHtml({ user, chart, ref, narrative, appUrl }) {
   </td></tr>
   <tr><td style="padding:0 28px 14px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${houseBreakdownHtml}</table>
-  </td></tr>
+  </td></tr>`}
 
   <!-- Key Opportunities & Challenges -->
   <tr><td style="padding:6px 28px 8px;">
     <div style="font-family:Georgia,serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-bottom:10px;">✦ Key Opportunities &amp; Challenges</div>
   </td></tr>
   <tr><td style="padding:0 28px 14px;">
-    ${narrative.opportunities ? `<div style="margin-bottom:12px;"><div style="font-family:Georgia,serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#A8C8A8;margin-bottom:4px;">✦ Opportunities</div><p style="font-family:Georgia,serif;font-size:14px;line-height:1.6;color:${TEXT};margin:0;">${highlight(narrative.opportunities)}</p></div>` : ''}
-    ${narrative.challenges ? `<div style="margin-bottom:12px;"><div style="font-family:Georgia,serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#D8B4C2;margin-bottom:4px;">⚠ Challenges</div><p style="font-family:Georgia,serif;font-size:14px;line-height:1.6;color:${TEXT};margin:0;">${highlight(narrative.challenges)}</p></div>` : ''}
+    ${narrative.opportunities ? `<div style="margin-bottom:12px;"><div style="font-family:Georgia,serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#5E8A5E;margin-bottom:4px;">✦ Opportunities</div><p style="font-family:Georgia,serif;font-size:14px;line-height:1.6;color:${TEXT};margin:0;">${highlight(narrative.opportunities)}</p></div>` : ''}
+    ${narrative.challenges ? `<div style="margin-bottom:12px;"><div style="font-family:Georgia,serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#A85D75;margin-bottom:4px;">⚠ Challenges</div><p style="font-family:Georgia,serif;font-size:14px;line-height:1.6;color:${TEXT};margin:0;">${highlight(narrative.challenges)}</p></div>` : ''}
     ${narrative.transits_to_watch ? `<div><div style="font-family:Georgia,serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:${BLUE};margin-bottom:4px;">🔭 Transits to Watch</div><p style="font-family:Georgia,serif;font-size:14px;line-height:1.6;color:${TEXT};margin:0;">${highlight(narrative.transits_to_watch)}</p></div>` : ''}
   </td></tr>
 
@@ -390,7 +405,7 @@ function renderRecapHtml({ user, chart, ref, narrative, appUrl }) {
 
   <!-- CTAs -->
   <tr><td style="padding:0 28px 8px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,${CARD},#1d2c4a);border:1px solid ${GOLD}44;border-radius:14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CARD};border:1px solid ${GOLD}44;border-radius:14px;">
       <tr><td style="padding:22px 24px;text-align:center;">
         <a href="${home}" style="display:inline-block;background:${GOLD2};color:#1a2436;font-family:Georgia,serif;font-size:15px;font-weight:bold;text-decoration:none;padding:14px 32px;border-radius:999px;">Enter Astrosetta →</a>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:14px;"><tr>
@@ -452,7 +467,9 @@ export default async function(req: Request): Promise<Response> {
     const ref = buildStructuredReference(raw, chart);
     const narrative = await buildNarrative(base44, recipient, chart, ref);
     const html = renderRecapHtml({ user: recipient, chart, ref, narrative, appUrl });
-    const subject = `✦ Your Birth Chart, In Detail — ${chart.sun_sign || ''} Sun, ${chart.moon_sign || ''} Moon, ${ref.ascSign || ''} Rising`;
+    const subject = ref.unknownTime
+      ? `✦ Your Birth Chart, In Detail — ${chart.sun_sign || ''} Sun, ${chart.moon_sign || ''} Moon`
+      : `✦ Your Birth Chart, In Detail — ${chart.sun_sign || ''} Sun, ${chart.moon_sign || ''} Moon, ${ref.ascSign || ''} Rising`;
 
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: recipient.email,

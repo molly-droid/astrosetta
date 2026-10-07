@@ -301,7 +301,7 @@ Deno.serve(async (req) => {
       if (tradition === 'vedic') chart = toSidereal(chart, natalJDE);
       chart.zodiac = tradition === 'vedic' ? 'sidereal' : 'tropical';
       chart.tradition = tradition;
-      return Response.json({ chart_type: 'natal', birth_date, birth_time: birth_time ?? '12:00:00', birth_location, utc_offset: tz, house_system: houseSystem, ...chart });
+      return Response.json({ chart_type: 'natal', birth_date, birth_time: birth_time ?? '12:00:00', unknown_time: !!body.unknown_time, birth_location, utc_offset: tz, house_system: houseSystem, ...chart });
     }
 
     if (ct === 'transit') {
@@ -495,7 +495,7 @@ Deno.serve(async (req) => {
           }
         } catch { /* non-critical — fall back to noon Moon */ }
       }
-      return Response.json({ chart_type: 'transit', natal: { birth_date, birth_time, birth_location, ...natal }, transit_date: tDate, transit_planets: tPlanets, transit_aspects: tAspects, stations, ingresses, zodiac: tradition === 'vedic' ? 'sidereal' : 'tropical', tradition });
+      return Response.json({ chart_type: 'transit', natal: { birth_date, birth_time, unknown_time: !!body.unknown_time, birth_location, ...natal }, transit_date: tDate, transit_planets: tPlanets, transit_aspects: tAspects, stations, ingresses, zodiac: tradition === 'vedic' ? 'sidereal' : 'tropical', tradition });
     }
 
     if (ct === 'synastry') {

@@ -8,413 +8,14 @@
  */
 import { compatClient } from '../_shared/base44Compat.ts';
 import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
-import { fetchKnowledgeDepth, densityInstruction } from '../_shared/knowledgeDensity.ts';
-import { TONE_DIRECTIVE } from '../_shared/toneDirective.ts';
-
-// ── Constants ────────────────────────────────────────────────────────────────
-const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
-const PLANET_GLYPHS = {Sun:'☉',Moon:'☽',Mercury:'☿',Venus:'♀',Mars:'♂',Jupiter:'♃',Saturn:'♄',Uranus:'♅',Neptune:'♆',Pluto:'♇',Chiron:'⚷','North Node':'☊','South Node':'☋','Black Moon Lilith':'⚸',Lilith:'⚸','Black Moon':'⚸',Ascendant:'Asc',Midheaven:'MC'};
-const ASPECT_GLYPHS = {conjunction:'☌',opposition:'☍',square:'□',trine:'△',sextile:'⚹'};
-const ASPECT_ABBREV = {conjunction:'cnj',opposition:'opp',square:'sq',trine:'tri',sextile:'sxt'};
-const ASPECT_ANGLES = {conjunction:0,opposition:180,trine:120,square:90,sextile:60};
-const PERSONA = `You are a psychologically astute astrologer and educator — specific, warm, and grounded. You never use generic affirmations or vague spiritual language. You always show your work: you name the specific planetary configurations (planet, sign, aspect, natal planet, house) creating each interpretation and explain the astrological mechanic of how those elements interact to produce the effect. Your goal is to teach the reader how astrology works, not just deliver a horoscope.
-
-${TONE_DIRECTIVE}`;
-const SLOW_SET = new Set(['Jupiter','Saturn','Uranus','Neptune','Pluto']);
-const ALL_TP = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
-const DOW_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const HOUSE_THEMES = ['','self and first impressions','money and values','communication and learning','home and family','creativity and romance','health and daily routines','partnerships','shared resources and intimacy','philosophy, travel, and higher learning','career and public standing','friendships and groups','solitude and spirituality'];
-const PLANET_DURATIONS = {Sun:'about 1 month',Mercury:'2–4 weeks',Venus:'3–4 weeks',Mars:'about 2 months',Jupiter:'about 1 year',Saturn:'about 2.5 years',Uranus:'about 7 years',Neptune:'about 14 years',Pluto:'12–30 years'};
-const CHART_RULERS = {Aries:{planet:'Mars'},Taurus:{planet:'Venus'},Gemini:{planet:'Mercury'},Cancer:{planet:'Moon'},Leo:{planet:'Sun'},Virgo:{planet:'Mercury'},Libra:{planet:'Venus'},Scorpio:{planet:'Pluto'},Sagittarius:{planet:'Jupiter'},Capricorn:{planet:'Saturn'},Aquarius:{planet:'Uranus'},Pisces:{planet:'Neptune'}};
-const TRAD_RULERS = {Aries:'Mars',Taurus:'Venus',Gemini:'Mercury',Cancer:'Moon',Leo:'Sun',Virgo:'Mercury',Libra:'Venus',Scorpio:'Mars',Sagittarius:'Jupiter',Capricorn:'Saturn',Aquarius:'Saturn',Pisces:'Jupiter'};
-const PROF_THEMES = {1:'identity and new beginnings',2:'resources and values',3:'communication and learning',4:'home and family',5:'creativity and pleasure',6:'health and daily routine',7:'partnerships and relationships',8:'transformation and shared resources',9:'beliefs and expansion',10:'career and public life',11:'community and future vision',12:'solitude and inner work'};
-
-function getSolarReturnContext(raw, date) {
-  if (!raw?.birth_date) return '';
-  const parts = raw.birth_date.split('-');
-  if (parts.length !== 3) return '';
-  const birthYear = parseInt(parts[0], 10);
-  const birthMonth = parseInt(parts[1], 10) - 1;
-  const birthDay = parseInt(parts[2], 10);
-  if (birthYear < 1900) return '';
-
-  const isBirthday = date.getMonth() === birthMonth && date.getDate() === birthDay;
-  const nowYear = date.getFullYear();
-  const birthdayThisYear = new Date(nowYear, birthMonth, birthDay);
-  const birthdayPassed = date > birthdayThisYear;
-  const age = (isBirthday || birthdayPassed) ? nowYear - birthYear : nowYear - birthYear - 1;
-  if (age < 0) return '';
-
-  // Days until next birthday
-  let nextBday = new Date(nowYear, birthMonth, birthDay);
-  if (date > nextBday) nextBday = new Date(nowYear + 1, birthMonth, birthDay);
-  const daysUntil = Math.ceil((nextBday - date) / 86400000);
-
-  // Profection
-  const profectedHouse = (age % 12) + 1;
-  const natalHouses = raw.houses || [];
-  const houseData = natalHouses.find(h => h.number === profectedHouse);
-  const profectedSign = houseData?.sign || raw.ascendant_sign || '';
-  const yearLord = TRAD_RULERS[profectedSign] || '';
-  const lordPlanet = (raw.planets || []).find(p => p.name === yearLord);
-  const lordPlacement = lordPlanet ? `${yearLord} in ${lordPlanet.sign}${lordPlanet.house ? ` (${lordPlanet.house}H)` : ''}` : '';
-
-  let ctx = '';
-  if (isBirthday) {
-    ctx += `SOLAR RETURN: TODAY IS THEIR BIRTHDAY — solar return #${age}. The Sun has returned to its exact natal position, marking a personal new year. Acknowledge this warmly and weave intention-setting, reflection, and renewal themes into the reading. `;
-  } else if (daysUntil <= 7) {
-    ctx += `SOLAR RETURN APPROACHING: Their birthday (solar return #${age + 1}) is in ${daysUntil} day(s). Weave anticipatory, reflective energy into the reading — a year is completing, a new one begins soon. `;
-  }
-  if (profectedSign && yearLord) {
-    ctx += `PROFECTION YEAR: ${profectedHouse}th house profection year (${PROF_THEMES[profectedHouse]}). Year lord is ${yearLord} (ruler of ${profectedSign})${lordPlacement ? `, placed in ${lordPlacement}` : ''}. Weave the profection house theme and year lord placement into the reading where relevant.`;
-  }
-  return ctx;
-}
-
-// ── Orbital math ─────────────────────────────────────────────────────────────
-function dateToJD(date) { return date.getTime() / 86400000 + 2440587.5; }
-
-function planetLongitude(name, jd) {
-  const T = (jd - 2451545.0) / 36525.0;
-  const deg = v => ((v % 360) + 360) % 360;
-  switch (name) {
-    case 'Sun': return deg(280.460 + 35999.372 * T);
-    case 'Moon': {
-      const Lp = 218.3164477 + 481267.88123421 * T;
-      const D = 297.8501921 + 445267.1114034 * T;
-      const pert = 6.288774 * Math.sin(D * Math.PI / 180);
-      return deg(Lp + pert);
-    }
-    case 'Mercury': return deg(252.251 + 149472.675 * T);
-    case 'Venus': return deg(181.979 + 58517.816 * T);
-    case 'Mars': return deg(355.433 + 19140.299 * T);
-    case 'Jupiter': return deg(34.351519 + 3034.905675 * T);
-    case 'Saturn': return deg(50.077444 + 1222.113794 * T);
-    case 'Uranus': return deg(314.055005 + 428.466998 * T);
-    case 'Neptune': return deg(304.348665 + 218.459213 * T);
-    case 'Pluto': return deg(238.929 + 145.2069 * T);
-    default: return 0;
-  }
-}
-
-function longitudeToSign(lon) {
-  const idx = Math.floor((((lon % 360) + 360) % 360) / 30);
-  return SIGNS[idx] || '';
-}
-
-function isRetrograde(name, date) {
-  if (name === 'Sun' || name === 'Moon') return false;
-  const prev = new Date(date.getTime() - 2 * 86400000);
-  const next = new Date(date.getTime() + 2 * 86400000);
-  const l0 = planetLongitude(name, dateToJD(prev));
-  const l1 = planetLongitude(name, dateToJD(date));
-  const l2 = planetLongitude(name, dateToJD(next));
-  function motion(a, b) { let d = b - a; if (d > 180) d -= 360; if (d < -180) d += 360; return d; }
-  return motion(l0, l1) < 0 || motion(l1, l2) < 0;
-}
-
-function getMoonPhaseName(moonLon, sunLon) {
-  let diff = ((moonLon - sunLon) + 360) % 360;
-  if (diff < 22.5 || diff >= 337.5) return 'New Moon';
-  if (diff < 67.5) return 'Crescent';
-  if (diff < 112.5) return 'First Quarter';
-  if (diff < 157.5) return 'Gibbous';
-  if (diff < 202.5) return 'Full Moon';
-  if (diff < 247.5) return 'Disseminating';
-  if (diff < 292.5) return 'Last Quarter';
-  return 'Balsamic';
-}
-
-function checkAspect(lon1, lon2) {
-  let diff = Math.abs(lon1 - lon2);
-  if (diff > 180) diff = 360 - diff;
-  for (const [aspName, aspAngle] of Object.entries(ASPECT_ANGLES)) {
-    const orb = Math.abs(diff - aspAngle);
-    if (orb <= 2.0) return { aspect: aspName, orb };
-  }
-  return null;
-}
-
-function formatTransitLabel(tp, np, aspect) {
-  const houseStr = np.house ? ` (${np.house}H)` : '';
-  const tSign = tp.sign ? ` in ${tp.sign}` : '';
-  const nSign = np.sign ? ` in ${np.sign}` : '';
-  return `${tp.name}${tSign} ${aspect} ${np.name}${nSign}${houseStr}`;
-}
-
-function dateKey(date) {
-  const y = date.getUTCFullYear();
-  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(date.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
-// Re-assign natal planet houses using stored cusps — ensures correct house
-// assignments even if the stored chart was calculated with a different
-// house system than what's currently active.
-function reassignHouses(natalRaw) {
-  const planets = natalRaw?.planets || [];
-  const houses = natalRaw?.houses || [];
-  const houseSystem = natalRaw?.house_system || 'whole_sign';
-  const ascSign = natalRaw?.ascendant_sign;
-  if (houses.length < 12) return planets;
-  const norm = v => ((v % 360) + 360) % 360;
-  for (const np of planets) {
-    if (np.longitude == null) continue;
-    if (houseSystem === 'whole_sign' && ascSign) {
-      const signIdx = Math.floor(norm(np.longitude) / 30);
-      const ascIdx = SIGNS.indexOf(ascSign);
-      np.house = ((signIdx - ascIdx + 12) % 12) + 1;
-    } else {
-      const lon = norm(np.longitude);
-      for (let i = 0; i < 12; i++) {
-        const a = norm(houses[i].longitude);
-        const b = norm(houses[(i + 1) % 12].longitude);
-        const inside = a <= b ? (lon >= a && lon < b) : (lon >= a || lon < b);
-        if (inside) { np.house = i + 1; break; }
-      }
-    }
-  }
-  return planets;
-}
-
-// ── Transit processing ────────────────────────────────────────────────────────
-function processTransits(date, natalRaw) {
-  const jd = dateToJD(date);
-  const natalPlanets = reassignHouses(natalRaw);
-
-  const transitPlanets = ALL_TP.map(name => {
-    const lon = planetLongitude(name, jd);
-    return { name, longitude: lon, sign: longitudeToSign(lon), retrograde: isRetrograde(name, date) };
-  });
-
-  // Natal aspects (slow planets + fast planets to natal)
-  const PLANET_ORBS = { Sun: 2.0, Mercury: 2.0, Venus: 2.0, Mars: 2.0 };
-  const natalAspects = [];
-  for (const tp of transitPlanets) {
-    if (tp.name === 'Moon') continue;
-    const isSlow = SLOW_SET.has(tp.name);
-    const maxOrb = isSlow ? 2.0 : (PLANET_ORBS[tp.name] ?? 2.0);
-    for (const np of natalPlanets) {
-      const result = checkAspect(tp.longitude, np.longitude);
-      if (result && result.orb <= maxOrb) {
-        natalAspects.push({ transit_planet: tp.name, natal_planet: np.name, aspect: result.aspect, orb: result.orb, type: 'natal' });
-      }
-    }
-  }
-
-  // Lunar aspects (Moon to natal, wider orb)
-  const moon = transitPlanets.find(p => p.name === 'Moon');
-  const lunarAspects = [];
-  for (const np of natalPlanets) {
-    const result = checkAspect(moon.longitude, np.longitude);
-    if (result && result.orb <= 8.0) {
-      lunarAspects.push({ transit_planet: 'Moon', natal_planet: np.name, aspect: result.aspect, orb: result.orb, type: 'lunar' });
-    }
-  }
-
-  // Mundane aspects (transit to transit, excluding Moon)
-  const MUNDANE_ORBS = { conjunction: 2.0, opposition: 2.0, trine: 2.0, square: 2.0, sextile: 1.5 };
-  const mundaneAspects = [];
-  for (let i = 0; i < transitPlanets.length; i++) {
-    for (let j = i + 1; j < transitPlanets.length; j++) {
-      const p1 = transitPlanets[i], p2 = transitPlanets[j];
-      if (p1.name === 'Moon' || p2.name === 'Moon') continue;
-      let diff = Math.abs(p1.longitude - p2.longitude);
-      if (diff > 180) diff = 360 - diff;
-      for (const [asp, targetOrb] of Object.entries(MUNDANE_ORBS)) {
-        const orb = Math.abs(diff - ASPECT_ANGLES[asp]);
-        if (orb <= targetOrb) {
-          mundaneAspects.push({ transit_planet: p1.name, natal_planet: p2.name, aspect: asp, orb: Math.round(orb * 100) / 100, type: 'mundane' });
-          break;
-        }
-      }
-    }
-  }
-
-  // Moon sign & phase
-  const sun = transitPlanets.find(p => p.name === 'Sun');
-  const moonPhase = (moon && sun) ? getMoonPhaseName(moon.longitude, sun.longitude) : '';
-  let diff = ((moon.longitude - sun.longitude) + 360) % 360;
-  const isExactNewMoon = diff <= 6 || diff >= 354;
-  const isExactFullMoon = Math.abs(diff - 180) <= 6;
-
-  // Stations
-  const stations = [];
-  for (const name of ALL_TP) {
-    if (name === 'Sun' || name === 'Moon') continue;
-    const prev = new Date(date.getTime() - 2 * 86400000);
-    const next = new Date(date.getTime() + 2 * 86400000);
-    const l0 = planetLongitude(name, dateToJD(prev));
-    const l1 = planetLongitude(name, dateToJD(date));
-    const l2 = planetLongitude(name, dateToJD(next));
-    function motion(a, b) { let d = b - a; if (d > 180) d -= 360; if (d < -180) d += 360; return d; }
-    const m0 = motion(l0, l1), m1 = motion(l1, l2);
-    if ((m0 > 0 && m1 < 0) || (m0 < 0 && m1 > 0)) {
-      stations.push({ planet: name, type: m0 > 0 ? 'retrograde' : 'direct', sign: longitudeToSign(l1) });
-    }
-  }
-
-  // Ingresses (planet changed sign since yesterday)
-  const ingresses = [];
-  for (const name of ALL_TP) {
-    const yesterday = new Date(date.getTime() - 86400000);
-    const todayLon = planetLongitude(name, jd);
-    const yesterdayLon = planetLongitude(name, dateToJD(yesterday));
-    if (longitudeToSign(todayLon) !== longitudeToSign(yesterdayLon)) {
-      ingresses.push({ planet: name, from_sign: longitudeToSign(yesterdayLon), to_sign: longitudeToSign(todayLon), degree: todayLon % 30, exact: true });
-    }
-  }
-
-  return { transitPlanets, natalAspects, mundaneAspects, lunarAspects, moonSign: moon?.sign, moonPhase, isExactNewMoon, isExactFullMoon, stations, ingresses };
-}
-
-// ── Synthesis builders ───────────────────────────────────────────────────────
-async function generateDaySynthesis(base44, raw, date, transits, depth) {
-  const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-  const natalPlanets = raw.planets || [];
-  const tPls = transits.transitPlanets || [];
-
-  const fmtNatal = transits.natalAspects.map(a => formatTransitLabel(
-    tPls.find(p => p.name === a.transit_planet) || { name: a.transit_planet, longitude: 0 },
-    natalPlanets.find(p => p.name === a.natal_planet) || { name: a.natal_planet, longitude: 0 },
-    a.aspect));
-  const fmtMundane = transits.mundaneAspects.map(a => formatTransitLabel(
-    tPls.find(p => p.name === a.transit_planet) || { name: a.transit_planet, longitude: 0 },
-    tPls.find(p => p.name === a.natal_planet) || { name: a.natal_planet, longitude: 0 },
-    a.aspect));
-  const fmtLunar = transits.lunarAspects.map(a => formatTransitLabel(
-    tPls.find(p => p.name === 'Moon') || { name: 'Moon', longitude: 0 },
-    natalPlanets.find(p => p.name === a.natal_planet) || { name: a.natal_planet, longitude: 0 },
-    a.aspect));
-
-  const fmtStations = transits.stations.map(s => `${s.planet} stations ${s.type === 'retrograde' ? 'retrograde (℞)' : 'direct (↗)'} in ${s.sign}`);
-
-  const fmtIngresses = transits.ingresses.map(ing => {
-    const signIdx = SIGNS.indexOf(ing.to_sign);
-    const natalHouses = raw.houses || [];
-    const houseSystem = raw.house_system || 'whole_sign';
-    const ascSign = raw.ascendant_sign;
-    let entryH = null;
-    if (houseSystem === 'whole_sign' && ascSign) {
-      const ascIdx = SIGNS.indexOf(ascSign);
-      if (signIdx >= 0 && ascIdx >= 0) entryH = ((signIdx - ascIdx + 12) % 12) + 1;
-    } else if (signIdx >= 0) {
-      const norm = v => ((v % 360) + 360) % 360;
-      const startLon = signIdx * 30;
-      for (let i = 0; i < natalHouses.length; i++) {
-        const a = norm(natalHouses[i].longitude), b = norm(natalHouses[(i+1)%12].longitude);
-        const inEntry = a <= b ? (norm(startLon) >= a && norm(startLon) < b) : (norm(startLon) >= a || norm(startLon) < b);
-        if (inEntry) { entryH = natalHouses[i].number; break; }
-      }
-    }
-    const base = `${ing.planet} enters ${ing.to_sign} (leaving ${ing.from_sign})`;
-    return entryH ? `${base} — in natal ${entryH}H (${HOUSE_THEMES[entryH]})` : base;
-  });
-
-  const ruler = CHART_RULERS[raw.ascendant_sign];
-  const rulerLine = ruler ? `CHART RULER: ${PLANET_GLYPHS[ruler.planet] || ''} ${ruler.planet} rules your ${raw.ascendant_sign} Ascendant — this planet governs your identity, life direction, and how you meet the world.` : '';
-  const moonInfo = transits.moonSign ? `Moon in ${transits.moonSign} (${transits.moonPhase})` : '';
-
-  const transitPositions = (tPls || [])
-    .filter(p => !['North Node', 'South Node', 'Black Moon Lilith'].includes(p.name))
-    .map(p => `${p.name}: ${p.sign} ${p.degree?.toFixed(0)}°`)
-    .join(', ');
-
-  const prompt = `${PERSONA}
-
-${densityInstruction(depth)}
-
-Today: ${dateStr}
-NATAL: ☉ ${raw.sun_sign} · ☽ ${raw.moon_sign} · ASC ${raw.ascendant_sign}
-NATAL PLACEMENTS: ${natalPlanets.map(p => `${p.name} in ${p.sign || '?'}${p.house ? ` (${p.house}H)` : ''}`).join(', ')}
-${rulerLine}
-${moonInfo}
-
-AUTHORITATIVE TRANSIT POSITIONS (use these exact signs — do NOT use your own knowledge of where planets are):
-${transitPositions || 'Data unavailable.'}
-
-TODAY'S TRANSITS
-PERSONAL:
-${fmtNatal.join('\n') || 'None today.'}
-
-MUNDANE:
-${fmtMundane.join('\n') || 'None today.'}
-
-LUNAR:
-${fmtLunar.join('\n') || 'None today.'}
-
-STATIONS:
-${fmtStations.join('\n') || 'None today.'}
-
-INGRESSES:
-${fmtIngresses.join('\n') || 'None today.'}
-
-Rules:
-- THE PERSONAL_READING IS ABOUT TRANSITS, NOT NATAL STRUCTURE. Every bullet in personal_reading MUST interpret a specific transit from TODAY'S TRANSITS above. Do NOT describe natal stelliums, chart patterns, sign-to-house oppositions, or natal chart structure unless a specific transit is directly activating them. A zodiac SIGN cannot form an aspect — only planets and points aspect other planets and points. Never write things like "Aries opposes your 7th house."
-- Every personal_reading bullet MUST begin by copying the exact transit label from TODAY'S TRANSITS above (transiting planet + sign, aspect, natal planet + natal sign and house when available). If the label has no house, do NOT invent one. One bullet per transit; do NOT combine multiple transits into one bullet.
-- COVERAGE & ORDER LOCK: personal_reading MUST contain EXACTLY ONE bullet for EVERY transit listed in the PERSONAL section above, in the exact order they appear. Do not skip, add, or reorder any transit. Knowledge Density changes only the prose depth and vocabulary of each bullet — never which transits are covered.
-- If PERSONAL transits say "None today," return an empty personal_reading array. Do NOT fill it with natal pattern descriptions.
-- After the label, write 2-3 sentences explaining the astrological mechanic in depth — name what the transiting planet represents (its drive/domain), how the sign it's in colors that energy, what the aspect does (flow/friction/merger), what the natal placement means in its sign and house, and the real-world life area activated. Teach the reader how the symbols combine so they learn to make their own interpretations.
-- personal_reading_core is a SUBSET of personal_reading: include ONLY the bullets for transits whose natal target is the Sun, Moon, or Ascendant (the "Big Three"). Use the exact same label and interpretation as in personal_reading. If none hit the Big Three, return an empty personal_reading_core array.
-- Use ONLY the transit data listed above. Do NOT mention or reference any planetary aspects, ingresses, stations, or lunar events that are not explicitly listed. If a category says "None today," do NOT invent any.
-- CRITICAL: Use ONLY the signs from AUTHORITATIVE TRANSIT POSITIONS above. Do NOT rely on your own knowledge of where planets currently are. Every time you mention a transiting planet, you MUST use the exact sign listed there.
-- Use ONLY the Moon sign and phase provided above.
-- LUNAR NODES: Transits to your natal North Node or South Node are karmically significant — the North Node marks your evolutionary direction and the South Node marks past-pattern comfort. When any transit aspects a node, you MUST include it in personal_reading AND name the nodal activation explicitly in the overview (e.g. "the Sun opposing your North Node..."). Never bury or omit a node transit.
-- Use FULL planet names and FULL aspect names. Never use abbreviations.
-- Do NOT include raw glyph symbols or the em-dash label format in your output. Write only prose — glyphs are added automatically by the frontend.
-- Do NOT include the words "applying" or "separating."
-- PERSONALIZATION LOCK: The overview and personal_reading must feel like they belong to no one else. Every personal_reading bullet MUST name the natal placement it touches inside the prose — e.g. "Because your natal Mars in Scorpio sits in your 5th house, you may experience this transit Venus as..." or "With your Virgo Midheaven, you may experience this Virgo Moon as...". When the transit lands on an angle (Ascendant, Midheaven, IC, Descendant), name that angle in the sentence. If a bullet could be true for anyone with any chart, rewrite it until it couldn't.
-- INVITING TONE: Speak directly to the reader in warm possibility language — "you may experience," "you might notice," "for you, this can show up as." Never commands, guarantees, or collective phrasing ("everyone," "we all") in the overview or personal_reading.
-- No platitudes, no generic horoscope language. Every sentence must be traceable to a specific transit configuration in the data above.
-
-Return JSON:
-{
-  "overview": "3-4 sentences synthesizing the WHOLE of what is happening today — weave the personal transits and collective sky into one coherent narrative naming the key configurations and which life areas are lit up. Speak directly to the reader and name their natal reference points (e.g. \"your Virgo Midheaven\") where relevant",
-  "personal_reading": ["TransitLabel — 2-3 sentence deep interpretation of the astrological mechanic", "..."],
-  "personal_reading_core": ["Same format as personal_reading, but ONLY for transits to the natal Sun, Moon, or Ascendant. Empty array if none."],
-  "collective_reading": ["Each bullet MUST start with 'PlanetName aspectName PlanetName' (e.g. 'Jupiter trine Sun') then the collective meaning", "..."],
-  "collective_highlight": "1 sentence on single most significant mundane transit",
-  "maximize": "1 action sentence",
-  "focus": "1 attention sentence",
-  "watch": "1 caution sentence",
-  "best_areas": ["area1", "area2"],
-  "power_planet": "planet name",
-  "key_themes": ["theme1", "theme2", "theme3"]
-}`;
-
-  const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-    prompt,
-    response_json_schema: {
-      type: 'object',
-      properties: {
-        overview: { type: 'string' },
-        personal_reading: { type: 'array', items: { type: 'string' } },
-        personal_reading_core: { type: 'array', items: { type: 'string' } },
-        collective_reading: { type: 'array', items: { type: 'string' } },
-        collective_highlight: { type: 'string' },
-        maximize: { type: 'string' },
-        focus: { type: 'string' },
-        watch: { type: 'string' },
-        best_areas: { type: 'array', items: { type: 'string' } },
-        power_planet: { type: 'string' },
-        key_themes: { type: 'array', items: { type: 'string' } },
-      },
-      required: ['overview', 'personal_reading', 'collective_reading', 'maximize', 'focus', 'watch', 'best_areas'],
-    },
-  });
-
-  const dk = dateKey(date);
-  return {
-    period_type: 'day',
-    period_key: `day-v20-${dk}-${depth}`,
-    date_start: dk,
-    date_end: dk,
-    summary: `Daily Reading · ${dateStr}`,
-    description: result.overview || '',
-    data: result,
-  };
-}
+import { fetchKnowledgeDepth } from '../_shared/knowledgeDensity.ts';
+import {
+  SIGNS, PLANET_GLYPHS, ASPECT_GLYPHS, ASPECT_ABBREV, ASPECT_ANGLES, PERSONA,
+  SLOW_SET, ALL_TP, DOW_SHORT, HOUSE_THEMES, PLANET_DURATIONS, CHART_RULERS, TRAD_RULERS, PROF_THEMES,
+  getSolarReturnContext, dateToJD, planetLongitude, longitudeToSign, isRetrograde, getMoonPhaseName,
+  checkAspect, formatTransitLabel, dateKey, reassignHouses, processTransits,
+  classifyCalculatorTransits, generateDaySynthesis
+} from '../_shared/daySynthesisGenerator.ts';
 
 async function generateWeekSynthesis(base44, raw, weekDays) {
   const natalPlanets = [...(raw.planets || [])];
@@ -440,7 +41,7 @@ async function generateWeekSynthesis(base44, raw, weekDays) {
   const prompt = `${PERSONA}
 
 Week: ${weekRange}
-NATAL: ☉ ${raw.sun_sign} · ☽ ${raw.moon_sign} · ASC ${raw.ascendant_sign}
+NATAL: ☉ ${raw.sun_sign} · ☽ ${raw.moon_sign}${raw.unknown_time ? ' · birth time unknown — rising and houses not determined; NEVER mention houses, rising, the Ascendant, or angles' : ` · ASC ${raw.ascendant_sign}`}
 ${solarContext}
 
 AUTHORITATIVE TRANSIT POSITIONS (use these exact signs — do NOT use your own knowledge of where planets are):
@@ -536,7 +137,7 @@ async function generateMonthSynthesis(base44, raw, baseDate) {
   const lunarEvents = [getLunation(t1), getLunation(t15)].filter(Boolean);
 
   const natalPlanetsStr = (raw.planets || [])
-    .map(p => `${p.name} in ${p.sign} (House ${p.house})`)
+    .map(p => `${p.name} in ${p.sign}${raw.unknown_time || p.house == null ? '' : ` (House ${p.house})`}`)
     .join('; ');
 
   const monthTransitPositions = (t1.transitPlanets || [])
@@ -547,7 +148,7 @@ async function generateMonthSynthesis(base44, raw, baseDate) {
   const prompt = `${PERSONA}
 
 Month: ${monthName}
-NATAL: Sun: ${raw.sun_sign}, Moon: ${raw.moon_sign}, Rising: ${raw.ascendant_sign}
+NATAL: Sun: ${raw.sun_sign}, Moon: ${raw.moon_sign}${raw.unknown_time ? ', birth time unknown — rising and houses not determined; NEVER mention houses, rising, the Ascendant, or angles' : `, Rising: ${raw.ascendant_sign}`}
 Planets: ${natalPlanetsStr || 'not provided'}
 
 AUTHORITATIVE TRANSIT POSITIONS (use these exact signs — do NOT use your own knowledge of where planets are):
@@ -603,10 +204,13 @@ Return JSON:
 
 async function generateLunarSynthesis(base44, raw, date, moonSign, exactPhase) {
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-  const natalPlanets = (raw.planets || []).map(p => `${p.name} in ${p.sign} (House ${p.house})`).join('; ');
-  const natalHouses = (raw.houses || []).map(h => `House ${h.number}: ${h.sign}`).join(', ');
+  // Unknown birth time — rising/houses cannot be determined; report no houses.
+  const unknownTime = !!raw.unknown_time;
+  const natalPlanets = (raw.planets || [])
+    .map(p => `${p.name} in ${p.sign}${unknownTime || p.house == null ? '' : ` (House ${p.house})`}`).join('; ');
+  const natalHouses = unknownTime ? '' : (raw.houses || []).map(h => `House ${h.number}: ${h.sign}`).join(', ');
 
-  const moonHouseObj = raw.houses?.find(h => h.sign === moonSign);
+  const moonHouseObj = unknownTime ? null : raw.houses?.find(h => h.sign === moonSign);
   const moonHouseNum = moonHouseObj?.number;
   const moonHouseContext = moonHouseNum
     ? `The ${exactPhase} falls in ${moonSign}, which is the ${moonHouseNum}th house for this person.`
@@ -622,9 +226,9 @@ async function generateLunarSynthesis(base44, raw, date, moonSign, exactPhase) {
 Today is ${dateStr} and there is a ${exactPhase} in ${moonSign}.
 
 NATAL CHART:
-Sun: ${raw.sun_sign}, Moon: ${raw.moon_sign}, Rising: ${raw.ascendant_sign}
+Sun: ${raw.sun_sign}, Moon: ${raw.moon_sign}${unknownTime ? ', birth time unknown — rising and houses not determined; NEVER mention houses, rising, the Ascendant, or angles' : `, Rising: ${raw.ascendant_sign}`}
 Planets: ${natalPlanets || 'not provided'}
-House cusps: ${natalHouses || 'not provided'}
+${unknownTime ? '' : `House cusps: ${natalHouses || 'not provided'}`}
 ${moonHouseContext}
 ${conjunctionNote}
 
@@ -634,7 +238,7 @@ CRITICAL: Use ONLY the natal chart data provided above. Do NOT invent signs, hou
 
 Return JSON:
 - collective: 2 sentences on what this ${exactPhase} means for everyone collectively — themes, archetypes, what is illuminated/released/seeded
-- personal: 2-3 sentences on how this specifically activates THIS person's natal chart. Reference the specific house it activates, any natal planets in ${moonSign}. Be concrete and personal.
+- personal: 2-3 sentences on how this specifically activates THIS person's natal chart. ${unknownTime ? `Reference the natal planets in ${moonSign} by sign only — their birth time is unknown, so do NOT mention houses or rising.` : `Reference the specific house it activates, any natal planets in ${moonSign}.`} Be concrete and personal.
 - ritual: 1 short practical suggestion for honoring this moon phase today`;
 
   const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
@@ -665,13 +269,16 @@ Return JSON:
 
 async function generateIngressSynthesis(base44, raw, date, ing) {
   const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-  const natalPlanets = (raw.planets || []).map(p => `${p.name} in ${p.sign} (House ${p.house})`).join('; ');
-  const natalHouses = (raw.houses || []).map(h => `House ${h.number}: ${h.sign}`).join(', ');
+  // Unknown birth time — rising/houses cannot be determined; report no houses.
+  const unknownTime = !!raw.unknown_time;
+  const natalPlanets = (raw.planets || [])
+    .map(p => `${p.name} in ${p.sign}${unknownTime || p.house == null ? '' : ` (House ${p.house})`}`).join('; ');
+  const natalHouses = unknownTime ? '' : (raw.houses || []).map(h => `House ${h.number}: ${h.sign}`).join(', ');
 
   // Find natal house for the ingressing sign
   const signIdx = SIGNS.indexOf(ing.to_sign);
   const houseSystem = raw.house_system || 'whole_sign';
-  const ascSign = raw.ascendant_sign;
+  const ascSign = unknownTime ? null : raw.ascendant_sign;
   let entryHouse = null;
   if (houseSystem === 'whole_sign' && ascSign) {
     const ascIdx = SIGNS.indexOf(ascSign);
@@ -693,10 +300,10 @@ async function generateIngressSynthesis(base44, raw, date, ing) {
 
   const planetsInNewSign = (raw.planets || []).filter(p => p.sign === ing.to_sign);
   const conjunctionNote = planetsInNewSign.length
-    ? `Natal planets in ${ing.to_sign}: ${planetsInNewSign.map(p => `${p.name} (House ${p.house})`).join(', ')} — ${ing.planet} will conjunct these.`
+    ? `Natal planets in ${ing.to_sign}: ${planetsInNewSign.map(p => `${p.name}${unknownTime || p.house == null ? '' : ` (House ${p.house})`}`).join(', ')} — ${ing.planet} will conjunct these.`
     : '';
 
-  const ruler = CHART_RULERS[raw.ascendant_sign];
+  const ruler = unknownTime ? null : CHART_RULERS[raw.ascendant_sign];
   const isChartRuler = ruler && ing.planet === ruler.planet;
   const rulerNote = isChartRuler
     ? `⭐ This is YOUR CHART RULER — ${ruler.planet} rules your ${raw.ascendant_sign} Ascendant. This ingress is personally significant because it directly activates your identity, life direction, and how you meet the world.`
@@ -709,9 +316,9 @@ async function generateIngressSynthesis(base44, raw, date, ing) {
 Today is ${dateStr} and ${ing.planet} enters ${ing.to_sign}, leaving ${ing.from_sign}.
 
 NATAL CHART:
-Sun: ${raw.sun_sign}, Moon: ${raw.moon_sign}, Rising: ${raw.ascendant_sign}
+Sun: ${raw.sun_sign}, Moon: ${raw.moon_sign}${unknownTime ? ', birth time unknown — rising and houses not determined; NEVER mention houses, rising, the Ascendant, or angles' : `, Rising: ${raw.ascendant_sign}`}
 Planets: ${natalPlanets || 'not provided'}
-House cusps: ${natalHouses || 'not provided'}
+${unknownTime ? '' : `House cusps: ${natalHouses || 'not provided'}`}
 ${houseContext}
 ${conjunctionNote}
 
@@ -726,7 +333,7 @@ CRITICAL: Use ONLY the natal chart data provided above. Do NOT invent signs, hou
 Return JSON:
 - headline: a short evocative title (max 6 words), e.g. "Jupiter Enters Your 9th House"
 - collective: 2 sentences on what this ingress means for everyone collectively — the archetypal shift, what themes ${ing.to_sign} activates for ${ing.planet}
-- personal: 2-3 sentences on how this specifically activates THIS person's natal chart. Reference the house it enters and any natal planets in ${ing.to_sign}. Be concrete and personal.
+- personal: 2-3 sentences on how this specifically activates THIS person's natal chart. ${unknownTime ? `Reference the natal planets in ${ing.to_sign} by sign only — their birth time is unknown, so do NOT mention houses or rising.` : `Reference the house it enters and any natal planets in ${ing.to_sign}.`} Be concrete and personal.
 - ritual: 1 short practical suggestion for working with this ingress energy`;
 
   const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
@@ -774,80 +381,7 @@ async function getCalculatorTransits(base44, raw, dateStr) {
   return res.data || res;
 }
 
-// Classify chartCalculator response into the format expected by generateDaySynthesis
-// Mirrors the frontend's processTransits logic from useTransits.jsx
-function classifyCalculatorTransits(calcData, natalRaw) {
-  const transitPlanets = calcData.transit_planets || [];
-  const transitAspects = calcData.transit_aspects || [];
-  const natalPlanets = natalRaw?.planets || [];
 
-  const SLOW_PLANETS = new Set(['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Chiron', 'North Node', 'South Node', 'Black Moon Lilith']);
-  const PLANET_ORBS = { Sun: 2.0, Mercury: 2.0, Venus: 2.0, Mars: 2.0 };
-  const SLOW_ORB = 2.0;
-  const FAST_ORB = 2.0;
-  const LUNAR_ORB = 8.0;
-
-  // Natal: non-Moon transit planets aspecting natal planets
-  const natalClassified = transitAspects
-    .filter(a => {
-      if (a.transit_planet === 'Moon') return false;
-      const isSlow = SLOW_PLANETS.has(a.transit_planet);
-      const maxOrb = isSlow ? SLOW_ORB : (PLANET_ORBS[a.transit_planet] ?? FAST_ORB);
-      return (a.orb ?? 99) <= maxOrb;
-    })
-    .map(a => ({ ...a, type: 'natal' }));
-
-  // Lunar: Moon to natal
-  const lunarClassified = transitAspects
-    .filter(a => a.transit_planet === 'Moon' && (a.orb ?? 99) <= LUNAR_ORB)
-    .map(a => ({ ...a, type: 'lunar' }));
-
-  // Mundane: transit-to-transit aspects (matching frontend)
-  const MUNDANE_ORBS = { conjunction: 2.0, opposition: 2.0, trine: 2.0, square: 2.0, sextile: 1.5 };
-  const ASPECT_ANGLES = { conjunction: 0, opposition: 180, trine: 120, square: 90, sextile: 60 };
-  const mundaneAspects = [];
-  for (let i = 0; i < transitPlanets.length; i++) {
-    for (let j = i + 1; j < transitPlanets.length; j++) {
-      const p1 = transitPlanets[i], p2 = transitPlanets[j];
-      if (p1.name === 'Moon' || p2.name === 'Moon') continue;
-      let diff = Math.abs(p1.longitude - p2.longitude);
-      if (diff > 180) diff = 360 - diff;
-      for (const [asp, targetOrb] of Object.entries(MUNDANE_ORBS)) {
-        const orb = Math.abs(diff - ASPECT_ANGLES[asp]);
-        if (orb <= targetOrb) {
-          mundaneAspects.push({ transit_planet: p1.name, natal_planet: p2.name, aspect: asp, orb: Math.round(orb * 100) / 100, type: 'mundane' });
-          break;
-        }
-      }
-    }
-  }
-
-  // Moon info
-  const moon = transitPlanets.find(p => p.name === 'Moon');
-  const sun = transitPlanets.find(p => p.name === 'Sun');
-  let moonPhase = '';
-  let isExactNewMoon = false;
-  let isExactFullMoon = false;
-  if (moon && sun) {
-    moonPhase = getMoonPhaseName(moon.longitude, sun.longitude);
-    let diff = ((moon.longitude - sun.longitude) + 360) % 360;
-    isExactNewMoon = diff <= 6 || diff >= 354;
-    isExactFullMoon = Math.abs(diff - 180) <= 6;
-  }
-
-  return {
-    transitPlanets,
-    natalAspects: natalClassified,
-    mundaneAspects,
-    lunarAspects: lunarClassified,
-    moonSign: moon?.sign,
-    moonPhase,
-    isExactNewMoon,
-    isExactFullMoon,
-    stations: calcData.stations || [],
-    ingresses: calcData.ingresses || [],
-  };
-}
 
 // ── Handler ──────────────────────────────────────────────────────────────────
 // Processes ONE chart per call to avoid timeouts. The scheduled automation

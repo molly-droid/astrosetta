@@ -124,10 +124,11 @@ function getSolarReturnContext(raw, date) {
   const TRAD = {Aries:'Mars',Taurus:'Venus',Gemini:'Mercury',Cancer:'Moon',Leo:'Sun',Virgo:'Mercury',Libra:'Venus',Scorpio:'Mars',Sagittarius:'Jupiter',Capricorn:'Saturn',Aquarius:'Saturn',Pisces:'Jupiter'};
   const PROF_THEMES = {1:'identity and new beginnings',2:'resources and values',3:'communication and learning',4:'home and family',5:'creativity and pleasure',6:'health and daily routine',7:'partnerships and relationships',8:'transformation and shared resources',9:'beliefs and expansion',10:'career and public life',11:'community and future vision',12:'solitude and inner work'};
 
-  const profectedHouse = (age % 12) + 1;
-  const natalHouses = raw.houses || [];
+  // Unknown birth time — houses/rising cannot be determined; skip profection
+  const profectedHouse = raw.unknown_time ? null : (age % 12) + 1;
+  const natalHouses = raw.unknown_time ? [] : (raw.houses || []);
   const houseData = natalHouses.find(h => h.number === profectedHouse);
-  const profectedSign = houseData?.sign || raw.ascendant_sign || '';
+  const profectedSign = houseData?.sign || (raw.unknown_time ? '' : raw.ascendant_sign) || '';
   const yearLord = TRAD[profectedSign] || '';
   const lordPlanet = (raw.planets || []).find(p => p.name === yearLord);
   const lordPlacement = lordPlanet ? `${yearLord} in ${lordPlanet.sign}${lordPlanet.house ? ` (${lordPlanet.house}H)` : ''}` : '';
@@ -146,6 +147,9 @@ function getSolarReturnContext(raw, date) {
 
 function getEffectiveTier(user) {
   if (!user) return 'free';
+  // BETA: all users treated as paid. Set to false once payments launch.
+  const BETA_ALL_PAID = true;
+  if (BETA_ALL_PAID) return 'calendar';
   const tier = user.subscription_tier;
   if (!tier || tier === 'free') return 'free';
   if (user.subscription_expires) {
@@ -156,10 +160,10 @@ function getEffectiveTier(user) {
 }
 
 // ── Build weekly email for one user ──────────────────────────────────────────
-function mergeNatalPoints(natal) {
+function mergeNatalPoints(natal, includeAngles = true) {
   if (!natal) return [];
   const pts = [...(natal.planets || [])];
-  const a = natal.angles || {};
+  const a = includeAngles ? (natal.angles || {}) : {};
   if (a.ascendant) pts.push({ name: 'Ascendant', ...a.ascendant, house: 1 });
   if (a.midheaven) pts.push({ name: 'Midheaven', ...a.midheaven, house: 10 });
   if (a.descendant) pts.push({ name: 'Descendant', ...a.descendant, house: 7 });
@@ -177,8 +181,10 @@ async function buildWeeklyEmailForUser(base44, targetUser, appUrl) {
   const raw = chart.raw_data;
   if (!raw.birth_date || !raw.birth_location?.latitude) return null;
 
-  const natalPlanets = raw.planets || [];
-  const natalHouses = raw.houses || [];
+  const unknownTime = !!raw.unknown_time;
+  const ANGLE_TARGETS = new Set(['Ascendant', 'Descendant', 'Midheaven', 'IC']);
+  const natalPlanets = (raw.planets || []).map(p => unknownTime ? { ...p, house: null } : p);
+  const natalHouses = unknownTime ? [] : (raw.houses || []);
 
   // Week start = today (Monday)
   const weekStart = new Date();
@@ -218,16 +224,17 @@ async function buildWeeklyEmailForUser(base44, targetUser, appUrl) {
     if (i === 0) firstDayTransitPlanets = tPlanets;
     // Use freshly calculated natal planets (correct houses) from the response
     // Include angles and nodes so transit aspects to them resolve correctly
-    const freshNatal = tData.natal ? mergeNatalPoints(tData.natal) : natalPlanets;
+    const freshNatal = tData.natal ? mergeNatalPoints(tData.natal, !unknownTime) : natalPlanets;
 
-    // Top personal aspects for this day
+    // Top personal aspects for this day (angles excluded when birth time unknown)
     const personal = (tData.transit_aspects || [])
       .filter(a => a.natal_planet !== a.transit_planet)
+      .filter(a => !unknownTime || !ANGLE_TARGETS.has(a.natal_planet))
       .sort((a, b) => a.orb - b.orb)
       .slice(0, 3)
       .map(a => {
         const nP = freshNatal.find(p => p.name === a.natal_planet);
-        return { ...a, natal_sign: nP?.sign, natal_house: nP?.house };
+        return { ...a, natal_sign: nP?.sign, natal_house: unknownTime ? null : nP?.house };
       });
 
     const moon = tPlanets.find(p => p.name === 'Moon');
@@ -240,9 +247,9 @@ async function buildWeeklyEmailForUser(base44, targetUser, appUrl) {
         seenIngressKeys.add(key);
         const signIdx = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'].indexOf(ing.to_sign);
         const signStartLon = signIdx >= 0 ? signIdx * 30 : 0;
-        const freshHouses = tData.natal?.houses || natalHouses;
-        const freshAscSign = tData.natal?.angles?.ascendant?.sign || raw.ascendant_sign;
-        const entryHouse = findNatalHouse(signStartLon, freshHouses, raw.house_system || 'whole_sign', freshAscSign);
+        const freshHouses = unknownTime ? [] : (tData.natal?.houses || natalHouses);
+        const freshAscSign = unknownTime ? null : (tData.natal?.angles?.ascendant?.sign || raw.ascendant_sign);
+        const entryHouse = unknownTime ? null : findNatalHouse(signStartLon, freshHouses, raw.house_system || 'whole_sign', freshAscSign);
         allIngresses.push({
           ...ing,
           house: entryHouse,
@@ -302,7 +309,10 @@ async function buildWeeklyEmailForUser(base44, targetUser, appUrl) {
     ? allStations.map(s => `${s.planet} stations ${s.type === 'retrograde' ? 'retrograde' : 'direct'} in ${s.sign}`).join('\n')
     : 'No stations this week.';
 
-  const natalBig3 = `Sun ${chart.sun_sign}, Moon ${chart.moon_sign}, Rising ${chart.ascendant_sign}`;
+  const natalBig3 = `Sun ${chart.sun_sign}, Moon ${chart.moon_sign}${unknownTime ? ' — birth time unknown, so the rising sign, angles, and houses CANNOT be determined' : `, Rising ${chart.ascendant_sign}`}`;
+  const unknownRule = unknownTime
+    ? `- BIRTH TIME UNKNOWN: Their birth time is unknown, so the Ascendant (rising), angles, and houses CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, or Descendant anywhere in your output. Interpret by planet, sign, and aspect only.`
+    : '';
   const solarContext = getSolarReturnContext(raw, weekStart);
 
   // Knowledge Density — shapes the tone/depth of the weekly reading
@@ -333,7 +343,7 @@ Write all planets, signs, and aspects as full English WORDS (e.g. "Mercury in Ca
 
 Use ONLY the transit data listed above. Do NOT mention or reference any planetary aspects, ingresses, stations, or lunar events that are not explicitly listed in the data provided. If a day has "no major personal aspects," do not invent any for that day.
 - CRITICAL: Use ONLY the signs from AUTHORITATIVE TRANSIT POSITIONS above. Do NOT rely on your own knowledge of where planets currently are — your training data is outdated. Every time you mention a transiting planet, you MUST use the exact sign listed there. For example, if the data says "Mars: Gemini 20°", you must write "Mars in Gemini" — never any other sign.
-
+${unknownRule}
 SHOW YOUR WORK — this app teaches astrology. Every transit mentioned MUST include the planet word + sign word + aspect word + natal planet word + house, all in WORDS (e.g. "Mercury in Cancer conjunction natal Chiron in your 8th house"). Do NOT use glyph symbols; the email inserts them automatically. Then explain the mechanic of WHY this configuration creates the effect. No generic horoscope language.
 
 PERSONALIZATION LOCK: This digest must feel written for this one person, not a collective horoscope. Whenever a personal transit is interpreted, anchor it to their natal chart by naming the natal placement inside the prose — e.g. "Because your natal Mars in Scorpio sits in your 5th house, you may experience this transit Venus as..." or "With your Virgo Midheaven, you may experience this Virgo Moon as...". If a sentence could be true for anyone with any chart, rewrite it.
@@ -402,7 +412,7 @@ Write JSON:
 
 // ── HTML renderer ─────────────────────────────────────────────────────────────
 function renderWeeklyHtml({ user, weekRange, llm, allIngresses, allStations, daySummaries, appUrl, featureHighlight = null }) {
-  const BG = '#0f1a2e', CARD = '#16233d', GOLD = '#C9A961', GOLD2 = '#D4AF85', TEXT = '#ffffff', MUTED = '#9aa6bd', BLUE = '#9DB4C8';
+  const BG = '#FDFBF7', CARD = '#F5F1E8', GOLD = '#A07C3F', GOLD2 = '#B08D4A', TEXT = '#2C3E50', MUTED = '#8B7355', BLUE = '#4E6E8E';
   const planner = appUrl ? `${appUrl}/planner?view=Week` : '#';
   const subscribe = appUrl ? `${appUrl}/subscribe` : '#';
 
@@ -421,7 +431,7 @@ function renderWeeklyHtml({ user, weekRange, llm, allIngresses, allStations, day
     <tr><td style="padding:10px 14px;background:${CARD};border-radius:8px;border-left:3px solid ${GOLD};">
       <div style="font-family:Georgia,serif;font-size:14px;color:${GOLD2};margin-bottom:4px;"><strong>${dh.day}</strong> <span style="color:${MUTED};font-size:11px;">${dh.date || ''}</span></div>
       <div style="font-family:Georgia,serif;font-size:13px;color:${TEXT};line-height:1.5;margin-bottom:4px;">${highlightAstro(dh.energy)}</div>
-      <div style="display:inline-block;font-family:Georgia,serif;font-size:10px;color:#A8C8A8;border:1px solid #A8C8A844;border-radius:999px;padding:2px 8px;">✦ ${dh.best_for}</div>
+      <div style="display:inline-block;font-family:Georgia,serif;font-size:10px;color:#5E8A5E;border:1px solid #A8C8A844;border-radius:999px;padding:2px 8px;">✦ ${dh.best_for}</div>
     </td></tr><tr><td style="height:8px;line-height:8px;">&nbsp;</td></tr>`
   ).join('');
 
@@ -434,12 +444,12 @@ function renderWeeklyHtml({ user, weekRange, llm, allIngresses, allStations, day
 
   const stationRows = allStations.length ? allStations.map(s => `
     <tr><td style="padding:8px 14px;border-left:2px solid ${GOLD}33;background:${CARD};border-radius:6px;">
-      <div style="font-family:Georgia,serif;font-size:13px;color:${TEXT};">${s.glyph || '✦'} <strong>${s.planet}</strong> stations <strong style="color:${s.type === 'retrograde' ? '#D8B4C2' : '#A8C8A8'};">${s.type === 'retrograde' ? '↺ Retrograde' : '→ Direct'}</strong> in <span style="color:${GOLD2};">${s.sign_glyph || ''} ${s.sign}</span></div>
+      <div style="font-family:Georgia,serif;font-size:13px;color:${TEXT};">${s.glyph || '✦'} <strong>${s.planet}</strong> stations <strong style="color:${s.type === 'retrograde' ? '#A85D75' : '#5E8A5E'};">${s.type === 'retrograde' ? '↺ Retrograde' : '→ Direct'}</strong> in <span style="color:${GOLD2};">${s.sign_glyph || ''} ${s.sign}</span></div>
     </td></tr><tr><td style="height:6px;line-height:6px;">&nbsp;</td></tr>`
   ).join('') : '';
 
   const maximizeItems = (llm.maximize || []).map(m =>
-    `<tr><td style="padding:8px 14px;background:linear-gradient(135deg,${CARD},#1d2c4a);border-radius:8px;border:1px solid ${GOLD}22;">
+    `<tr><td style="padding:8px 14px;background:${CARD};border-radius:8px;border:1px solid ${GOLD}22;">
       <div style="font-family:Georgia,serif;font-size:13px;color:${TEXT};line-height:1.4;">${highlightAstro(m)}</div>
     </td></tr><tr><td style="height:6px;line-height:6px;">&nbsp;</td></tr>`
   ).join('');
@@ -450,8 +460,8 @@ function renderWeeklyHtml({ user, weekRange, llm, allIngresses, allStations, day
     </td></tr><tr><td style="height:6px;line-height:6px;">&nbsp;</td></tr>`
   ).join('');
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:${BG};">
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><style>:root{color-scheme:light;supported-color-schemes:light}</style></head>
+<body bgcolor="#FDFBF7" style="margin:0;padding:0;background:${BG};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BG};padding:24px 0;">
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
@@ -465,7 +475,7 @@ function renderWeeklyHtml({ user, weekRange, llm, allIngresses, allStations, day
   <!-- Feature Highlight — newest feature, shown for one week -->
   ${featureHighlight ? `
   <tr><td style="padding:14px 28px 8px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,${CARD},#1d2c4a);border:1px solid ${GOLD}55;border-radius:14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CARD};border:1px solid ${GOLD}55;border-radius:14px;">
       <tr><td style="padding:20px 24px;text-align:center;">
         <div style="font-family:Georgia,serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-bottom:10px;">✦ ${featureHighlight.title}</div>
         <p style="font-family:Georgia,serif;font-size:14px;line-height:1.6;color:${TEXT};margin:0 0 14px;">${featureHighlight.description}</p>
@@ -558,7 +568,7 @@ function renderWeeklyHtml({ user, weekRange, llm, allIngresses, allStations, day
 
   <!-- Planner CTA -->
   <tr><td style="padding:18px 28px 8px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,${CARD},#1d2c4a);border:1px solid ${GOLD}44;border-radius:14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CARD};border:1px solid ${GOLD}44;border-radius:14px;">
       <tr><td style="padding:18px 24px;text-align:center;">
         <p style="font-family:Georgia,serif;font-size:14px;color:${TEXT};margin:0 0 12px;line-height:1.5;">${highlightAstro(llm.planner_teaser)}</p>
         <a href="${planner}" style="display:inline-block;background:${GOLD2};color:#1a2436;font-family:Georgia,serif;font-size:14px;font-weight:bold;text-decoration:none;padding:10px 24px;border-radius:999px;">Explore your week in the Planner →</a>

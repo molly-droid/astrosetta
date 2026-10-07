@@ -91,8 +91,6 @@ export default function MonthSynthesis({ date, chart }) {
     setLoading(true);
 
     const raw = chart.raw_data || {};
-    const unknownTime = !!raw.unknown_time;
-    const ANGLE_TARGETS = new Set(['Ascendant', 'Midheaven', 'Descendant', 'IC']);
     const year = date.getFullYear();
     const month = date.getMonth();
     const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -142,10 +140,10 @@ export default function MonthSynthesis({ date, chart }) {
 
       // Personal aspects active at start and mid-month
       const aspects1 = (res1.data?.transit_aspects || [])
-        .filter(a => SLOW.has(a.transit_planet) && !(unknownTime && ANGLE_TARGETS.has(a.natal_planet)))
+        .filter(a => SLOW.has(a.transit_planet))
         .map(a => `${a.transit_planet} ${a.aspect} ${a.natal_planet} (${a.orb?.toFixed(1)}°)`);
       const aspects15 = (res15.data?.transit_aspects || [])
-        .filter(a => SLOW.has(a.transit_planet) && !(unknownTime && ANGLE_TARGETS.has(a.natal_planet)))
+        .filter(a => SLOW.has(a.transit_planet))
         .map(a => `${a.transit_planet} ${a.aspect} ${a.natal_planet} (${a.orb?.toFixed(1)}°)`);
       const allAspects = [...new Set([...aspects1, ...aspects15])];
 
@@ -181,15 +179,14 @@ export default function MonthSynthesis({ date, chart }) {
 
     // Use freshly calculated natal planets from the chartCalculator response (correct houses)
     const natalPlanets = (freshNatal || raw.planets || [])
-      .map(p => `${p.name} in ${p.sign}${unknownTime || !p.house ? '' : ` (House ${p.house})`}`)
+      .map(p => `${p.name} in ${p.sign} (House ${p.house})`)
       .join('; ');
 
     const result = await invokeLLMTask('month-synthesis', {
       monthName,
       sunSign: raw.sun_sign,
       natalMoonSign: raw.moon_sign,
-      ascSign: unknownTime ? '' : raw.ascendant_sign,
-      unknownTime,
+      ascSign: raw.ascendant_sign,
       natalPlanets,
       planetContext,
     });
@@ -233,7 +230,7 @@ export default function MonthSynthesis({ date, chart }) {
 
   const handleShare = async () => {
     const ascSign = chart?.raw_data?.ascendant_sign || chart?.ascendant_sign;
-    if (chart?.raw_data?.unknown_time || !ascSign || shareLoading) return;
+    if (!ascSign || shareLoading) return;
     setShareLoading(true);
     try {
       const monthDateStr = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -370,12 +367,10 @@ export default function MonthSynthesis({ date, chart }) {
                   >
                     <RefreshCw size={10} /> Regenerate
                   </button>
-                  {!chart?.raw_data?.unknown_time && (
                   <button onClick={handleShare}
                     className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-gold-accent transition-colors">
                     {shareLoading ? <Loader2 size={10} className="animate-spin" /> : <Share2 size={10} />} Share
                   </button>
-                  )}
                 </div>
               </div>
             </>

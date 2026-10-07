@@ -106,6 +106,7 @@ export default function BirthDataForm({ user, onComplete }) {
     const payload = {
       birth_date: form.birth_date,
       birth_time: birthTime,
+      unknown_time: form.unknown_time,
       utc_offset: utcOffset,
       birth_location: {
         city: selectedLocation.name,
@@ -127,7 +128,8 @@ export default function BirthDataForm({ user, onComplete }) {
     const placementKeys = extractPlacementKeys(chartData);
     const sunPlanet = chartData.planets?.find(p => p.name === 'Sun');
     const moonPlanet = chartData.planets?.find(p => p.name === 'Moon');
-    const ascSign = chartData.angles?.ascendant?.sign || '';
+    // Unknown birth time — rising cannot be determined; never store a fabricated one
+    const ascSign = form.unknown_time ? '' : (chartData.angles?.ascendant?.sign || '');
 
     await base44.entities.Chart.create({
       user_id: user.id,

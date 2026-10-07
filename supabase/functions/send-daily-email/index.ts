@@ -2,6 +2,7 @@ import { compatClient } from '../_shared/base44Compat.ts';
 import { json, handleOptions } from '../_shared/edge.ts';
 import { insertGlyphs } from '../_shared/emailGlyphs.ts';
 import { fetchKnowledgeDepth, densityInstruction } from '../_shared/knowledgeDensity.ts';
+import { generateDaySynthesis, classifyCalculatorTransits } from '../_shared/daySynthesisGenerator.ts';
 import { getActiveEmailHighlight } from '../_shared/featureSchedule.ts';
 import { TONE_DIRECTIVE } from '../_shared/toneDirective.ts';
 import { ordinal } from '../_shared/emailUtils.ts';
@@ -231,6 +232,7 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
   const tier = getEffectiveTier(targetUser);
   // BETA: all users treated as paid. Set to false once payments launch.
   const BETA_ALL_PAID = true;
+
   const isPaid = BETA_ALL_PAID || tier === 'interpret' || tier === 'calendar';
   const charts = await base44.asServiceRole.entities.Chart.filter({ user_id: targetUser.id }, '-created_date');
   const chart = charts[0];
@@ -262,7 +264,11 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
   // Profection calculation — same logic as src/lib/solarReturn.js (frontend can't be imported)
   const TRAD_RULERS = { Aries:'Mars',Taurus:'Venus',Gemini:'Mercury',Cancer:'Moon',Leo:'Sun',Virgo:'Mercury',Libra:'Venus',Scorpio:'Mars',Sagittarius:'Jupiter',Capricorn:'Saturn',Aquarius:'Saturn',Pisces:'Jupiter' };
   const PROF_THEMES = { 1:'identity and new beginnings',2:'resources and values',3:'communication and learning',4:'home and family',5:'creativity and pleasure',6:'health and daily routine',7:'partnerships and relationships',8:'transformation and shared resources',9:'beliefs and expansion',10:'career and public life',11:'community and future vision',12:'solitude and inner work' };
-  const profectedHouse = ageNum >= 0 ? (ageNum % 12) + 1 : null;
+  // Unknown birth time — rising/houses/angles cannot be determined. Declared
+  // BEFORE first use (the profection calc below reads it); previously this sat
+  // ~26 lines lower, crashing every email build (TDZ ReferenceError).
+  const unknownTime = !!raw.unknown_time;
+  const profectedHouse = (!unknownTime && ageNum >= 0) ? (ageNum % 12) + 1 : null;
   const natalHousesForProf = raw.houses || [];
   const profHouseData = natalHousesForProf.find(h => h.number === profectedHouse);
   const profectedSign = profHouseData?.sign || chart.ascendant_sign || raw.ascendant_sign || '';
@@ -286,13 +292,16 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
   });
   const tData = transitRes.data || transitRes;
   const transitPlanets = tData.transit_planets || [];
+  const ANGLE_TARGETS = new Set(['Ascendant', 'Descendant', 'Midheaven', 'IC']);
   // Use freshly calculated natal planets from the transit response — these have
   // correct house assignments for the current house system
-  const natalPlanets = tData.natal?.planets || raw.planets || [];
+  const natalPlanets = (tData.natal?.planets || raw.planets || [])
+    .map(p => unknownTime ? { ...p, house: null } : p);
 
   // Personal transits (to natal), top 6 by tightest orb
   const personal = (tData.transit_aspects || [])
     .filter(a => a.natal_planet !== a.transit_planet)
+    .filter(a => !unknownTime || !ANGLE_TARGETS.has(a.natal_planet))
     .sort((a, b) => a.orb - b.orb)
     .slice(0, 6)
     .map(a => {
@@ -313,8 +322,8 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
   // Ingresses — planets changing signs today (or approaching)
   // Use freshly calculated natal houses from the chartCalculator response —
   // same data the on-site chart uses. raw.houses may be stale.
-  const natalHouses = tData.natal?.houses || raw.houses || [];
-  const freshAscendantSign = tData.natal?.angles?.ascendant?.sign || chart.ascendant_sign || raw.ascendant_sign;
+  const natalHouses = unknownTime ? [] : (tData.natal?.houses || raw.houses || []);
+  const freshAscendantSign = unknownTime ? null : (tData.natal?.angles?.ascendant?.sign || chart.ascendant_sign || raw.ascendant_sign);
   const ingresses = (tData.ingresses || []).map(ing => {
     const info = findNatalHousesForSign(ing.to_sign, natalHouses, raw.house_system || 'whole_sign', freshAscendantSign);
     const houseDesc = info.crossesInto
@@ -367,18 +376,35 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
 
   // Reuse the site's cached daily synthesis when available — single source of truth.
   // The site (DaySynthesis.jsx) and the pre-generation job both store the day reading
-  // in CalendarSynthesis under a depth-suffixed v18 key matching the recipient's
-  // Knowledge Density. Using that record guarantees the email matches the site exactly.
+  // in CalendarSynthesis under a depth-suffixed v20 key matching the recipient's
+  // Knowledge Density. If the exact record isn't there yet (pre-generation hasn't
+  // reached this chart, or the user changed Knowledge Density after their slot),
+  // generate it NOW with the SAME shared generator the site uses and store it
+  // under the same key — guaranteeing the email and the app show the same reading.
   let cachedSynthesis = null;
   try {
     const recs = await base44.asServiceRole.entities.CalendarSynthesis.filter({
       user_id: targetUser.id, period_type: 'day', date_start: todayStr,
     }, '-updated_date', 10);
-    const depth = await fetchKnowledgeDepth(base44, targetUser.id);
-    const exact = recs.find(r => r.period_key === `day-v20-${todayStr}-${depth}`);
-    const v20 = recs.find(r => (r.period_key || '').startsWith('day-v20'));
-    const v19 = recs.find(r => (r.period_key || '').startsWith('day-v19'));
-    cachedSynthesis = (exact || v20 || v19 || recs[0])?.data || null;
+    const exact = recs.find(r => r.period_key === `day-v20-${todayStr}-${knowledgeDepth}`);
+    if (exact?.data) {
+      cachedSynthesis = exact.data;
+    } else {
+      const genDate = new Date();
+      genDate.setUTCHours(12, 0, 0, 0);
+      const rec = await generateDaySynthesis(
+        base44, raw, genDate, classifyCalculatorTransits(tData, raw), knowledgeDepth);
+      const payload = { user_id: targetUser.id, ...rec, generated_at: new Date().toISOString() };
+      const existing = await base44.asServiceRole.entities.CalendarSynthesis.filter({
+        user_id: targetUser.id, period_key: rec.period_key,
+      });
+      if (existing[0]) {
+        await base44.asServiceRole.entities.CalendarSynthesis.update(existing[0].id, payload);
+      } else {
+        await base44.asServiceRole.entities.CalendarSynthesis.create(payload);
+      }
+      cachedSynthesis = rec.data;
+    }
   } catch { /* fall back to inline generation below */ }
 
   let llm = null;
@@ -388,7 +414,7 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
 ${TONE_DIRECTIVE}
 
 Today is ${prettyDate}. Recipient: ${targetUser.full_name || 'a student of astrology'}.
-NATAL: Sun ${chart.sun_sign}, Moon ${chart.moon_sign}, Rising ${chart.ascendant_sign}.
+NATAL: Sun ${chart.sun_sign}, Moon ${chart.moon_sign}${unknownTime ? ' — birth time unknown, so the rising sign, angles, and houses CANNOT be determined' : `, Rising ${chart.ascendant_sign}`}.
 
 ALREADY-GENERATED READING (authoritative):
 OVERVIEW: ${cachedSynthesis.overview || ''}
@@ -412,6 +438,7 @@ Write ONLY these email presentation fields. Do NOT add any transit not present i
 
 Rules:
 - A zodiac SIGN cannot form an aspect; only planets and points can. Never write things like "Aries opposes your 7th house."
+${unknownTime ? '- BIRTH TIME UNKNOWN: Their birth time is unknown, so the Ascendant (rising), angles, and houses CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, or Descendant anywhere in your output. Interpret by planet, sign, and aspect only.' : ''}
 ${lunarEvent ? `- A LUNAR EVENT is listed above (${lunarEvent.isEclipse ? (lunarEvent.eclipseType === 'solar' ? 'Solar Eclipse' : 'Lunar Eclipse') : lunarEvent.phase} in ${lunarEvent.sign}). Feature it prominently in the greeting and personal_synthesis — it is the day's headline celestial event.` : ''}
 - greeting: one warm sentence opening the email, referencing the day's feel.
 - personal_synthesis: 1-2 short paragraphs in flowing prose summarizing the PERSONAL reading above. Write ONLY in full English words — name every planet, sign, and aspect by its WORD (e.g. "Mercury in Cancer conjunction natal Chiron in your 8th house of shared resources"). Do NOT include any Unicode glyph symbols anywhere — the email inserts glyphs automatically next to each word. Stay grounded in the reading above; do not invent transits. PRESERVE the natal reference points from the reading — if it names a natal placement (e.g. "your Virgo Midheaven," "your natal Mars in Scorpio in your 5th house"), keep that anchor in your summary, and keep the possibility framing ("you may experience," "you might notice").
@@ -472,7 +499,7 @@ Today is ${prettyDate}.
 
 ${TONE_DIRECTIVE}
 
-THEIR NATAL CHART: Sun ${chart.sun_sign}, Moon ${chart.moon_sign}, Rising ${chart.ascendant_sign}.
+THEIR NATAL CHART: Sun ${chart.sun_sign}, Moon ${chart.moon_sign}${unknownTime ? ' — birth time unknown, so the rising sign, angles, and houses CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, or Descendant anywhere in your output.' : `, Rising ${chart.ascendant_sign}`}.
 
 CURRENT TRANSIT POSITIONS (authoritative — use these exact signs, do NOT use your own knowledge of where planets are):
 ${transitPositions}
@@ -497,6 +524,7 @@ ${lunarEvent ? `LUNAR EVENT TODAY: ${lunarEvent.isEclipse ? (lunarEvent.eclipseT
 Rules:
 - CRITICAL: Use ONLY the signs from CURRENT TRANSIT POSITIONS above. Do NOT rely on your own knowledge of where planets currently are — your training data is outdated. Every time you mention a transiting planet, you MUST use the exact sign listed in CURRENT TRANSIT POSITIONS or in TODAY'S PERSONAL TRANSITS. For example, if the data says "Mars: Gemini 20°", you must write "Mars in Gemini" — never "Mars in Scorpio" or any other sign.
 - Use ONLY the transit data listed above. Do NOT mention or reference any planetary aspects, ingresses, stations, or lunar events that are not explicitly listed in the data provided. If the data says "none," do not invent any.
+${unknownTime ? '- BIRTH TIME UNKNOWN: Their birth time is unknown, so the Ascendant (rising), angles, and houses CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, or Descendant anywhere in your output. Interpret by planet, sign, and aspect only. Anchor every transit explanation to the natal planet and its sign.' : ''}
 ${lunarEvent ? `- A LUNAR EVENT is listed (${lunarEvent.isEclipse ? (lunarEvent.eclipseType === 'solar' ? 'Solar Eclipse' : 'Lunar Eclipse') : lunarEvent.phase} in ${lunarEvent.sign}). Feature it prominently in the greeting and synthesis — it is the day's headline celestial event.` : ''}
 - THE PERSONAL SYNTHESIS IS ABOUT TRANSITS, NOT NATAL STRUCTURE. Every transit you mention in personal_synthesis and synthesis_personal MUST be a real transit listed in TODAY'S PERSONAL TRANSITS above. Do NOT describe static natal chart structure — never write things like "Aries opposes your 7th house," "your 1st house sign opposes the 7th," or describe a sign opposing a house. A zodiac SIGN cannot form an aspect; only PLANETS and POINTS form aspects to other planets and points. Houses do not aspect each other. If you want to mention a life area, tie it to a specific transiting planet aspecting a specific natal planet in that house — never to a sign-to-house relationship.
 - Do NOT describe natal stelliums, chart patterns, sign-to-house oppositions, or natal chart architecture unless a specific transit from TODAY'S PERSONAL TRANSITS is directly activating it. If you mention a house, you MUST first name the transit (planet, sign, aspect, natal planet) that is activating that house.
@@ -585,7 +613,7 @@ function getEffectiveTier(user) {
 }
 
 function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, phase, ingresses, stations, lunarEvent, appUrl, isPaid, isBirthday, ageLabel, profectionText, profectedHouse, yearLord, profectedSign, featureHighlight = null }) {
-  const BG = '#0f1a2e', CARD = '#16233d', GOLD = '#C9A961', GOLD2 = '#D4AF85', TEXT = '#ffffff', MUTED = '#9aa6bd', BLUE = '#9DB4C8', CREAM = '#FDFBF7';
+  const BG = '#FDFBF7', CARD = '#F5F1E8', GOLD = '#A07C3F', GOLD2 = '#B08D4A', TEXT = '#2C3E50', MUTED = '#8B7355', BLUE = '#4E6E8E', CREAM = '#2C3E50';
   const quiz = appUrl ? `${appUrl}/home?tab=learn` : '#';
   const planner = appUrl ? `${appUrl}/planner` : '#';
   const plannerWeek = appUrl ? `${appUrl}/planner?view=Week` : '#';
@@ -607,7 +635,7 @@ function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, ph
     const border = isEclipse ? '#D4AF85' : '#C9A961';
     return `
   <tr><td style="padding:0 24px 18px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,${CARD},#1d2c4a);border:2px solid ${border};border-radius:14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CARD};border:2px solid ${border};border-radius:14px;">
       <tr><td style="padding:22px 24px;text-align:center;">
         <div style="font-family:Georgia,serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-bottom:10px;">${badge}</div>
         <div style="font-family:Georgia,serif;font-size:30px;margin-bottom:8px;">${glyph}</div>
@@ -651,7 +679,7 @@ function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, ph
 
   // Station rows — retrograde/direct stations
   const stationRows = stations.length ? stations.map(s => transitRow(
-    `${s.glyph || '✦'} <strong>${s.planet}</strong> stations <strong style="color:${s.type === 'retrograde' ? '#D8B4C2' : '#A8C8A8'};">${s.type === 'retrograde' ? '↺ Retrograde' : '→ Direct'}</strong> in <span style="color:${GOLD2};">${s.sign_glyph || ''} ${s.sign}</span>`,
+    `${s.glyph || '✦'} <strong>${s.planet}</strong> stations <strong style="color:${s.type === 'retrograde' ? '#A85D75' : '#5E8A5E'};">${s.type === 'retrograde' ? '↺ Retrograde' : '→ Direct'}</strong> in <span style="color:${GOLD2};">${s.sign_glyph || ''} ${s.sign}</span>`,
     s.type === 'retrograde' ? '🔄 Time to review and revisit matters ruled by this planet' : '✅ Forward momentum resumes — integrate lessons and move ahead',
   )).join('') : '';
 
@@ -666,7 +694,7 @@ function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, ph
 
   // Maximize items — actionable highlights
   const maximizeItems = (llm.maximize || []).map(m =>
-    `<tr><td style="padding:8px 14px;background:linear-gradient(135deg,${CARD},#1d2c4a);border-radius:8px;border:1px solid ${GOLD}22;">
+    `<tr><td style="padding:8px 14px;background:${CARD};border-radius:8px;border:1px solid ${GOLD}22;">
       <div style="font-family:Georgia,serif;font-size:14px;color:${TEXT};line-height:1.4;">${highlightAstro(m)}</div>
     </td></tr><tr><td style="height:6px;line-height:6px;">&nbsp;</td></tr>`
   ).join('');
@@ -706,8 +734,8 @@ function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, ph
     <!-- Maximize / Focus / Watch -->
     <tr><td style="padding:4px 28px 10px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-        ${llm.synthesis_maximize ? `<tr><td style="padding:8px 14px;background:linear-gradient(135deg,${CARD},#1d2c4a);border-radius:8px;border:1px solid ${GOLD}22;">
-          <div style="font-family:Georgia,serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#A8C8A8;margin-bottom:3px;">✦ Maximize</div>
+        ${llm.synthesis_maximize ? `<tr><td style="padding:8px 14px;background:${CARD};border-radius:8px;border:1px solid ${GOLD}22;">
+          <div style="font-family:Georgia,serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#5E8A5E;margin-bottom:3px;">✦ Maximize</div>
           <div style="font-family:Georgia,serif;font-size:13px;color:${TEXT};line-height:1.4;">${highlightAstro(llm.synthesis_maximize)}</div>
         </td></tr><tr><td style="height:6px;line-height:6px;">&nbsp;</td></tr>` : ''}
         ${llm.synthesis_focus ? `<tr><td style="padding:8px 14px;background:${CARD};border-radius:8px;border:1px solid ${BLUE}22;">
@@ -715,7 +743,7 @@ function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, ph
           <div style="font-family:Georgia,serif;font-size:13px;color:${TEXT};line-height:1.4;">${highlightAstro(llm.synthesis_focus)}</div>
         </td></tr><tr><td style="height:6px;line-height:6px;">&nbsp;</td></tr>` : ''}
         ${llm.synthesis_watch ? `<tr><td style="padding:8px 14px;background:${CARD};border-radius:8px;border:1px solid #D8B4C233;">
-          <div style="font-family:Georgia,serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#D8B4C2;margin-bottom:3px;">⚠ Watch Out For</div>
+          <div style="font-family:Georgia,serif;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#A85D75;margin-bottom:3px;">⚠ Watch Out For</div>
           <div style="font-family:Georgia,serif;font-size:13px;color:${MUTED};line-height:1.4;">${highlightAstro(llm.synthesis_watch)}</div>
         </td></tr>` : ''}
       </table>
@@ -763,8 +791,8 @@ function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, ph
   const LORD_TITLES = { Sun:'The Illuminator',Moon:'The Nurturer',Mercury:'The Messenger',Venus:'The Beloved',Mars:'The Warrior',Jupiter:'The Expander',Saturn:'The Builder' };
   const LORD_SUMMARY = { Sun:'A year of identity, vitality, and creative self-expression. You are called to step into your light and clarify what you truly want.',Moon:'A year of emotional depth, home, and family. Your emotional life intensifies — tend your inner garden and strengthen your roots.',Mercury:'A year of communication, learning, and connection. A busy, mentally stimulating period with lots of movement and social interaction.',Venus:'A year of love, beauty, values, and pleasure. Cultivate what you love, deepen connections, and align choices with your authentic values.',Mars:'A year of drive, action, and assertion. Forward momentum, conflict resolution, and the will to pursue what you want with intensity.',Jupiter:'A year of expansion, opportunity, and growth. Doors open, horizons broaden — say yes, take risks, and trust in abundance.',Saturn:'A year of structure, responsibility, and mastery. Consolidate efforts, do the hard work, and build foundations that endure.' };
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:${BG};">
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><style>:root{color-scheme:light;supported-color-schemes:light}</style></head>
+<body bgcolor="#FDFBF7" style="margin:0;padding:0;background:${BG};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BG};padding:24px 0;">
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
@@ -780,7 +808,7 @@ function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, ph
   <!-- Feature Highlight — cycles through features, shown for at least a week each -->
   ${featureHighlight ? `
   <tr><td style="padding:14px 28px 8px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,${CARD},#1d2c4a);border:none;border-radius:14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CARD};border:none;border-radius:14px;">
       <tr><td style="padding:20px 24px;text-align:center;">
         <div style="font-family:Georgia,serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-bottom:10px;">✦ ${featureHighlight.title}</div>
         <p style="font-family:Georgia,serif;font-size:14px;line-height:1.6;color:${TEXT};margin:0 0 14px;">${featureHighlight.description}</p>
@@ -795,7 +823,7 @@ function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, ph
   <!-- Solar Return / Birthday banner -->
   ${isBirthday ? `
   <tr><td style="padding:0 24px 18px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,${CARD},#1d2c4a);border:1px solid ${GOLD}66;border-radius:14px;position:relative;overflow:hidden;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CARD};border:1px solid ${GOLD}66;border-radius:14px;position:relative;overflow:hidden;">
       <tr><td style="padding:22px 24px;text-align:center;">
         <div style="position:relative;z-index:2;">
         ${sparkleRow ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;"><tr>${sparkleRow}</tr></table>` : ''}
@@ -815,7 +843,7 @@ function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, ph
           </div>` : ''}
           ${HOUSE_FOCUS[profectedHouse] ? `
           <div style="background:rgba(168,200,168,0.08);border:1px solid rgba(168,200,168,0.18);border-radius:8px;padding:8px 12px;">
-            <div style="font-family:Georgia,serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#A8C8A8;margin-bottom:3px;">✦ Focus this year</div>
+            <div style="font-family:Georgia,serif;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#5E8A5E;margin-bottom:3px;">✦ Focus this year</div>
             <p style="font-family:Georgia,serif;font-size:11px;line-height:1.4;color:${TEXT};margin:0;">${HOUSE_FOCUS[profectedHouse]}</p>
           </div>` : ''}
         </div>` : ''}
@@ -875,7 +903,7 @@ function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, ph
 
   <!-- Quiz CTA -->
   <tr><td style="padding:22px 28px 8px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,${CARD},#1d2c4a);border:1px solid ${GOLD}44;border-radius:14px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CARD};border:1px solid ${GOLD}44;border-radius:14px;">
       <tr><td style="padding:22px 24px;text-align:center;">
         <div style="font-family:Georgia,serif;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-bottom:8px;">📖 Today's Quiz</div>
         <p style="font-family:Georgia,serif;font-size:15px;line-height:1.6;color:${TEXT};margin:0 0 16px;">${highlightAstro(llm.quiz_teaser)}</p>
@@ -927,7 +955,13 @@ Deno.serve(async (req) => {
     // SCHEDULED MODE — triggered by automation, no user context
     if (body.scheduled) {
       const charts = await base44.asServiceRole.entities.Chart.list('-created_date', 500);
-      const userIds = [...new Set(charts.map(c => c.user_id).filter(Boolean))];
+      let userIds = [...new Set(charts.map(c => c.user_id).filter(Boolean))];
+      // Optional batch support: when user_ids is passed, only process those users
+      // (lets the caller split the run into chunks that fit the execution window).
+      if (Array.isArray(body.user_ids) && body.user_ids.length) {
+        const wanted = new Set(body.user_ids);
+        userIds = userIds.filter(uid => wanted.has(uid));
+      }
       let sent = 0, skipped = 0, optedOut = 0, failed = 0;
       for (const uid of userIds) {
         const target = await base44.asServiceRole.entities.User.filter({ id: uid }).then(r => r[0]).catch(() => null);

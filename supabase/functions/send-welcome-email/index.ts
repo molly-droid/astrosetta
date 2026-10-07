@@ -22,7 +22,7 @@ Deno.serve(async (req) => {
     const appUrl = 'https://astrosetta.com';
     const sunSign = chartData.sun_sign || 'your Sun sign';
     const moonSign = chartData.moon_sign || '';
-    const ascSign = chartData.ascendant_sign || '';
+    const ascSign = chartData.raw_data?.unknown_time ? '' : (chartData.ascendant_sign || '');
 
     const bigThree = [
       `☉ ${sunSign}`,
@@ -30,10 +30,10 @@ Deno.serve(async (req) => {
       ascSign ? `Asc ${ascSign}` : null,
     ].filter(Boolean).join('  ·  ');
 
-    const BG = '#0f1a2e', CARD = '#16233d', GOLD = '#C9A961', GOLD2 = '#D4AF85', TEXT = '#ffffff', MUTED = '#9aa6bd';
+    const BG = '#FDFBF7', CARD = '#F5F1E8', GOLD = '#A07C3F', GOLD2 = '#B08D4A', TEXT = '#2C3E50', MUTED = '#8B7355';
 
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:${BG};">
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><style>:root{color-scheme:light;supported-color-schemes:light}</style></head>
+<body bgcolor="#FDFBF7" style="margin:0;padding:0;background:${BG};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BG};padding:32px 0;">
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">

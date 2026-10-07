@@ -87,7 +87,7 @@ export default function SavedChartManager({ user, charts, onRefresh, onClose }) 
       birth_date: chart.birth_date || '',
       birth_time: chart.birth_time ? chart.birth_time.slice(0, 5) : '',
       city_query: loc.city ? `${loc.city}${loc.country ? ', ' + loc.country : ''}` : '',
-      unknown_time: !chart.birth_time || chart.birth_time === '12:00:00',
+      unknown_time: !!chart.raw_data?.unknown_time || !chart.birth_time || chart.birth_time === '12:00:00',
     });
     setSelectedLocation(loc.latitude != null ? loc : null);
     setGeoResults([]);
@@ -111,7 +111,9 @@ export default function SavedChartManager({ user, charts, onRefresh, onClose }) 
     if (!selectedLocation) { setError('Please select a location from the dropdown.'); return; }
 
     setLoading(true);
-    const birthTime = form.unknown_time ? '12:00:00' : (form.birth_time ? form.birth_time + ':00' : '12:00:00');
+    // A blank birth time means the time is unknown — never fabricate a noon chart
+    const unknownTime = form.unknown_time || !form.birth_time;
+    const birthTime = unknownTime ? '12:00:00' : (form.birth_time ? form.birth_time + ':00' : '12:00:00');
     const tz = selectedLocation.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
     let utcOffset = 0;
     try {
@@ -146,6 +148,7 @@ export default function SavedChartManager({ user, charts, onRefresh, onClose }) 
       existing.birth_date !== form.birth_date ||
       existing.birth_time !== birthTime ||
       existing.utc_offset !== utcOffset ||
+      existing?.raw_data?.unknown_time !== unknownTime ||
       JSON.stringify(existing.birth_location) !== JSON.stringify(birthLocation);
 
     let chartData = existing?.raw_data;
@@ -159,6 +162,7 @@ export default function SavedChartManager({ user, charts, onRefresh, onClose }) 
           chart_type: 'natal',
           birth_date: form.birth_date,
           birth_time: birthTime,
+          unknown_time: unknownTime,
           utc_offset: utcOffset,
           birth_location: birthLocation,
         });
@@ -167,12 +171,28 @@ export default function SavedChartManager({ user, charts, onRefresh, onClose }) 
         const moonPlanet = chartData.planets?.find(p => p.name === 'Moon');
         sunSign = sunPlanet?.sign || '';
         moonSign = moonPlanet?.sign || '';
-        ascSign = chartData.angles?.ascendant?.sign || '';
+        ascSign = unknownTime ? '' : (chartData.angles?.ascendant?.sign || '');
       } catch (err) {
         setError('Failed to calculate chart. Please try again.');
         setLoading(false);
         return;
       }
+    }
+
+    // Persist the unknown-time flag inside raw_data and strip house/angle data —
+    // a chart without a birth time must never carry fabricated houses or a rising sign.
+    if (unknownTime) {
+      chartData = {
+        ...chartData,
+        unknown_time: true,
+        houses: [],
+        angles: {},
+        ascendant_sign: '',
+        planets: (chartData?.planets || []).map(p => ({ ...p, house: null })),
+        nodes: Object.fromEntries(Object.entries(chartData?.nodes || {}).map(([k, n]) => [k, { ...n, house: null }])),
+      };
+    } else if (chartData) {
+      chartData = { ...chartData, unknown_time: false };
     }
 
     const recordData = {

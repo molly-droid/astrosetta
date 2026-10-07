@@ -319,7 +319,13 @@ export default function MyChart() {
   const showNodes = user?.show_nodes !== false;
   const showLilith = user?.show_lilith !== false;
   const raw = activeChart?.raw_data || {};
-  const allPlanets = raw.planets || [];
+  const unknownTime = !composite && !!raw.unknown_time;
+  const wheelData = unknownTime ? {
+    ...raw, houses: [], angles: {}, ascendant_sign: '',
+    planets: (raw.planets || []).map(p => ({ ...p, house: null })),
+    nodes: Object.fromEntries(Object.entries(raw.nodes || {}).map(([k, n]) => [k, { ...n, house: null }])),
+  } : raw;
+  const allPlanets = wheelData.planets || [];
   const LOTS = new Set(['Part of Fortune', 'Part of Spirit', 'Part of Eros', 'Part of Necessity']);
   const hiddenPoints = new Set([
     ...(showAsteroids ? [] : [...ASTEROIDS]),
@@ -330,11 +336,11 @@ export default function MyChart() {
   const planets = (isPremium ? allPlanets : allPlanets.filter(p => !PREMIUM_POINTS.has(p.name)))
     .filter(p => !hiddenPoints.has(p.name));
   const aspects = (raw.aspects || []).filter(a => ['exact', 'strong', 'moderate'].includes(a.strength) && (isPremium || (!PREMIUM_POINTS.has(a.planet1) && !PREMIUM_POINTS.has(a.planet2))) && !hiddenPoints.has(a.planet1) && !hiddenPoints.has(a.planet2));
-  const nodes = raw.nodes || {};
-  const houses = raw.houses || [];
-  const angles = raw.angles || {};
+  const nodes = wheelData.nodes || {};
+  const houses = wheelData.houses || [];
+  const angles = wheelData.angles || {};
   const displayAngles = composite ? (composite.raw_data?.angles || {}) : angles;
-  const dynamics = analyzeChartDynamics(raw);
+  const dynamics = analyzeChartDynamics(composite ? raw : wheelData);
 
   const loc = raw.birth_location;
   const birthStr = [raw.birth_date, raw.birth_time?.slice(0, 5), loc?.city ? `${loc.city}${loc.country ? ', ' + loc.country : ''}` : null].filter(Boolean).join(' · ');
@@ -366,7 +372,7 @@ export default function MyChart() {
             {[
               { glyph: '☉', label: 'Sun', value: composite ? composite.raw_data?.sun_sign : activeChart.sun_sign },
               { glyph: '☽', label: 'Moon', value: composite ? composite.raw_data?.moon_sign : activeChart.moon_sign },
-              { glyph: 'AC', label: 'Rising', value: composite ? composite.raw_data?.ascendant_sign : activeChart.ascendant_sign },
+              ...(unknownTime ? [] : [{ glyph: 'AC', label: 'Rising', value: composite ? composite.raw_data?.ascendant_sign : activeChart.ascendant_sign }]),
             ].map(({ glyph, label, value }) => (
               <div key={label} className="text-center">
                 <div className="text-xl text-gold-accent font-display">{glyph}</div>
@@ -381,7 +387,7 @@ export default function MyChart() {
 
         <div className="px-3 pb-2 max-w-lg mx-auto">
           <LazyChartWheel
-            chartData={composite ? composite.raw_data : raw}
+            chartData={composite ? composite.raw_data : wheelData}
             partnerData={!composite && synastryOverlay ? { planets: synastryOverlay.planets, aspects: synastryOverlay.transit_aspects } : null}
             partnerHouses={!composite ? synastryOverlay?.partnerHouses : undefined}
             mode={composite ? 'transit' : (synastryOverlay ? 'synastry' : 'transit')}
@@ -493,9 +499,9 @@ export default function MyChart() {
                 <InterpretCard
                   key={p.name}
                   item={{ key: `planet_${p.name}`, type: 'planet', ...p }}
-                  chartContext={raw}
+                  chartContext={wheelData}
                   label={`${p.name} in ${p.sign}`}
-                  sublabel={`${p.degree?.toFixed(1)}° · ${getHouseName(p.house)}`}
+                  sublabel={`${p.degree?.toFixed(1)}°${p.house ? ` · ${getHouseName(p.house)}` : ''}`}
                   glyph={glyph}
                   glyphColor={color}
                   badge={p.retrograde ? '℞ retrograde' : null}
@@ -522,7 +528,7 @@ export default function MyChart() {
                 }}
                 chartContext={raw}
                 label={`North Node in ${nodes.north_node.sign}`}
-                sublabel={`${nodes.north_node.degree?.toFixed(1)}° · ${getHouseName(nodes.north_node.house)}`}
+                sublabel={`${nodes.north_node.degree?.toFixed(1)}°${nodes.north_node.house ? ` · ${getHouseName(nodes.north_node.house)}` : ''}`}
                 glyph="☊"
                 glyphColor="var(--gold-accent)"
                 onToggle={setHighlightKey}
@@ -546,7 +552,7 @@ export default function MyChart() {
                 }}
                 chartContext={raw}
                 label={`South Node in ${nodes.south_node.sign}`}
-                sublabel={`${nodes.south_node.degree?.toFixed(1)}° · ${getHouseName(nodes.south_node.house)}`}
+                sublabel={`${nodes.south_node.degree?.toFixed(1)}°${nodes.south_node.house ? ` · ${getHouseName(nodes.south_node.house)}` : ''}`}
                 glyph="☋"
                 glyphColor="var(--gold-accent)"
                 onToggle={setHighlightKey}
@@ -560,7 +566,14 @@ export default function MyChart() {
         {/* Houses tab */}
         {activeTab === 'houses' && (
           <div className="space-y-2">
-            {isCore ? (
+            {unknownTime && (
+              <div className="rounded-lg border border-gold-primary/20 bg-white/[0.03] px-4 py-6 text-center space-y-2">
+                <div className="text-2xl text-gold-accent/50 font-display">☉</div>
+                <p className="font-body text-sm text-brass">Your birth time isn't set, so your houses and rising sign can't be read yet.</p>
+                <p className="font-body text-xs text-brass/70">Add your birth time in Profile → Edit Birth Data to unlock houses, your rising sign, and angles. Your planets, signs, and aspects are all fully valid.</p>
+              </div>
+            )}
+            {!unknownTime && (isCore ? (
               <SolarReturnCard chart={activeChart} date={new Date()} />
             ) : (
               <GatedFeature
@@ -571,7 +584,7 @@ export default function MyChart() {
                 description="Your yearly Solar Return reading is part of Core. Unlock house readings, solar returns, and full natal interpretations."
                 ctaLabel="Unlock Core"
               />
-            )}
+            ))}
             {houses.map((h, i) => (
               <InterpretCard
                 key={`house_${i + 1}`}
@@ -599,7 +612,7 @@ export default function MyChart() {
                 <InterpretCard
                   key={`aspect_${i}`}
                   item={{ key: `aspect_${a.planet1}_${a.aspect}_${a.planet2}`, type: 'aspect', ...a }}
-                  chartContext={raw}
+                  chartContext={wheelData}
                   label={`${a.planet1} ${sym} ${a.planet2}`}
                   sublabel={`${a.aspect} · ${a.orb?.toFixed(1)}° orb`}
                   glyph={sym}

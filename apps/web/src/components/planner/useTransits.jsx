@@ -115,7 +115,11 @@ export function processTransits(result, natalRaw, hiddenPoints) {
   // Use freshly calculated natal planets from the backend response — these have
   // correct house assignments for the current house system. The stored chart
   // (natalRaw) may have stale houses from a different house system.
-  const natalPlanets = filterHiddenPlanets(mergeNatalPoints(result.natal || natalRaw), hidden);
+  // Unknown birth time — angles and houses cannot be determined; never report them.
+  const unknownTime = !!(result.natal || natalRaw)?.unknown_time;
+  const natalPlanets = filterHiddenPlanets(mergeNatalPoints(result.natal || natalRaw), hidden)
+    .filter(p => !(unknownTime && ['Ascendant', 'Descendant', 'Midheaven', 'IC'].includes(p.name)))
+    .map(p => unknownTime ? { ...p, house: null } : p);
 
   // Exact-transit orbs — only aspects perfecting within ~1 day
   const SLOW_PLANETS = new Set(['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Chiron', 'North Node', 'South Node', 'Black Moon Lilith']);
@@ -135,6 +139,7 @@ export function processTransits(result, natalRaw, hiddenPoints) {
   // Deduplicate: for the same (transit_planet, natal_planet) pair, keep only tightest orb
   const classifiedRaw = transitAspects
     .filter(a => {
+      if (unknownTime && ANGLE_NAMES.has(a.natal_planet)) return false; // angles unknown
       if (a.transit_planet === 'Moon') return false; // handled separately as lunar
       const isSlow = SLOW_PLANETS.has(a.transit_planet);
       let maxOrb = isSlow ? SLOW_ORB : (PLANET_ORBS[a.transit_planet] ?? FAST_ORB);
@@ -153,6 +158,7 @@ export function processTransits(result, natalRaw, hiddenPoints) {
   const LUNAR_ORB = 8.0;
   const lunarClassified = transitAspects
     .filter(a => a.transit_planet === 'Moon' && (a.orb ?? 99) <= LUNAR_ORB)
+    .filter(a => !(unknownTime && ANGLE_NAMES.has(a.natal_planet)))
     .map(a => ({ ...a, type: 'lunar', exact: a.orb < 0.5 }));
 
   // Mundane: transiting planet-to-planet aspects (sky weather for everyone)
@@ -216,7 +222,7 @@ export function processTransits(result, natalRaw, hiddenPoints) {
   if (eclipse?.type === 'lunar') isExactFullMoon = true;
 
   // Moon's natal house — which natal house does the transiting Moon fall in today?
-  const natalHouses = natalRaw?.houses || [];
+  const natalHouses = unknownTime ? [] : (natalRaw?.houses || []);
   let moonHouse = null;
   if (moonPlanet && natalHouses.length) {
     const norm = v => ((v % 360) + 360) % 360;

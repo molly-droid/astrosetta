@@ -32,7 +32,7 @@ export default function EditBirthDataModal({ open, onClose, user, existingChart,
         birth_date: user?.birth_date || '',
         birth_time: user?.birth_time?.slice(0, 5) || '',
         city_query: user?.birth_location || '',
-        unknown_time: false,
+        unknown_time: !!existingChart?.raw_data?.unknown_time,
       });
       setGeoResults([]);
       setCityChanged(false);
@@ -143,6 +143,7 @@ export default function EditBirthDataModal({ open, onClose, user, existingChart,
     const payload = {
       birth_date: form.birth_date,
       birth_time: birthTime,
+      unknown_time: form.unknown_time,
       utc_offset: utcOffset,
       birth_location: birthLocationPayload,
       house_system: houseSystem,
@@ -166,7 +167,8 @@ export default function EditBirthDataModal({ open, onClose, user, existingChart,
     const placementKeys = extractPlacementKeys(enrichedChartData);
     const sunPlanet = enrichedChartData.planets?.find(p => p.name === 'Sun');
     const moonPlanet = enrichedChartData.planets?.find(p => p.name === 'Moon');
-    const ascSign = enrichedChartData.angles?.ascendant?.sign || '';
+    // Unknown birth time — rising cannot be determined; never store a fabricated one
+    const ascSign = form.unknown_time ? '' : (enrichedChartData.angles?.ascendant?.sign || '');
 
     if (existingChart?.id) {
       await base44.entities.Chart.update(existingChart.id, {

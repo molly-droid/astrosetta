@@ -130,9 +130,7 @@ export default function WeekSynthesis({ days, chart }) {
     setLoading(true);
 
     const raw = chart.raw_data || {};
-    const unknownTime = !!raw.unknown_time;
     const SLOW = new Set(['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Chiron']);
-    const ANGLE_TARGETS = new Set(['Ascendant', 'Midheaven', 'Descendant', 'IC']);
 
     // Fetch transits for each day of the week in parallel
     const results = await Promise.all(
@@ -168,10 +166,10 @@ export default function WeekSynthesis({ days, chart }) {
 
       const moonInfo = moon ? `Moon in ${moon.sign}${moonPhase ? ` (${moonPhase})` : ''}` : '';
       // Use freshly calculated natal planets from the response (correct houses)
-      const natalPls = (res.natal?.planets || raw.planets || []).map(p => unknownTime ? { ...p, house: null } : p);
+      const natalPls = res.natal?.planets || raw.planets || [];
       const tPls = res.transit_planets || [];
       const fmtAspects = (res.transit_aspects || [])
-        .filter(a => SLOW.has(a.transit_planet) && a.orb <= 2.5 && !(unknownTime && ANGLE_TARGETS.has(a.natal_planet)))
+        .filter(a => SLOW.has(a.transit_planet) && a.orb <= 2.5)
         .map(a => formatTransitLabel(a, tPls, natalPls, false));
       const aspectInfo = fmtAspects.length ? fmtAspects.join(', ') : 'no major personal aspects';
 
@@ -198,8 +196,7 @@ export default function WeekSynthesis({ days, chart }) {
       weekRange,
       sunSign: raw.sun_sign,
       natalMoonSign: raw.moon_sign,
-      ascSign: unknownTime ? '' : raw.ascendant_sign,
-      unknownTime,
+      ascSign: raw.ascendant_sign,
       transitPositions,
       dailyTransits: dayContexts.join('\n'),
     });
@@ -239,7 +236,7 @@ export default function WeekSynthesis({ days, chart }) {
 
   const handleShare = async () => {
     const ascSign = chart?.raw_data?.ascendant_sign || chart?.ascendant_sign;
-    if (chart?.raw_data?.unknown_time || !ascSign || shareLoading) return;
+    if (!ascSign || shareLoading) return;
     setShareLoading(true);
     try {
       const res = await base44.functions.invoke('generateRisingSignCard', {
@@ -347,12 +344,10 @@ export default function WeekSynthesis({ days, chart }) {
                 >
                   <RefreshCw size={10} /> Regenerate
                 </button>
-                {!chart?.raw_data?.unknown_time && (
                 <button onClick={handleShare}
                   className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-gold-accent transition-colors">
                   {shareLoading ? <Loader2 size={10} className="animate-spin" /> : <Share2 size={10} />} Share
                 </button>
-                )}
               </div>
             </>
           )}

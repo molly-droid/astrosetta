@@ -89,7 +89,7 @@ Your job: Write a concise product digest for the founder. Return JSON with:
       },
     });
 
-    const BG = '#0f1a2e', CARD = '#16233d', GOLD = '#C9A961', GOLD2 = '#D4AF85', TEXT = '#ffffff', MUTED = '#9aa6bd';
+    const BG = '#FDFBF7', CARD = '#F5F1E8', GOLD = '#A07C3F', GOLD2 = '#B08D4A', TEXT = '#2C3E50', MUTED = '#8B7355';
     const GREEN = '#A8C8A8', BLUE = '#9DB4C8', RED = '#D8B4C2', PURPLE = '#B8A5C8';
 
     const priorityColor = (p) => p === 'High' ? RED : p === 'Medium' ? GOLD : MUTED;
@@ -111,8 +111,8 @@ Your job: Write a concise product digest for the founder. Return JSON with:
       `<li style="font-family:Georgia,serif;font-size:14px;color:${TEXT};line-height:1.6;margin-bottom:6px;padding-left:4px;">• ${ins}</li>`
     ).join('');
 
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:${BG};">
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light"><style>:root{color-scheme:light;supported-color-schemes:light}</style></head>
+<body bgcolor="#FDFBF7" style="margin:0;padding:0;background:${BG};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${BG};padding:24px 0;">
 <tr><td align="center">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
@@ -147,7 +147,7 @@ Your job: Write a concise product digest for the founder. Return JSON with:
 
   <!-- Top priority action -->
   <tr><td style="padding:0 24px 16px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,${CARD},#1d2c4a);border:1px solid ${GOLD}55;border-radius:12px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CARD};border:1px solid ${GOLD}55;border-radius:12px;">
       <tr><td style="padding:16px 20px;">
         <div style="font-family:Georgia,serif;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:${GOLD};margin-bottom:8px;">🎯 Top Priority Action This Week</div>
         <div style="font-family:Georgia,serif;font-size:15px;color:${TEXT};line-height:1.6;">${llm.top_priority_action || ''}</div>

@@ -153,14 +153,12 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
       utc_offset: utcOffset,
       natal_planets_override: raw.planets || [],
       house_system: raw.house_system || 'whole_sign',
-      unknown_time: raw.unknown_time,
     }).then(r => r.data).catch(() => null);
     if (!res) { setLoading(false); return; }
 
     // Build a minimal transits-like object from the chartCalculator response
     const SLOW = new Set(['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'Chiron']);
     const ANGLE_NODE_POINTS = new Set(['Ascendant', 'Midheaven', 'Descendant', 'IC', 'North Node', 'South Node']);
-    const ANGLE_TARGETS = new Set(['Ascendant', 'Midheaven', 'Descendant', 'IC']);
     const LOT_POINTS = new Set(['Part of Fortune', 'Tyche', 'Juno', 'Pallas', 'Vesta']);
     const moon = res.transit_planets?.find(p => p.name === 'Moon');
     const sun = res.transit_planets?.find(p => p.name === 'Sun');
@@ -188,8 +186,6 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
       transitPlanets: res.transit_planets || [],
       natalPlanets: mergeNatalPoints(res.natal || raw),
       natalAspects: (res.transit_aspects || []).filter(a => {
-        // Unknown birth time — angles cannot be determined; drop angle transits
-        if (raw.unknown_time && ANGLE_TARGETS.has(a.natal_planet)) return false;
         // Include slow-planet transits (major transits to any natal target)
         if (SLOW.has(a.transit_planet) && a.orb <= 5) return true;
         // Always include transits to angles and nodes — significant even from
@@ -199,7 +195,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
         if (LOT_POINTS.has(a.natal_planet) && a.orb <= 2) return true;
         return false;
       }),
-      lunarAspects: (res.transit_aspects || []).filter(a => a.transit_planet === 'Moon' && !(raw.unknown_time && ANGLE_TARGETS.has(a.natal_planet))),
+      lunarAspects: (res.transit_aspects || []).filter(a => a.transit_planet === 'Moon'),
       mundaneAspects: [],
       moonSign: moon?.sign || '',
       moonPhase,
@@ -221,7 +217,6 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
     const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
     const t = transitData || transits;
-    const unknownTime = !!raw.unknown_time;
     const moonInfo = t?.moonSign ? `Moon in ${t.moonSign} at ${t.moonDegree?.toFixed(1)}° (${t.moonPhase})` : '';
 
     // Lunation events for today (New Moon / Full Moon / Eclipse)
@@ -238,20 +233,14 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
 
     // Use freshly calculated natal planets from the transit response — these have
     // correct house assignments for the current house system
-    // Unknown birth time — strip fabricated houses and drop angle transits so
-    // the reading is anchored to planet, sign, and aspect only.
-    const ANGLE_TARGETS_GEN = new Set(['Ascendant', 'Midheaven', 'Descendant', 'IC']);
-    const natalPlanets = unknownTime
-      ? (t?.natalPlanets || raw.planets || []).map(p => ({ ...p, house: null }))
-      : (t?.natalPlanets || raw.planets || []);
+    const natalPlanets = t?.natalPlanets || raw.planets || [];
     const transitPlanetsList = t?.transitPlanets || [];
-    const keepAspect = (a) => !unknownTime || !ANGLE_TARGETS_GEN.has(a.natal_planet);
 
-    const fmtNatal = (t?.natalAspects || []).filter(keepAspect).map(a =>
+    const fmtNatal = (t?.natalAspects || []).map(a =>
       formatTransitLabel(a, transitPlanetsList, natalPlanets, false));
     const fmtMundane = (t?.mundaneAspects || []).map(a =>
       formatTransitLabel(a, transitPlanetsList, transitPlanetsList, true));
-    const fmtLunar = (t?.lunarAspects || []).filter(keepAspect).map(a =>
+    const fmtLunar = (t?.lunarAspects || []).map(a =>
       formatTransitLabel(a, transitPlanetsList, natalPlanets, false));
 
     const fmtStations = (t?.stations || []).map(s =>
@@ -259,7 +248,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
 
     const HOUSE_THEMES_LIST = ['', 'self and first impressions', 'money and values', 'communication and learning', 'home and family', 'creativity and romance', 'health and daily routines', 'partnerships', 'shared resources and intimacy', 'philosophy, travel, and higher learning', 'career and public standing', 'friendships and groups', 'solitude and spirituality'];
     const houseSystem = raw.house_system || 'whole_sign';
-    const ascendantSign = unknownTime ? null : (raw.ascendant_sign || null);
+    const ascendantSign = raw.ascendant_sign || null;
     const fmtIngresses = (t?.ingresses || []).map(ing => {
       const natalHouses = raw.houses || [];
       const { entryHouse, crossesInto } = findNatalHouseForSign(ing.to_sign, natalHouses, houseSystem, ascendantSign);
@@ -270,7 +259,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
       return base;
     });
 
-    const ruler = unknownTime ? null : getChartRuler(raw.ascendant_sign);
+    const ruler = getChartRuler(raw.ascendant_sign);
     const rulerGlyph = ruler ? (PLANET_GLYPHS[ruler.planet] || '') : '';
     const rulerNatal = ruler ? (natalPlanets.find(p => p.name === ruler.planet) || (raw.planets || []).find(p => p.name === ruler.planet)) : null;
     const rulerNatalInfo = rulerNatal ? ` (natal: ${rulerNatal.sign}${rulerNatal.house ? `, ${rulerNatal.house}H` : ''}${rulerNatal.retrograde ? ', Rx' : ''})` : '';
@@ -295,9 +284,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
     ].filter(Boolean);
 
     // Chart dynamics — stelliums, oppositions, patterns activated by today's transits
-    const dynamics = analyzeChartDynamics(unknownTime
-      ? { ...raw, houses: [], angles: {}, ascendant_sign: '', planets: (raw.planets || []).map(p => ({ ...p, house: null })) }
-      : raw);
+    const dynamics = analyzeChartDynamics(raw);
     const activated = getActivatedDynamics(dynamics, t);
     let dynamicsSection = '';
     let dynamicsInstruction = '';
@@ -360,8 +347,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
       dateStr,
       sunSign: raw.sun_sign,
       moonSign: raw.moon_sign,
-      ascSign: unknownTime ? '' : raw.ascendant_sign,
-      unknownTime,
+      ascSign: raw.ascendant_sign,
       natalPlacements: natalPlanets.map(p => `${p.name} in ${p.sign || '?'}${p.house ? ` (${p.house}H)` : ''}`).join(', '),
       rulerLine,
       rulerPlanet: ruler?.planet || '',
@@ -456,7 +442,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
 
   const handleShare = async () => {
     const ascSign = chart?.raw_data?.ascendant_sign || chart?.ascendant_sign;
-    if (chart?.raw_data?.unknown_time || !ascSign || shareLoading) return;
+    if (!ascSign || shareLoading) return;
     setShareLoading(true);
     try {
       const shareDateStr = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -648,12 +634,10 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
                       className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-brass transition-colors">
                       <RefreshCw size={10} /> Regenerate
                     </button>
-                    {!chart?.raw_data?.unknown_time && (
                     <button onClick={handleShare}
                       className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-gold-accent transition-colors">
                       {shareLoading ? <Loader2 size={10} className="animate-spin" /> : <Share2 size={10} />} Share
                     </button>
-                    )}
                   </div>
                 </div>
               </div>

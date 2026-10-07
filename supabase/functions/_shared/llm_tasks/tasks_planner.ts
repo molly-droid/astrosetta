@@ -52,7 +52,7 @@ const daySynthesis: LLMTaskDef = {
 ${densityPromptSuffix(p.knowledgeDepth)}
 
 Today: ${s(p.dateStr, 60)}
-NATAL: ☉ ${s(p.sunSign, 20)} · ☽ ${s(p.moonSign, 20)} · ASC ${s(p.ascSign, 20)}
+NATAL: ☉ ${s(p.sunSign, 20)} · ☽ ${s(p.moonSign, 20)}${bool(p.unknownTime) ? ' — birth time unknown: rising, houses, and angles CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, or Descendant anywhere in your output. Anchor every interpretation to planet, sign, and aspect only.' : ` · ASC ${s(p.ascSign, 20)}`}
 NATAL PLACEMENTS: ${block(p.natalPlacements, 2000)}
 ${s(p.rulerLine, 400)}
 ${s(p.moonInfo, 120)}
@@ -339,7 +339,7 @@ const weekSynthesis: LLMTaskDef = {
   build: (p) => `${PERSONA}
 
 Week: ${s(p.weekRange, 80)}
-NATAL: ☉ ${s(p.sunSign, 20)} · ☽ ${s(p.natalMoonSign, 20)} · ASC ${s(p.ascSign, 20)}
+NATAL: ☉ ${s(p.sunSign, 20)} · ☽ ${s(p.natalMoonSign, 20)}${bool(p.unknownTime) ? ' — birth time unknown: rising, houses, and angles CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, or Descendant anywhere in your output.' : ` · ASC ${s(p.ascSign, 20)}`}
 
 AUTHORITATIVE TRANSIT POSITIONS (use these exact signs — do NOT use your own knowledge of where planets are):
 ${block(p.transitPositions, 2000) || 'Data unavailable.'}
@@ -398,7 +398,7 @@ const monthSynthesis: LLMTaskDef = {
 ${TONE_DIRECTIVE}
 
 NATAL CHART:
-Sun: ${s(p.sunSign, 20)}, Moon: ${s(p.natalMoonSign, 20)}, Rising: ${s(p.ascSign, 20)}
+Sun: ${s(p.sunSign, 20)}, Moon: ${s(p.natalMoonSign, 20)}${bool(p.unknownTime) ? ' — birth time unknown: rising, houses, and angles CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, or Descendant anywhere in your output.' : `, Rising: ${s(p.ascSign, 20)}`}
 Planets: ${block(p.natalPlanets, 3000) || 'not provided'}
 
 ${block(p.planetContext, 6000)}
@@ -461,7 +461,7 @@ const plannerWeekSynthesis: LLMTaskDef = {
   build: (p) => `${PERSONA}
 
 Week: ${s(p.weekRange, 80)}
-NATAL: ☉ ${s(p.sunSign, 20)} · ☽ ${s(p.natalMoonSign, 20)} · ASC ${s(p.ascSign, 20)}
+NATAL: ☉ ${s(p.sunSign, 20)} · ☽ ${s(p.natalMoonSign, 20)}${bool(p.unknownTime) ? ' — birth time unknown: rising, houses, and angles CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, or Descendant anywhere in your output.' : ` · ASC ${s(p.ascSign, 20)}`}
 
 DAILY TRANSITS (slow planets ≤2.5° orb):
 ${block(p.dailyTransits)}

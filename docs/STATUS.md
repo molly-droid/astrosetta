@@ -71,6 +71,17 @@ _Last updated: 2026-09-24_
       byte-identical (no recompression). REMAINING for Base44 decommission:
       media URLs living *inside data* (entity records) — handled at cutover
       import (Phase 5.11).
+- [x] **Molly's post-export Base44 changes ported (2026-10-07)**: fresh export
+      (`~/Downloads/Astrosetta/astrosetta copy.zip`) diffed against the Sept 14
+      original — 22 changed files: unknown-birth-time support (end-to-end),
+      day-synthesis shared-generator refactor (period key day-v20), email
+      light theme, sendDailyEmail TDZ crash fix. Ported to base44/ reference +
+      supabase functions (11 deployed) + apps/web; LLM prompt changes landed
+      in `llm_tasks/tasks_planner.ts` (prompts live server-side here).
+      **Process note:** every Base44 change Molly makes after an export is
+      re-migration work — the export-diff procedure above is the repeatable
+      way to catch up; ask Molly to flag app changes and agree a change
+      freeze date before cutover. Re-diff once more at cutover (Phase 5).
 
 ## Remaining work, in order
 

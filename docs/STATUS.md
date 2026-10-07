@@ -137,11 +137,24 @@ _Last updated: 2026-09-24_
    $5.55/$7.77 copy, so the native Subscribe screen MUST show the store's
    real localized price (via RevenueCat) before launch — required Phase-4
    wiring, App Review risk otherwise. Molly may still adjust pricing.**
+   2026-10-07 later: **purchase flow wired and VERIFIED END-TO-END on a real
+   device.** RevenueCat offerings `core`/`premium` ($rc_monthly+$rc_annual,
+   products attached); client purchases via offerings (purchases.js), native
+   Subscribe/PaywallModal/SubscriptionSection show the store's localized
+   price; restore rewired to RevenueCat; `revenuecat-webhook` Edge Function
+   deployed (auth: REVENUECAT_WEBHOOK_AUTH secret + matching Authorization
+   header in the RevenueCat webhook settings — BOTH must be set, a missing
+   header 401s silently). E2E proof (sandbox, Tony's iPhone): purchase →
+   RC entitlement `interpret` active → RENEWAL webhook → users row
+   `tier=interpret, source=apple, expires set`. Test account
+   `iap-sandbox-20261007@silexdev.com` (role=admin to bypass
+   GATING_ADMIN_ONLY full-access; delete or demote before launch).
+   `Astrosetta.storekit` + shared scheme committed for simulator testing.
    REMAINING: Play products after first AAB (format `productId:basePlanId`
-   in RevenueCat); Stripe app/connection; offerings + packages (decide when
-   wiring purchase flow); webhook → Supabase; wire purchase flow + restore
-   in app (incl. real price display); Google developer notifications
-   (Phase 4).
+   in RevenueCat) + Android purchase QA; Stripe app/connection (decide:
+   web stays on our stripe-webhook vs routing through RevenueCat);
+   Google developer notifications (Phase 4); Apple App Store Server
+   Notifications are NOT needed (RevenueCat polls receipts + notifies us).
 
 **Phase 4 — mobile release:**
 8. Release-candidate builds, signed store builds, one submission each

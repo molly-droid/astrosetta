@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { getEffectiveTier } from '@/lib/permissions';
@@ -9,6 +9,7 @@ import PaywallModal from '@/components/paywall/PaywallModal';
 import DowngradeSurveyModal from '@/components/profile/DowngradeSurveyModal';
 import { isNativePlatform } from '@/lib/platform';
 import { restorePurchases } from '@/lib/restorePurchases';
+import { purchasesEnabled, getNativePriceString } from '@/lib/purchases';
 
 const PLANS = [
   {
@@ -108,6 +109,25 @@ export default function SubscriptionSection() {
 
   const [paywall, setPaywall] = useState(null);
   const [showSurvey, setShowSurvey] = useState(false);
+  // Store-localized monthly prices on native (Apple/Google price points differ
+  // slightly from the web's Stripe prices — the store price is authoritative).
+  const [nativePrices, setNativePrices] = useState(null);
+  useEffect(() => {
+    if (!isNativePlatform() || !purchasesEnabled()) return;
+    let alive = true;
+    (async () => {
+      const [interpret, calendar] = await Promise.all([
+        getNativePriceString('interpret', 'monthly'),
+        getNativePriceString('calendar', 'monthly'),
+      ]);
+      if (alive && (interpret || calendar)) setNativePrices({ interpret, calendar });
+    })();
+    return () => { alive = false; };
+  }, []);
+  const planPrice = (plan) =>
+    (nativePrices?.[plan.id] && `${nativePrices[plan.id]}/mo`) || plan.price;
+  const foundingPrice = (tier) =>
+    (nativePrices?.[tier] && `${nativePrices[tier]}/mo`) || FOUNDING_PRICE[tier];
   const [portalLoading, setPortalLoading] = useState(false);
   const [portalError, setPortalError] = useState(null);
   const [restoring, setRestoring] = useState(false);
@@ -156,7 +176,7 @@ export default function SubscriptionSection() {
             <p className="font-display text-sm font-bold text-gold-accent">You're a founding member</p>
           </div>
           <p className="font-body text-xs text-white/70 leading-relaxed">
-            Lock in your founding rate — {FOUNDING_PRICE.interpret} for Core or {FOUNDING_PRICE.calendar} for Premium — forever. Your rate stays with you for life.
+            Lock in your founding rate — {foundingPrice('interpret')} for Core or {foundingPrice('calendar')} for Premium — forever. Your rate stays with you for life.
           </p>
           {preference && (
             <button
@@ -294,7 +314,7 @@ export default function SubscriptionSection() {
                   </ul>
                 </div>
                 <div className="shrink-0 flex flex-col items-end gap-2">
-                  {plan.price && <span className="font-display text-base font-bold text-white whitespace-nowrap">{plan.price}</span>}
+                  {plan.price && <span className="font-display text-base font-bold text-white whitespace-nowrap">{planPrice(plan)}</span>}
                   {!isCurrent && isUpgrade && (
                     <Button
                       size="sm"

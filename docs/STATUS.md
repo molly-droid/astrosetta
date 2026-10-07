@@ -115,10 +115,19 @@ _Last updated: 2026-09-24_
    2026-10-05 later: ASC In-App Purchase key uploaded
    (`subscription_key_configured: true` — Apple link live); Play Store app
    `appd3e40d25f4` created (package `com.astrosetta.app`), Android SDK key
-   wired into `.env`. REMAINING: Play Console app + service-account JSON →
-   RevenueCat (manual); Stripe app/connection; products + offerings +
-   packages (blocked on pricing); attach products to entitlements;
-   webhook → Supabase; wire purchase flow + restore in app.
+   wired into `.env`.
+   2026-10-07: Play side done — Play Console app "Astrosetta" created;
+   service account `revenuecat@astrosetta-revenuecat.iam.gserviceaccount.com`
+   (GCP project `astrosetta-revenuecat`, **lives under the silexdev.com org —
+   handoff item: add Molly as Owner or migrate**; org-policy
+   `iam.managed.disableServiceAccountKeyCreation` overridden at project level
+   to mint the key) invited to Play Console + JSON saved in RevenueCat
+   (`play_service_account_credentials_configured: true`). RevenueCat's
+   "package name not found" validation warning is expected until the first
+   AAB upload registers `com.astrosetta.app` (Phase 4). REMAINING: Stripe
+   app/connection; products + offerings + packages (blocked on pricing);
+   attach products to entitlements; webhook → Supabase; wire purchase flow +
+   restore in app; Google developer notifications (Pub/Sub, Phase 4).
 
 **Phase 4 — mobile release:**
 8. Release-candidate builds, signed store builds, one submission each

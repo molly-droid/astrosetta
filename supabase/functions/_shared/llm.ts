@@ -49,7 +49,12 @@ export async function invokeLLM({
 
   const request: Record<string, unknown> = {
     model: model || DEFAULT_MODEL,
-    max_tokens: 8192,
+    // Thinking disabled: Base44's InvokeLLM was a non-thinking fast path, and
+    // sonnet-5's adaptive thinking burned ~10k tokens/140s per day-synthesis,
+    // truncating the JSON answer under a tight budget (measured 2026-10-07:
+    // disabled = same output contract at 2.7x speed, ~70% fewer output tokens).
+    max_tokens: 32000,
+    thinking: { type: 'disabled' },
     messages: [{ role: 'user', content: prompt }],
   };
   if (response_json_schema) {
@@ -58,12 +63,19 @@ export async function invokeLLM({
     };
   }
 
-  const response = await client.messages.create(request);
+  // Stream and accumulate rather than one long non-streaming read: generation
+  // can run 60s+ (day synthesis), and the Edge runtime cuts idle response
+  // bodies — which surfaced as truncated JSON ("Unterminated string").
+  const stream = client.messages.stream(request);
+  const response = await stream.finalMessage();
   const text = response.content
     .filter((b: { type: string }) => b.type === 'text')
     .map((b: { text: string }) => b.text)
     .join('');
 
+  if (response.stop_reason === 'max_tokens') {
+    console.warn(`invokeLLM: output truncated at max_tokens (${text.length} chars)`);
+  }
   if (response_json_schema) return JSON.parse(text);
   return text;
 }

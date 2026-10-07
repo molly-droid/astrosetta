@@ -1,0 +1,117 @@
+{
+  "identifier": "EF69F576-4466-4A1E-8D26-0DCF06ED68CE",
+  "nonRenewingSubscriptions": [],
+  "products": [],
+  "settings": {
+    "_applicationInternalID": "",
+    "_developerTeamID": "",
+    "_failTransactionsEnabled": false,
+    "_lastSynchronizedDate": 0,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [
+    {
+      "id": "21800001",
+      "localizations": [
+        {
+          "description": "",
+          "displayName": "Astrosetta",
+          "locale": "en_US"
+        }
+      ],
+      "name": "Astrosetta",
+      "subscriptions": [
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "5.59",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "FD14B1CD-9851-49FB-B721-88C80BFCFE2A",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Daily personalized readings and lessons",
+              "displayName": "Astrosetta Core",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.astrosetta.interpret.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Core Monthly",
+          "subscriptionGroupID": "21800001",
+          "type": "RecurringSubscription"
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "55.00",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "E8540611-552D-4AA8-ACDA-181652A7B3DE",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Daily personalized readings and lessons",
+              "displayName": "Astrosetta Core",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.astrosetta.interpret.yearly",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Core Yearly",
+          "subscriptionGroupID": "21800001",
+          "type": "RecurringSubscription"
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "7.79",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "8EEE2D8D-B069-4D1B-B4AD-C8D43CC306AB",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Core plus astrological calendar & planner",
+              "displayName": "Astrosetta Premium",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.astrosetta.calendar.monthly",
+          "recurringSubscriptionPeriod": "P1M",
+          "referenceName": "Premium Monthly",
+          "subscriptionGroupID": "21800001",
+          "type": "RecurringSubscription"
+        },
+        {
+          "adHocOffers": [],
+          "codeOffers": [],
+          "displayPrice": "77.00",
+          "familyShareable": false,
+          "groupNumber": 1,
+          "internalID": "98F2B0CD-3920-41EA-9FFE-5DA107C86A18",
+          "introductoryOffer": null,
+          "localizations": [
+            {
+              "description": "Core plus astrological calendar & planner",
+              "displayName": "Astrosetta Premium",
+              "locale": "en_US"
+            }
+          ],
+          "productID": "com.astrosetta.calendar.yearly",
+          "recurringSubscriptionPeriod": "P1Y",
+          "referenceName": "Premium Yearly",
+          "subscriptionGroupID": "21800001",
+          "type": "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}

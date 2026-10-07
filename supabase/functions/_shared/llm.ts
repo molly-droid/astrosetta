@@ -49,12 +49,15 @@ export async function invokeLLM({
 
   const request: Record<string, unknown> = {
     model: model || DEFAULT_MODEL,
-    // Thinking disabled: Base44's InvokeLLM was a non-thinking fast path, and
-    // sonnet-5's adaptive thinking burned ~10k tokens/140s per day-synthesis,
-    // truncating the JSON answer under a tight budget (measured 2026-10-07:
-    // disabled = same output contract at 2.7x speed, ~70% fewer output tokens).
+    // Thinking off by default: Base44's InvokeLLM was a non-thinking fast
+    // path, and sonnet-5's adaptive thinking burned ~10k tokens/140s per
+    // day-synthesis, truncating the JSON answer under a tight budget
+    // (measured 2026-10-07: disabled = same output contract at 2.7x speed,
+    // ~70% fewer output tokens). Set the LLM_THINKING=enabled secret to turn
+    // it back on — note the latency: generations run ~3x longer, which the
+    // send-daily-email on-the-spot fallback cannot absorb (150s idle limit).
     max_tokens: 32000,
-    thinking: { type: 'disabled' },
+    ...(Deno.env.get('LLM_THINKING') === 'enabled' ? {} : { thinking: { type: 'disabled' } }),
     messages: [{ role: 'user', content: prompt }],
   };
   if (response_json_schema) {

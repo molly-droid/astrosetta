@@ -82,6 +82,14 @@ _Last updated: 2026-09-24_
       re-migration work — the export-diff procedure above is the repeatable
       way to catch up; ask Molly to flag app changes and agree a change
       freeze date before cutover. Re-diff once more at cutover (Phase 5).
+      **Tested 2026-10-07**: chart-calculator unknown_time round-trip ✓;
+      pre-generate-synthesis E2E ✓ (ok, 4 items, ~88s/chart); send-daily-email
+      E2E ✓ (sent:1 in 16.6s via cached day-v20 synthesis). Testing surfaced
+      and fixed a REAL bug: sonnet-5 adaptive thinking truncated invokeLLM's
+      JSON (llm.ts now streams, disables thinking, max_tokens 32000 — see
+      commit). NOT yet tested: unknown-birth-time UI flow in the browser/app
+      (mechanical patches; cover in Phase 4 device QA) and the
+      weekly/monthly/recap emails (same template pattern as daily).
 
 ## Remaining work, in order
 

@@ -129,11 +129,19 @@ _Last updated: 2026-09-24_
    (`com.astrosetta.{interpret,calendar}.{monthly,yearly}`) and attached to
    their entitlements; `entitlements.js` extended to monthly+yearly per
    platform (`getProductId` gained an optional `period` param, defaults
-   monthly — call sites unchanged). REMAINING: ASC subscription group + 4
-   auto-renewables (Tony, manual); Play products after first AAB (format
-   `productId:basePlanId` in RevenueCat); Stripe app/connection; offerings +
-   packages (decide when wiring purchase flow); webhook → Supabase; wire
-   purchase flow + restore in app; Google developer notifications (Phase 4).
+   monthly — call sites unchanged).
+   2026-10-07 later: ASC subscription group "Astrosetta" + all 4
+   auto-renewables created with localizations. **Actual Apple prices (Apple's
+   price points didn't offer $5.55/$7.77): Core $5.59/mo $55/yr, Premium
+   $7.79/mo $77/yr — monthly prices are ABOVE the app's displayed
+   $5.55/$7.77 copy, so the native Subscribe screen MUST show the store's
+   real localized price (via RevenueCat) before launch — required Phase-4
+   wiring, App Review risk otherwise. Molly may still adjust pricing.**
+   REMAINING: Play products after first AAB (format `productId:basePlanId`
+   in RevenueCat); Stripe app/connection; offerings + packages (decide when
+   wiring purchase flow); webhook → Supabase; wire purchase flow + restore
+   in app (incl. real price display); Google developer notifications
+   (Phase 4).
 
 **Phase 4 — mobile release:**
 8. Release-candidate builds, signed store builds, one submission each

@@ -9,12 +9,24 @@
 /** Tier to IAP product identifier mappings */
 export const IAP_PRODUCTS = {
   interpret: {
-    apple: 'com.astrosetta.interpret.monthly',   // placeholder — set in App Store Connect
-    google: 'com.astrosetta.interpret.monthly',   // placeholder — set in Google Play Console
+    apple: {
+      monthly: 'com.astrosetta.interpret.monthly',
+      yearly: 'com.astrosetta.interpret.yearly',
+    },
+    google: {
+      monthly: 'com.astrosetta.interpret.monthly', // placeholder — created in Play Console after first AAB upload
+      yearly: 'com.astrosetta.interpret.yearly',   // placeholder
+    },
   },
   calendar: {
-    apple: 'com.astrosetta.calendar.monthly',     // placeholder
-    google: 'com.astrosetta.calendar.monthly',    // placeholder
+    apple: {
+      monthly: 'com.astrosetta.calendar.monthly',
+      yearly: 'com.astrosetta.calendar.yearly',
+    },
+    google: {
+      monthly: 'com.astrosetta.calendar.monthly',  // placeholder
+      yearly: 'com.astrosetta.calendar.yearly',    // placeholder
+    },
   },
 };
 
@@ -22,11 +34,12 @@ export const IAP_PRODUCTS = {
 export const STRIPE_TIERS = ['interpret', 'calendar'];
 
 /**
- * Returns the platform-appropriate product ID for a given tier.
+ * Returns the platform-appropriate product ID for a given tier and billing
+ * period ('monthly' | 'yearly', defaults to monthly).
  * Falls back to null if platform is 'web' (use Stripe checkout instead).
  */
-export function getProductId(tier, platform) {
-  return IAP_PRODUCTS[tier]?.[platform] || null;
+export function getProductId(tier, platform, period = 'monthly') {
+  return IAP_PRODUCTS[tier]?.[platform]?.[period] || null;
 }
 
 /**

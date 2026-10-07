@@ -124,10 +124,16 @@ _Last updated: 2026-09-24_
    to mint the key) invited to Play Console + JSON saved in RevenueCat
    (`play_service_account_credentials_configured: true`). RevenueCat's
    "package name not found" validation warning is expected until the first
-   AAB upload registers `com.astrosetta.app` (Phase 4). REMAINING: Stripe
-   app/connection; products + offerings + packages (blocked on pricing);
-   attach products to entitlements; webhook → Supabase; wire purchase flow +
-   restore in app; Google developer notifications (Pub/Sub, Phase 4).
+   AAB upload registers `com.astrosetta.app` (Phase 4).
+   2026-10-07 later (pricing decided): 4 Apple products created in RevenueCat
+   (`com.astrosetta.{interpret,calendar}.{monthly,yearly}`) and attached to
+   their entitlements; `entitlements.js` extended to monthly+yearly per
+   platform (`getProductId` gained an optional `period` param, defaults
+   monthly — call sites unchanged). REMAINING: ASC subscription group + 4
+   auto-renewables (Tony, manual); Play products after first AAB (format
+   `productId:basePlanId` in RevenueCat); Stripe app/connection; offerings +
+   packages (decide when wiring purchase flow); webhook → Supabase; wire
+   purchase flow + restore in app; Google developer notifications (Phase 4).
 
 **Phase 4 — mobile release:**
 8. Release-candidate builds, signed store builds, one submission each
@@ -154,7 +160,7 @@ _Last updated: 2026-09-24_
 
 | Item | Unblocks |
 |---|---|
-| **Launch pricing confirmation** (app shows Core $5.55/$55, Premium $7.77/$77; her Stripe had $9/$14; same on iOS?) | Apple subscriptions (ASC step 4) + RevenueCat products + Stripe live prices |
+| ~~Launch pricing confirmation~~ **DECIDED 2026-10-07 (Tony): go with app-displayed prices** — Core $5.55/mo $55/yr, Premium $7.77/mo $77/yr; the $9/$14 Stripe products treated as old leftovers. Molly asked; flag if she answers differently. | unblocked ASC step 4 + RevenueCat products |
 | Google Play + RevenueCat accounts (Apple done 2026-10-05) | Phases 3–4 |
 | DNS access (or willingness to paste records) | DNS cutover |
 | Vercel access (or new project under her account) | Phase 5 |

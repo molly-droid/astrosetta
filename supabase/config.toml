@@ -96,6 +96,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.recompute-xp-totals]
 verify_jwt = false
+[functions.revenuecat-webhook]
+verify_jwt = false
 [functions.send-chart-recap-email]
 verify_jwt = false
 [functions.send-daily-email]

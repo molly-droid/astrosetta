@@ -1,35 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Sparkles, CalendarDays, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { getPlatform } from '@/lib/platform';
-import { getProductId } from '@/lib/entitlements';
 import { useAuth } from '@/lib/AuthContext';
 import { restorePurchases } from '@/lib/restorePurchases';
+import { purchasesEnabled, purchaseTier, getNativePriceString } from '@/lib/purchases';
 
 /**
  * PaywallModal
  * variant: "interpret" | "calendar"
  * fromTier: the user's current effective tier ("free" | "interpret")
  *
- * On mobile (iOS/Android): shows IAP purchase flow via validateIapReceipt.
- * On web: uses Stripe checkout.
+ * On mobile (iOS/Android): purchases through RevenueCat (App Store /
+ * Google Play); prices shown come from the store so they always match
+ * what the user is charged. On web: uses Stripe checkout.
  */
 export default function PaywallModal({ variant = 'interpret', fromTier = 'free', context = '', onClose }) {
   const [loading, setLoading] = useState(null);
   const [restoring, setRestoring] = useState(false);
   const [restoreMsg, setRestoreMsg] = useState(null);
+  const [purchaseError, setPurchaseError] = useState(null);
+  // Store-localized monthly price strings (native only); fall back to web copy
+  const [nativePrices, setNativePrices] = useState({});
   const { reloadUser } = useAuth();
   const isCalendarUpgrade = variant === 'calendar';
   const platform = getPlatform();
   const isNative = platform === 'ios' || platform === 'android';
 
+  useEffect(() => {
+    if (!isNative || !purchasesEnabled()) return;
+    let alive = true;
+    (async () => {
+      const [interpret, calendar] = await Promise.all([
+        getNativePriceString('interpret', 'monthly'),
+        getNativePriceString('calendar', 'monthly'),
+      ]);
+      if (alive) setNativePrices({ interpret, calendar });
+    })();
+    return () => { alive = false; };
+  }, [isNative]);
+
   const handleCheckout = async (tier) => {
     setLoading(tier);
+    setPurchaseError(null);
 
     if (isNative) {
-      await handleIapPurchase(tier, platform);
+      await handleIapPurchase(tier);
     } else {
       await handleStripeCheckout(tier);
     }
@@ -47,45 +65,32 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
     window.location.href = url;
   };
 
-  const handleIapPurchase = async (tier, platform) => {
-    const productId = getProductId(tier, platform);
-    if (!productId) {
-      console.error('No IAP product ID configured for', tier, platform);
-      setLoading(null);
+  const handleIapPurchase = async (tier) => {
+    if (!purchasesEnabled()) {
+      // No store billing available (web preview / missing key): the Subscribe
+      // page can complete via Stripe on mobile web
+      window.location.href = '/subscribe';
       return;
     }
 
-    // When running inside Capacitor with IAP plugin:
-    if (window.Capacitor?.Plugins?.InAppPurchases) {
-      try {
-        const purchase = await window.Capacitor.Plugins.InAppPurchases.purchase({
-          productId,
-        });
-        if (purchase?.receipt) {
-          const res = await base44.functions.invoke('validateIapReceipt', {
-            platform,
-            receipt: purchase.receipt,
-            productId,
-            tier,
-          });
-          if (res.data?.success) {
-            onClose();
-          } else {
-            console.error('IAP validation failed:', res.data);
-            setLoading(null);
-          }
-          return;
-        }
-      } catch (err) {
-        console.error('IAP purchase error:', err);
-        setLoading(null);
-        return;
+    const result = await purchaseTier(tier, 'monthly');
+    if (result.success) {
+      // The authoritative tier update lands via the revenuecat-webhook Edge
+      // Function; give it a few beats to reflect on the users row.
+      for (let i = 0; i < 5; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+        const updated = await reloadUser?.();
+        if (updated?.subscription_tier === tier) break;
       }
+      onClose();
+      return;
     }
 
-    // Fallback: if Capacitor IAP plugin isn't available, redirect to Subscribe page
-    // where the user can complete via Stripe on mobile web
-    window.location.href = '/subscribe';
+    if (!result.cancelled) {
+      console.error('IAP purchase error:', result.error);
+      setPurchaseError('The purchase could not be completed. You have not been charged — please try again.');
+    }
+    setLoading(null);
   };
 
   // Apple-required restore action for auto-renewable subscriptions (native only)
@@ -108,10 +113,15 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
   const storeLabel = platform === 'ios' ? 'App Store' : platform === 'android' ? 'Google Play' : null;
   const nativeSuffix = storeLabel ? ` (${storeLabel})` : '';
 
+  // On native, the store's localized price is authoritative (Apple price
+  // points differ slightly from the web's Stripe prices).
+  const corePrice = (isNative && nativePrices.interpret) || '$5.55';
+  const premiumPrice = (isNative && nativePrices.calendar) || '$7.77';
+
   const config = isCalendarUpgrade ? {
     icon: <CalendarDays size={22} className="text-gold-accent" />,
     title: 'Become a Premium member',
-    price: '$7.77/mo',
+    price: `${premiumPrice}/mo`,
     tierName: 'Premium Plan',
     description: fromTier === 'interpret'
       ? 'The deepest layer of Astrosetta — Black Moon Lilith, the asteroid pack, early access to new features, and founding patron recognition.'
@@ -125,13 +135,13 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
       '🏅 Founding patron recognition in-app',
     ],
     primaryLabel: isNative
-      ? `Subscribe${nativeSuffix} — $7.77/mo`
+      ? `Subscribe${nativeSuffix} — ${premiumPrice}/mo`
       : fromTier === 'interpret' ? 'Upgrade to Premium — $7.77/mo' : 'Become a Premium member — $7.77/mo',
     secondaryLabel: fromTier === 'interpret' ? 'Keep Exploring' : 'Maybe Later',
   } : {
     icon: <Sparkles size={22} className="text-celestial-blue" />,
     title: 'Unlock Core',
-    price: '$5.55/mo',
+    price: `${corePrice}/mo`,
     tierName: 'Core Plan',
     description: context
       ? `Learn what ${context} means for your life right now.`
@@ -145,7 +155,7 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
       '🤖 AI navigator chatbot',
     ],
     primaryLabel: isNative
-      ? `Subscribe${nativeSuffix} — $5.55/mo`
+      ? `Subscribe${nativeSuffix} — ${corePrice}/mo`
       : 'Unlock Core — $5.55/mo',
     secondaryLabel: 'Maybe Later',
   };
@@ -195,7 +205,7 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
             <div className="rounded-lg border border-gold-primary/20 p-3 bg-gold-primary/5 space-y-2">
               <p className="font-body text-[10px] uppercase tracking-widest text-brass/50">Also available</p>
               <p className="font-body text-xs text-white/80">
-                <strong className="text-gold-accent">Premium — $7.77/mo</strong><br/>
+                <strong className="text-gold-accent">Premium — {premiumPrice}/mo</strong><br/>
                 Everything in Core + Black Moon Lilith, the asteroid pack, early access to new features, and founding patron recognition.
               </p>
             </div>
@@ -209,7 +219,7 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
                 <p className="font-label text-xs font-medium uppercase tracking-[0.05em] text-starlight-muted">Subscription disclosure</p>
               </div>
               <p className="font-body text-[13px] leading-snug text-starlight">
-                {config.tierName} — {isCalendarUpgrade ? '$7.77' : '$5.55'} per month. Payment is charged to your {storeLabel} account and automatically renews until cancelled. Cancel anytime in your {storeLabel} subscription settings at least 24 hours before the period ends.
+                {config.tierName} — {isCalendarUpgrade ? premiumPrice : corePrice} per month. Payment is charged to your {storeLabel} account and automatically renews until cancelled. Cancel anytime in your {storeLabel} subscription settings at least 24 hours before the period ends.
               </p>
               <div className="flex items-center gap-4 pt-0.5">
                 <Link to="/terms" onClick={onClose} className="font-body text-[13px] text-gold-foil underline">Terms of Service</Link>
@@ -222,6 +232,10 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
             <p className="font-body text-[13px] text-starlight-muted text-center">{restoreMsg}</p>
           )}
 
+          {purchaseError && (
+            <p className="font-body text-[13px] text-red-300 text-center">{purchaseError}</p>
+          )}
+
           {/* CTAs */}
           <div className="space-y-2 pt-1">
             <Button
@@ -230,7 +244,7 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
               className="w-full bg-gold-primary hover:bg-gold-accent text-deep-blue font-body text-sm h-10 font-semibold"
             >
               {loading === (isCalendarUpgrade ? 'calendar' : 'interpret')
-                ? <><Loader2 size={15} className="animate-spin mr-2" /> Redirecting...</>
+                ? <><Loader2 size={15} className="animate-spin mr-2" /> {isNative ? 'Processing…' : 'Redirecting...'}</>
                 : config.primaryLabel}
             </Button>
             {!isCalendarUpgrade && fromTier === 'free' && (
@@ -241,7 +255,7 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
                 className="w-full font-body text-sm h-9 border-gold-primary/30 text-brass"
               >
                 {loading === 'calendar'
-                  ? <><Loader2 size={15} className="animate-spin mr-2" /> Redirecting...</>
+                  ? <><Loader2 size={15} className="animate-spin mr-2" /> {isNative ? 'Processing…' : 'Redirecting...'}</>
                   : 'Become a Premium member — $7.77/mo'}
               </Button>
             )}

@@ -10,6 +10,7 @@ import OrnamentDivider from '@/components/ui/OrnamentDivider';
 import { track, EVENTS } from '@/lib/analytics';
 import EventGiftPanel from '@/components/events/EventGiftPanel';
 import { resolveSkuId } from '@/lib/eventTag';
+import { purchasesEnabled, purchaseTier, getNativePriceString } from '@/lib/purchases';
 
 // What each tier actually delivers (aligned with Landing + what's built)
 // Internal keys `interpret` / `calendar` are retained for backend/Stripe compat.
@@ -65,7 +66,7 @@ const PLANS = [
 ];
 
 export default function Subscribe() {
-  const { user } = useAuth();
+  const { user, reloadUser } = useAuth();
   const navigate = useNavigate();
   const effectiveTier = getEffectiveTier(user);
   const [loading, setLoading] = useState(null);
@@ -84,12 +85,62 @@ export default function Subscribe() {
   // is_founding_member will be false for new users.
   const isFoundingMember = !!user?.is_founding_member;
 
+  // Store-localized price strings on native (Apple/Google price points differ
+  // slightly from the web's Stripe prices — the store price is authoritative).
+  const [nativePrices, setNativePrices] = useState(null);
+  useEffect(() => {
+    if (!isNative || !purchasesEnabled()) return;
+    let alive = true;
+    (async () => {
+      const [im, iy, cm, cy] = await Promise.all([
+        getNativePriceString('interpret', 'monthly'),
+        getNativePriceString('interpret', 'yearly'),
+        getNativePriceString('calendar', 'monthly'),
+        getNativePriceString('calendar', 'yearly'),
+      ]);
+      if (alive && (im || iy || cm || cy)) {
+        setNativePrices({
+          interpret: { monthly: im, yearly: iy },
+          calendar: { monthly: cm, yearly: cy },
+        });
+      }
+    })();
+    return () => { alive = false; };
+  }, [isNative]);
+
   useEffect(() => {
     track(EVENTS.SUBSCRIBE_VIEWED, { current_tier: effectiveTier, is_founding_member: isFoundingMember });
   }, []);
 
+  const handleIapSelect = async (tier) => {
+    track(EVENTS.SUBSCRIPTION_STARTED, { tier, founding: true, billing, store: platform });
+    setLoading(tier);
+    setCheckoutError(null);
+    const result = await purchaseTier(tier, billing);
+    if (result.success) {
+      // The authoritative tier update lands via the revenuecat-webhook Edge
+      // Function; give it a few beats to reflect on the users row.
+      for (let i = 0; i < 5; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+        const updated = await reloadUser?.();
+        if (updated?.subscription_tier === tier) break;
+      }
+      navigate(`/profile?success=true&tier=${tier}`);
+      return;
+    }
+    if (!result.cancelled) {
+      console.error('IAP purchase error:', result.error);
+      setCheckoutError('The purchase could not be completed. You have not been charged — please try again.');
+    }
+    setLoading(null);
+  };
+
   const handleSelect = async (tier) => {
     if (!purchaseAgeConfirmed) return;
+    if (isNative && purchasesEnabled()) {
+      await handleIapSelect(tier);
+      return;
+    }
     track(EVENTS.SUBSCRIPTION_STARTED, { tier, founding: true, billing });
     setLoading(tier);
     setCheckoutError(null);
@@ -212,9 +263,10 @@ export default function Subscribe() {
         {PLANS.map((plan) => {
           const isCurrent = effectiveTier === plan.tier;
           const isLoading = loading === plan.tier;
-          const displayPrice = billing === 'yearly'
+          const storePrice = nativePrices?.[plan.tier]?.[billing];
+          const displayPrice = storePrice || (billing === 'yearly'
             ? plan.yearlyPrice
-            : (isFoundingMember ? plan.foundingPrice : plan.price);
+            : (isFoundingMember ? plan.foundingPrice : plan.price));
           const displayPeriod = billing === 'yearly' ? '/yr' : plan.period;
 
           return (
@@ -299,7 +351,7 @@ export default function Subscribe() {
                     }`}
                   >
                     {isLoading ? (
-                      <><Loader2 size={16} className="animate-spin mr-2" /> Redirecting...</>
+                      <><Loader2 size={16} className="animate-spin mr-2" /> {isNative ? 'Processing…' : 'Redirecting...'}</>
                     ) : (
                       <><Zap size={15} className="mr-1.5" /> {isFoundingMember ? 'Lock In Founding Rate' : `Get ${plan.label}`}</>
                     )}

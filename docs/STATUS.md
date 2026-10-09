@@ -23,8 +23,17 @@ Stripe/RevenueCat products (fail closed until the founding window ends)._
 _2026-10-09 (Tony): Molly ACKNOWLEDGED the iOS prices ($5.59/$7.79 monthly,
 $55/$77 yearly) — pricing is settled. AI daily limits stay at the implemented
 values (free 50 / Core 300 / Premium 600, admins unlimited) per Tony's call;
-no further sign-off gate. LLM_THINKING stays default-off. Next: TestFlight
-build for Molly (in progress)._
+no further sign-off gate. LLM_THINKING stays default-off._
+
+_2026-10-09 (Tony): **TestFlight build 1.0 (1) UPLOADED** — archived and
+uploaded via xcodebuild with an ASC API key (Admin role required once to
+mint the team's cloud-managed iOS Distribution cert; key `5W8QPDGB55`, .p8
+in `~/.appstoreconnect/private_keys/`). `ITSAppUsesNonExemptEncryption=false`
+set. Plan: Tony tests via internal group first, then Molly. Known gap in
+build: interpretation panels empty until the content import. Next after
+TestFlight: stage LIVE Stripe (create live prices + register live webhook,
+record IDs — but keep hosted secrets on sandbox until cutover) and grab the
+active-subscriber export while live-Stripe access is fresh._
 
 ## Current completion pass — local code, not launch sign-off
 

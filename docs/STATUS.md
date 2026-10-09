@@ -6,7 +6,19 @@ Update this file as items move. Cutover mechanics live in
 [NAVIGATOR_PARITY_TEST.md](./NAVIGATOR_PARITY_TEST.md).
 
 _Completion-pass update: 2026-10-08. Historical notes below describe Tony's
-earlier hosted setup; the following local changes have NOT been deployed._
+earlier hosted setup._
+
+_2026-10-09 (Tony): the completion pass IS deployed — all five 20261008
+migrations applied and every function redeployed 2026-10-09 14:32 UTC
+(including get-interpretations, ahead of the interpretations import — panels
+read empty until cutover; only test users exist so no user impact).
+`REVENUECAT_SECRET_API_KEY` set (v1 key) and the new reconciliation verified
+end-to-end: webhook auth → RC /v1/subscribers fetch → snapshot → tier
+projection (expired sandbox sub correctly projects to free). Still
+unconfigured: `GOOGLE_CALENDAR_CLIENT_ID/SECRET` (calendar features fail
+closed; needs Calendar API + redirect URI in the Google project that owns
+the OAuth client), optional `AI_MODEL_RATES_JSON`, and the standard-monthly
+Stripe/RevenueCat products (fail closed until the founding window ends)._
 
 ## Current completion pass — local code, not launch sign-off
 

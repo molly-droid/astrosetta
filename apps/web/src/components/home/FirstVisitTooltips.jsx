@@ -146,9 +146,11 @@ export default function FirstVisitTooltips({ activeTab, onTabChange }) {
         <div
           className="fixed z-40 rounded-lg pointer-events-none transition-all duration-300"
           style={{
+            // Clamp to the viewport so the ring's border stays visible on
+            // full-bleed targets (e.g. the edge-to-edge home tab buttons).
             top: `${coords.top - 4}px`,
-            left: `${coords.left - 4}px`,
-            width: `${coords.width + 8}px`,
+            left: `${Math.max(4, coords.left - 4)}px`,
+            width: `${Math.min(window.innerWidth - 4, coords.left + coords.width + 4) - Math.max(4, coords.left - 4)}px`,
             height: `${coords.height + 8}px`,
             boxShadow: '0 0 0 2px rgba(201, 169, 97, 0.6), 0 0 20px rgba(201, 169, 97, 0.25)',
             background: 'rgba(201, 169, 97, 0.04)',

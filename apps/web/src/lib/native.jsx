@@ -116,6 +116,10 @@ export default function NativeBridge() {
         });
 
         const open = await App.addListener('appUrlOpen', async ({ url }) => {
+          if (url.startsWith('astrosetta:')) {
+            const { Browser } = await import('@capacitor/browser');
+            await Browser.close().catch(() => {});
+          }
           const authed = await completeAuthCallback(url);
           const path = deepLinkToPath(url);
           if (authed) {

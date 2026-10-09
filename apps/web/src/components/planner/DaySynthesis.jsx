@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Sparkles, ChevronDown, ChevronRight, RefreshCw, ThumbsUp, ThumbsDown, Bookmark, Globe, Layers, Lightbulb, Share2 } from 'lucide-react';
+import { Loader2, Sparkles, RefreshCw, ThumbsUp, ThumbsDown, Bookmark, Globe, Layers, Lightbulb, Share2 } from 'lucide-react';
 import { invokeLLMTask } from '@/api/llmTasks';
 import { formatTransitLabelProse as formatTransitLabel, highlightSynthesisText, getChartRuler, PLANET_GLYPHS, mergeNatalPoints } from '@/lib/transitUtils';
 import { getMoonPhaseName, getMoonPhaseEmoji } from '@/lib/moonPhase';

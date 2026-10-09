@@ -1,7 +1,8 @@
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions } from '../_shared/edge.ts';
+import { json, handleOptions, serviceClient } from '../_shared/edge.ts';
 import Stripe from 'npm:stripe@14';
 import { resolveEventSignup, buildEventMetadata } from '../_shared/eventOrders.ts';
+import { checkoutPrice } from '../_shared/pricing.ts';
 
 Deno.serve(async (req) => {
   const opt = handleOptions(req);
@@ -10,6 +11,12 @@ Deno.serve(async (req) => {
     const base44 = compatClient(req);
     const user = await base44.auth.me();
     if (!user) return json({ error: 'Unauthorized' }, { status: 401 });
+    const db = serviceClient();
+    const { error: refreshError } = await db.rpc('refresh_billing_access', { p_user_id: user.id });
+    if (refreshError) throw refreshError;
+    const { data: profile, error: profileError } = await db.from('users').select('is_founding_member').eq('id', user.id).single();
+    if (profileError) throw profileError;
+    user.is_founding_member = profile.is_founding_member;
 
     const { tier, period = 'monthly', successUrl, cancelUrl, eventSignup } = await req.json();
 
@@ -17,11 +24,7 @@ Deno.serve(async (req) => {
       return json({ error: 'Invalid tier' }, { status: 400 });
     }
 
-    const isYearly = period === 'yearly';
-    const priceIds = {
-      interpret: isYearly ? Deno.env.get('STRIPE_INTERPRET_YEARLY_PRICE_ID') : Deno.env.get('STRIPE_INTERPRET_PRICE_ID'),
-      calendar: isYearly ? Deno.env.get('STRIPE_CALENDAR_YEARLY_PRICE_ID') : Deno.env.get('STRIPE_CALENDAR_PRICE_ID'),
-    };
+    const priceId = checkoutPrice(tier, period, user.is_founding_member === true, key => Deno.env.get(key));
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
@@ -44,13 +47,6 @@ Deno.serve(async (req) => {
       await base44.auth.updateMe({ stripe_customer_id: customerId });
     }
 
-    // Founding members lock in a recurring founding-rate coupon forever.
-    // Coupon IDs are optional during prep — if the secrets aren't set yet,
-    // checkout proceeds at the standard price.
-    const foundingCouponId = user.is_founding_member
-      ? Deno.env.get(tier === 'interpret' ? 'STRIPE_FOUNDING_COUPON_INTERPRET' : 'STRIPE_FOUNDING_COUPON_CALENDAR')
-      : null;
-
     // Event-sourced signups (pop-up booth QR tag or event promo code):
     // validate the event + gift SKU, then stamp the payload onto the session
     // metadata so the webhook can create the EventOrder once payment lands.
@@ -63,13 +59,12 @@ Deno.serve(async (req) => {
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
-      line_items: [{ price: priceIds[tier], quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
       allow_promotion_codes: true,
       subscription_data: {
         metadata: { base44_user_id: user.id, tier, period, founding: user.is_founding_member ? 'true' : 'false' },
-        ...(foundingCouponId ? { discounts: [{ coupon: foundingCouponId }] } : {}),
       },
       metadata: { base44_user_id: user.id, tier, period, ...eventMeta },
     });

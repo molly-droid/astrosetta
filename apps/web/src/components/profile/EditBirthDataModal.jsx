@@ -19,7 +19,7 @@ export default function EditBirthDataModal({ open, onClose, user, existingChart,
   });
   const [geoResults, setGeoResults] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(existingLoc);
-  const [cityChanged, setCityChanged] = useState(false); // eslint-disable-line
+  const [cityChanged, setCityChanged] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

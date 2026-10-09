@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Layers, Compass, Eye, Sparkles, CalendarCheck, Smartphone, Telescope, Mail, Users, X, ArrowRight, Route } from 'lucide-react';
+import { Bell, Sparkles, Telescope, X, ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { FEATURE_ANNOUNCEMENTS, ANNOUNCEMENT_ICONS } from '@/lib/featureAnnouncements';

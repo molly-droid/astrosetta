@@ -18,7 +18,7 @@
  */
 import { json, handleOptions, getAuthUser, serviceClient } from '../_shared/edge.ts';
 import { invokeLLM } from '../_shared/llm.ts';
-import { effectiveTier, meetsGate, DAILY_LIMITS } from '../_shared/llm_tasks/core.ts';
+import { reserveAiUsage } from '../_shared/aiAccess.ts';
 import { TASKS } from '../_shared/llm_tasks/registry.ts';
 
 Deno.serve(async (req) => {
@@ -33,45 +33,20 @@ Deno.serve(async (req) => {
     if (!def) return json({ error: `Unknown task: ${task}` }, { status: 400 });
 
     const svc = serviceClient();
-    const { data: userRow } = await svc
-      .from('users')
-      .select('role, subscription_tier, subscription_expires')
-      .eq('id', user.id)
-      .maybeSingle();
-    if (!userRow) {
-      return json({ error: 'user_not_registered', code: 'user_not_registered' }, { status: 403 });
-    }
-
-    const tier = effectiveTier(userRow);
     const gate = typeof def.gate === 'function' ? def.gate(params ?? {}) : def.gate;
-    if (!meetsGate(tier, gate)) {
-      return json({ error: 'This feature requires an upgraded plan', code: 'upgrade_required' }, { status: 403 });
-    }
-
-    // Daily quota — the RPC both checks and logs. Admins pass -1 (no limit)
-    // so their calls are still logged but never refused.
-    const dateKey = new Date().toISOString().slice(0, 10);
-    const limit = userRow.role === 'admin' ? -1 : DAILY_LIMITS[tier];
-    const { data: usage, error: usageError } = await svc.rpc('increment_llm_usage', {
-      p_user_id: String(user.id),
-      p_date_key: dateKey,
-      p_limit: limit,
-      p_description: `llm-task:${task}`,
-    });
-    if (usageError) throw new Error(`usage log failed: ${usageError.message}`);
-    if (!usage?.allowed) {
-      return json({ error: 'Daily AI usage limit reached', code: 'limit_reached' }, { status: 429 });
-    }
+    const denied = await reserveAiUsage(svc, String(user.id), gate, `llm-task:${task}`);
+    if (denied) return denied;
 
     const prompt = def.build(params ?? {});
     const result = await invokeLLM({
       prompt,
       response_json_schema: def.schema,
       model: def.model,
+      telemetry: { userId: user.id, task },
     });
     return json(result);
   } catch (err) {
     console.error('llm-task error:', err);
-    return json({ error: err.message }, { status: 500 });
+    return json({ error: err instanceof Error ? err.message : 'AI request failed' }, { status: 500 });
   }
 });

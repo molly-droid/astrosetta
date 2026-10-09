@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from '@/App.jsx'
 import '@/index.css'
 import { initNative } from '@/lib/native.jsx'
+import { supabase } from '@/api/shim/supabase.js'
 
 // ── Global error monitoring ─────────────────────────────────────────────────
 // Catches unhandled runtime errors and React render errors, sends them to the
@@ -11,16 +12,14 @@ import { initNative } from '@/lib/native.jsx'
 function reportError(errorData) {
   try {
     const isErr = errorData instanceof Error;
-    fetch('/functions/logFrontendError', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    supabase.functions.invoke('log-frontend-error', {
+      body: {
         error_message: isErr ? errorData.message : (errorData.message || String(errorData)),
         stack_trace: isErr ? errorData.stack : (errorData.stack || ''),
         page_url: window.location.href,
         user_agent: navigator.userAgent,
         component_stack: errorData.componentStack || '',
-      }),
+      },
     }).catch(() => {});
   } catch {}
 }

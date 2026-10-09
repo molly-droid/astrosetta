@@ -1,9 +1,8 @@
 // v2 — redeployed 2026-06-02
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions } from '../_shared/edge.ts';
+import { json, handleOptions, serviceClient } from '../_shared/edge.ts';
+import { googleAccessToken, calendarAllowed } from '../_shared/googleCalendar.ts';
 import { getLunationsBetween } from '../_shared/lunations.ts';
-
-const CONNECTOR_ID = '6a1dcf26b051d2efbd301fbf';
 
 // Approximate planet longitude using simplified VSOP-like formulas (good to ~1°)
 // Epoch: J2000.0, all angles in degrees
@@ -115,11 +114,11 @@ function formatDateTime(dateStr, decimalHour) {
   return `${dateStr}T${pad(h)}:${pad(m)}:00`;
 }
 
-async function checkConnection(base44) {
+async function checkConnection(userId) {
   try {
-    const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection(CONNECTOR_ID);
+    const accessToken = await googleAccessToken(serviceClient(), userId);
     if (!accessToken) return json({ connected: false });
-    const test = await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=1', {
+    const test = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=1', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     return json({ connected: test.ok });
@@ -129,7 +128,7 @@ async function checkConnection(base44) {
 }
 
 async function syncCalendar(base44, user, body) {
-  const { accessToken } = await base44.asServiceRole.connectors.getCurrentAppUserConnection(CONNECTOR_ID);
+  const accessToken = await googleAccessToken(serviceClient(), user.id);
   if (!accessToken) return json({ error: 'Not connected' }, { status: 400 });
 
   const filters = body.filters || {};
@@ -138,7 +137,7 @@ async function syncCalendar(base44, user, body) {
   const includeTransits = filters.major_transits !== false;
   const includeRetrogrades = filters.retrogrades !== false;
   const includeJournal = filters.journal !== false;
-  const daysAhead = body.days_ahead || 28;
+  const daysAhead = Math.min(90, Math.max(1, Number(body.days_ahead) || 28));
 
   let natalPlanets = [];
   if (includeTransits) {
@@ -164,26 +163,21 @@ async function syncCalendar(base44, user, body) {
   );
 
   // Fetch existing events for dedup (idempotency — prevents duplicates on re-sync)
-  const existingRes = await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${today.toISOString()}&timeMax=${endDate.toISOString()}&maxResults=250`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
-  const existingData = await existingRes.json();
   const existingKeys = new Set();
-  // Stale moon events from earlier syncs — the old version could place a new
-  // moon across several days, so remove them before writing the corrected one.
-  const staleMoonEventIds = [];
-  for (const evt of (existingData.items || [])) {
-    const evtDate = (evt.start?.dateTime || evt.start?.date || '').slice(0, 10);
-    existingKeys.add(`${evtDate}|${evt.summary}`);
-    if (/^[🌑🌕]/.test(evt.summary || '') && evt.id) staleMoonEventIds.push(evt.id);
-  }
-  for (const id of staleMoonEventIds) {
-    await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${accessToken}` },
+  let pageToken = '';
+  do {
+    const query = new URLSearchParams({ timeMin: today.toISOString(), timeMax: endDate.toISOString(), maxResults: '250', ...(pageToken ? { pageToken } : {}) });
+    const existingRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${query}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(15000),
     });
-  }
+    if (!existingRes.ok) throw new Error('Unable to read Google Calendar. Reconnect and try again.');
+    const existingData = await existingRes.json();
+    for (const evt of existingData.items || []) {
+      const evtDate = (evt.start?.dateTime || evt.start?.date || '').slice(0, 10);
+      existingKeys.add(`${evtDate}|${evt.summary}`);
+    }
+    pageToken = existingData.nextPageToken || '';
+  } while (pageToken);
 
   const eventsToCreate = [];
 
@@ -259,12 +253,15 @@ async function syncCalendar(base44, user, body) {
     const evtDate = evt.dateTime.slice(0, 10);
     const dedupKey = `${evtDate}|${evt.summary}`;
     if (existingKeys.has(dedupKey)) continue;
+    const endTime = new Date(Date.parse(`${evt.dateTime}Z`) + 30 * 60000).toISOString().slice(0, 19);
     const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ summary: evt.summary, description: evt.description, start: { dateTime: evt.dateTime }, end: { dateTime: evt.dateTime }, colorId: evt.colorId }),
+      body: JSON.stringify({ summary: evt.summary, description: evt.description, start: { dateTime: evt.dateTime, timeZone: userTz }, end: { dateTime: endTime, timeZone: userTz }, colorId: evt.colorId }),
     });
-    if (res.ok) events_created++;
+    if (!res.ok) throw new Error('Google Calendar could not save every event. Reconnect and try again.');
+    events_created++;
+    existingKeys.add(dedupKey);
   }
 
   return json({ events_created, total_checked: daysAhead });
@@ -280,7 +277,8 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
 
-    if (body.check_only) return checkConnection(base44);
+    if (!await calendarAllowed(serviceClient(), user.id)) return json({ error: 'Calendar sync requires Core or Premium' }, { status: 403 });
+    if (body.check_only) return checkConnection(user.id);
     return syncCalendar(base44, user, body);
   } catch (error) {
     return json({ error: error.message }, { status: 500 });

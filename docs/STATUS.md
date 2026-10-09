@@ -5,7 +5,67 @@ Update this file as items move. Cutover mechanics live in
 [DEPLOYMENT.md](./DEPLOYMENT.md); the parity protocol in
 [NAVIGATOR_PARITY_TEST.md](./NAVIGATOR_PARITY_TEST.md).
 
-_Last updated: 2026-09-24_
+_Completion-pass update: 2026-10-08. Historical notes below describe Tony's
+earlier hosted setup; the following local changes have NOT been deployed._
+
+## Current completion pass — local code, not launch sign-off
+
+Confirmed by Jacob: annual prices are **Core $55 / Premium $77**, superseding
+the original handoff's $66/$88. Monthly founding prices remain $5.55/$7.77;
+the original standard monthly rates remain $8/$10 pending any explicit change.
+
+Implemented locally:
+
+- Account authority, shared AI quotas, annual renewals, RevenueCat transfers
+  and cross-provider billing snapshots; regression tests cover all six findings.
+- Google Calendar OAuth (offline access, PKCE, single-use expiring state),
+  refresh/disconnect and direct sync; replaces the missing Base44 connector.
+- Private, backend-hosted calendar feeds. Existing Base44 feed subscriptions
+  must be replaced with new links; a plain user ID no longer grants access.
+- Purchase-platform billing management, RevenueCat identity changes on account
+  switches/sign-out, restore for Free users and explicit server reconciliation.
+- Founding/standard monthly product selection; shared $55/$77 annual products.
+  Native standard-monthly offerings fail closed until configured.
+- A database founding-window cutoff shared by signup and legacy repairs.
+  Cutoff remains null (beta); no existing cohort flags were changed.
+- Supabase-only interpretations, public native deletion URLs and migrated
+  frontend error reporting. Interpretation content must be imported BEFORE
+  deploying that function.
+- Per-request AI outcomes, provider/model, latency, available token usage and
+  optional operator-configured cost estimates; no prompt/response text stored.
+- Web SPA routing; lint errors cleared with mechanical unused-import cleanup.
+  Legacy type-check errors remain (see verification below).
+
+Remaining decisions/configuration — do not mistake these for completed work:
+
+1. Confirm whether a founding subscriber who lapses may rejoin at the founding
+   price. Existing cohort eligibility is preserved until that policy is decided;
+   enforcing loss of a discount after lapse is NOT implemented by this pass.
+2. Confirm launch/founding cutoff, final feature gates and AI quotas. Neither
+   beta gate flag has been flipped.
+3. Set Google Calendar credentials/redirect URI, RevenueCat server key and live
+   Stripe products. Configure native standard offerings, Google products/base
+   plans, developer notifications, restore/transfer policy and store price rules.
+4. Validate the native pricing/cohort rules in both stores; linking entitlements
+   does not itself configure store offers or prevent unsupported promotions.
+5. Deploy the five October 8 migrations and affected functions/web in the order
+   in DEPLOYMENT.md. Live receipt/webhook/OAuth tests have NOT been run here.
+6. Device QA, native auth, associated HTTPS links, release signing and the two
+   store submissions remain. No store uploads/submissions were performed.
+7. Final export freeze, production import/media/interpretations, chart recalc,
+   Vercel/domain cutover and end-to-end smoke tests remain.
+8. Close chart/API acceptance coverage (saved-person/synastry/composite,
+   traditions/house systems/timezones, Tyche fallback and cache/license terms).
+   No paid provider calls were made in this pass.
+
+Local verification: web build, lint and Android debug compilation pass; 25 offline regression tests and
+real disposable-PostgreSQL permission/launch/billing/concurrency checks pass.
+The frontend typecheck has 245 legacy errors (81 fewer than the baseline,
+with no new diagnostics); this is not a clean full-repo sign-off.
+Xcode is unavailable on this checkout's host, so iOS build/device
+validation cannot be repeated here. Native and live-provider QA remain gates.
+
+## Historical implementation and account notes
 
 ## Done
 

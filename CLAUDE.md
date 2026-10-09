@@ -28,6 +28,24 @@ Avoid root `pnpm build`/`test` (turbo) for now — the parked workspaces are not
 
 ## Migration architecture (the important part)
 
+October 8 completion pass: annual prices confirmed $55/$77 (not original
+$66/$88). Apply all FIVE October 8 migrations before deploying. Calendar uses
+`calendar-connection` OAuth and private feed keys, not Base44 connectors/UIDs.
+Interpretations are now local-only: import that content BEFORE deploying its
+function. Signup founding eligibility is controlled by
+`launch_configuration.founding_ends_at` (null preserves beta), not LAUNCH_DATE.
+AI metrics are service-owned and record no prompt/response text. See the top of
+STATUS.md and DEPLOYMENT.md for the current local-vs-hosted distinction; older
+notes below are historical. No code from this completion pass is deployed.
+
+October 8 billing/access patch: apply the two `20261008` migrations before
+deploying the updated functions/web. `reserveAiUsage` is shared by llm-task
+and Navigator; quota rows are server-owned and reservations serialized.
+Billing webhooks refresh provider state into `billing_snapshots` and atomically
+project the highest active tier. RevenueCat requires `REVENUECAT_SECRET_API_KEY`.
+`validate-iap-receipt` is now a compatibility reconciliation endpoint, not a
+second receipt/tier writer. See DEPLOYMENT.md for deployment order and tests.
+
 All 103 feature files import one object: `import { base44 } from '@/api/base44Client'`. That file is now a **Supabase-backed shim** reproducing the Base44 SDK surface, so feature code stays untouched. Mappings live in `apps/web/src/api/shim/`:
 
 - `entities.js` — `base44.entities.<Name>.list/filter/create/update/delete/deleteMany/subscribe` → Postgres tables. Table names in `shim/tables.js` (snake_case; `User` → `users`). Tables replicate Base44's record shape: `id`, `created_date`, `updated_date`, `created_by` + fields from `base44/entities/<Name>.jsonc`. Sort strings are Base44-style (`'-created_date'` = desc); filters are plain equality maps.

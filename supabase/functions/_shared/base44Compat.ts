@@ -143,6 +143,12 @@ export function compatClient(req?: Request) {
   const user = req ? userClient(req) : service;
   const callerAuth = req?.headers.get('Authorization') ?? '';
   const serviceAuth = `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`;
+  const contextualCore = {
+    ...Core,
+    InvokeLLM: (params: Parameters<typeof invokeLLM>[0]) => invokeLLM({ ...params,
+      telemetry: params.telemetry || { task: req ? new URL(req.url).pathname.split('/').pop() || 'service-function' : 'service-function' },
+    }),
+  };
 
   return {
     auth: {
@@ -172,9 +178,9 @@ export function compatClient(req?: Request) {
     functions: makeFunctions(callerAuth || serviceAuth),
     asServiceRole: {
       entities: makeEntities(service),
-      integrations: { Core },
+      integrations: { Core: contextualCore },
       functions: makeFunctions(serviceAuth),
     },
-    integrations: { Core },
+    integrations: { Core: contextualCore },
   };
 }

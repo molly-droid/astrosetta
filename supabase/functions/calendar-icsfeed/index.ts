@@ -1,8 +1,9 @@
 // ICS calendar feed — no OAuth required.
-// Users subscribe via Google Calendar → "Add by URL" with: https://astrosetta.com/functions/calendarICSFeed?uid=<user_id>
-// Google Calendar fetches this server-side, so there's no user auth — we use the service role + user_id query param.
+// External calendar clients use an unguessable bearer feed key issued to the
+// authenticated owner by calendar-connection. A user ID alone is not a key.
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions } from '../_shared/edge.ts';
+import { json, handleOptions, serviceClient } from '../_shared/edge.ts';
+import { calendarAllowed } from '../_shared/googleCalendar.ts';
 import { getLunationsBetween } from '../_shared/lunations.ts';
 
 function planetLongitude(name, jd) {
@@ -301,14 +302,14 @@ Deno.serve(async (req) => {
     const base44 = compatClient(req);
 
     const url = new URL(req.url);
-    let userId = url.searchParams.get('uid');
-    if (!userId && req.method === 'POST') {
-      const body = await req.json().catch(() => ({}));
-      userId = body.uid;
-    }
-    if (!userId) {
-      return json({ error: 'Missing uid parameter' }, { status: 400 });
-    }
+    const token = url.searchParams.get('token');
+    if (!token || !/^[a-f0-9]{64}$/.test(token)) return json({ error: 'Invalid calendar link' }, { status: 401 });
+    const db = serviceClient();
+    const { data: feed, error } = await db.from('calendar_feed_keys').select('user_id').eq('token', token).maybeSingle();
+    if (error) throw error;
+    if (!feed) return json({ error: 'Calendar link not found' }, { status: 404 });
+    const userId = feed.user_id;
+    if (!await calendarAllowed(db, userId)) return json({ error: 'Calendar subscription inactive' }, { status: 403 });
 
     const charts = await base44.asServiceRole.entities.Chart.filter({ user_id: userId });
     if (!charts.length) {
@@ -519,7 +520,7 @@ Deno.serve(async (req) => {
       status: 200,
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': 'private, no-store',
       },
     });
   } catch (error) {

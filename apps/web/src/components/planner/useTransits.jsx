@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { getMoonPhaseName } from '@/lib/moonPhase';
 import { detectEclipse } from '@/lib/eclipseUtils';

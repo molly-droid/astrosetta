@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { base44, supabase } from '@/api/base44Client';
 import { pickBestProgress } from '@/lib/userProgress';
-import { initPurchases } from '@/lib/purchases';
+import { initPurchases, resetPurchases } from '@/lib/purchases';
 
 const AuthContext = createContext();
 
@@ -24,6 +24,7 @@ export const AuthProvider = ({ children }) => {
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') checkUserAuth();
       if (event === 'SIGNED_OUT') {
+        resetPurchases().catch(() => {});
         setRealUser(null);
         setImpersonatedUser(null);
         setIsAuthenticated(false);
@@ -64,11 +65,9 @@ export const AuthProvider = ({ children }) => {
         base44.entities.UserProgress.filter({}).catch(() => []),
       ]);
 
-      // Stamp founding member flag and tier preference on first login
+      // Founding eligibility is server-owned. Only the tier preference is
+      // supplied by the browser; imported null flags must not block login.
       const updates = {};
-      if (currentUser.is_founding_member === undefined || currentUser.is_founding_member === null) {
-        updates.is_founding_member = true;
-      }
       const storedTier = localStorage.getItem('founding_tier_preference');
       if (storedTier && !currentUser.founding_tier_preference) {
         updates.founding_tier_preference = storedTier;

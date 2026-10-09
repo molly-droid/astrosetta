@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { invokeLLMTask } from '@/api/llmTasks';
-import { Loader2, X } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
 import { findNatalHouseForSign, ordinal } from '@/lib/houseUtils';
 import { highlightSynthesisText } from '@/lib/transitUtils';

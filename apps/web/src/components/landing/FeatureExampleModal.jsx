@@ -1,7 +1,7 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import ChartWheel from '@/components/chart/ChartWheel';
-import { Check, ArrowRight } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 export const FEATURE_EXAMPLES = {
   daily: {

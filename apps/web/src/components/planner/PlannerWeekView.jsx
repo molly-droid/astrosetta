@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTransits } from './useTransits';
-import { Loader2, X, Sparkles, RefreshCw, Download, ChevronDown, ChevronRight, CalendarDays } from 'lucide-react';
-import DaySynthesis from './DaySynthesis';
+import { Loader2, Sparkles, RefreshCw, Download, ChevronDown, ChevronRight, CalendarDays } from 'lucide-react';
 import PlanetTracker from './PlanetTracker';
 import PeriodTransitChart from './PeriodTransitChart';
 import PeriodHighlights from './PeriodHighlights';

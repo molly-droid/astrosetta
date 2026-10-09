@@ -1,108 +1,72 @@
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions } from '../_shared/edge.ts';
+import { json, handleOptions, serviceClient } from '../_shared/edge.ts';
 import Stripe from 'npm:stripe@14';
 import { createEventOrder } from '../_shared/eventOrders.ts';
+import { applyBillingSnapshot, stripeEntitlements, stripePriceTiers } from '../_shared/billing.ts';
+
+const SYNC_EVENTS = new Set([
+  'checkout.session.completed', 'invoice.paid', 'customer.subscription.created',
+  'customer.subscription.updated', 'customer.subscription.deleted',
+]);
+const objectId = (value: any): string | undefined => typeof value === 'string' ? value : value?.id;
 
 Deno.serve(async (req) => {
   const opt = handleOptions(req);
   if (opt) return opt;
-  const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
-  const webhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET');
-
-  // Build price->tier map inside handler so env vars are resolved at runtime
-  const TIER_BY_PRICE = {
-    [Deno.env.get('STRIPE_INTERPRET_PRICE_ID')]: 'interpret',
-    [Deno.env.get('STRIPE_CALENDAR_PRICE_ID')]: 'calendar',
-  };
-
-  const body = await req.text();
-  const sig = req.headers.get('stripe-signature');
-
+  const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!);
   let event;
   try {
-    event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err.message);
-    return new Response(`Webhook Error: ${err.message}`, { status: 400 });
+    event = await stripe.webhooks.constructEventAsync(
+      await req.text(), req.headers.get('stripe-signature')!, Deno.env.get('STRIPE_WEBHOOK_SECRET')!,
+    );
+  } catch {
+    return json({ error: 'Invalid webhook signature' }, { status: 400 });
   }
-
-  const base44 = compatClient(req);
-
+  if (!SYNC_EVENTS.has(event.type)) return json({ received: true });
   try {
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object;
-      const userId = session.metadata?.base44_user_id;
-      const tier = session.metadata?.tier;
-      const subscriptionId = session.subscription;
-
-      if (!userId || !tier) {
-        console.error('Missing metadata on session:', session.id);
-        return json({ received: true });
-      }
-
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      const expiresAt = new Date(subscription.current_period_end * 1000).toISOString();
-
-      await base44.asServiceRole.entities.User.update(userId, {
-        subscription_tier: tier,
-        subscription_expires: expiresAt,
-        subscription_source: 'stripe',
-        stripe_subscription_id: subscriptionId,
-      });
-      console.log(`checkout.session.completed: updated user ${userId} to tier=${tier}, expires=${expiresAt}`);
-
-      // Event-sourced signup (pop-up booth / promo code): create the incentive
-      // order, decrement stock race-safely, and notify the booth team.
-      if (session.metadata?.event_id) {
-        try {
-          await createEventOrder(base44, session);
-        } catch (eventOrderError) {
-          console.error('Event order creation failed:', eventOrderError.message);
+    const record = event.data.object as any;
+    const customerId = objectId(record.customer);
+    if (!customerId) return json({ received: true });
+    const db = serviceClient();
+    let { data: user, error } = await db.from('users').select('id, stripe_customer_id')
+      .eq('stripe_customer_id', customerId).maybeSingle();
+    if (error) throw error;
+    if (!user) {
+      const customer = await stripe.customers.retrieve(customerId);
+      const userId = !customer.deleted && customer.metadata?.base44_user_id;
+      if (userId) {
+        const result = await db.from('users').select('id, stripe_customer_id').eq('id', userId).maybeSingle();
+        if (result.error) throw result.error;
+        user = result.data;
+        if (user?.stripe_customer_id && user.stripe_customer_id !== customerId) {
+          throw new Error('Stripe customer does not match user');
         }
       }
     }
-
-    if (event.type === 'invoice.paid') {
-      const invoice = event.data.object;
-      const subscriptionId = invoice.subscription;
-      if (!subscriptionId) return json({ received: true });
-
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      const userId = subscription.metadata?.base44_user_id;
-      const priceId = subscription.items.data[0]?.price?.id;
-      const tier = TIER_BY_PRICE[priceId];
-      const expiresAt = new Date(subscription.current_period_end * 1000).toISOString();
-
-      if (userId && tier) {
-        await base44.asServiceRole.entities.User.update(userId, {
-          subscription_tier: tier,
-          subscription_expires: expiresAt,
-          subscription_source: 'stripe',
-        });
-        console.log(`invoice.paid: renewed user ${userId} tier=${tier}, expires=${expiresAt}`);
-      } else {
-        console.warn(`invoice.paid: missing userId=${userId} or tier=${tier} for priceId=${priceId}`);
-      }
+    if (!user) return json({ received: true });
+    const observedAt = new Date().toISOString();
+    const subscriptions = [];
+    // Auto-pagination includes older/cancelled subscriptions past the first page.
+    for await (const sub of stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 100 })) {
+      subscriptions.push(sub);
     }
+    const grants = stripeEntitlements(subscriptions, stripePriceTiers((key) => Deno.env.get(key)));
+    await applyBillingSnapshot(db, user.id, 'stripe', observedAt, grants);
 
-    if (event.type === 'customer.subscription.deleted') {
-      const subscription = event.data.object;
-      const userId = subscription.metadata?.base44_user_id;
+    // Portal/support identifiers do not control the effective cross-store tier.
+    const primary = subscriptions.find((sub) => ['active', 'trialing', 'past_due'].includes(sub.status));
+    const { error: saveError } = await db.from('users').update({
+      stripe_customer_id: customerId, stripe_subscription_id: primary?.id ?? null,
+    }).eq('id', user.id);
+    if (saveError) throw saveError;
 
-      if (userId) {
-        await base44.asServiceRole.entities.User.update(userId, {
-          subscription_tier: 'free',
-          subscription_expires: null,
-          subscription_source: null,
-          stripe_subscription_id: null,
-        });
-        console.log(`customer.subscription.deleted: downgraded user ${userId} to free`);
-      }
+    if (event.type === 'checkout.session.completed' && record.metadata?.event_id) {
+      try { await createEventOrder(compatClient(req), record); }
+      catch (error) { console.error('Event order creation failed:', error); }
     }
-
     return json({ received: true });
   } catch (error) {
-    console.error('Webhook handler error:', error.message);
-    return json({ error: error.message }, { status: 500 });
+    console.error('stripe-webhook reconciliation failed:', error);
+    return json({ error: 'Billing reconciliation failed; retry delivery' }, { status: 500 });
   }
 });

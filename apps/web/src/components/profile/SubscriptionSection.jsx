@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { getEffectiveTier } from '@/lib/permissions';
 import { Sparkles, CalendarDays, Check, Zap, Scroll, ArrowRight, Lock, AlertCircle, Loader2, CreditCard } from 'lucide-react';
+import { publicAppOrigin, openExternalUrl, subscriptionManagementUrl } from '@/lib/appUrls';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import PaywallModal from '@/components/paywall/PaywallModal';
@@ -125,7 +126,8 @@ export default function SubscriptionSection() {
     return () => { alive = false; };
   }, []);
   const planPrice = (plan) =>
-    (nativePrices?.[plan.id] && `${nativePrices[plan.id]}/mo`) || plan.price;
+    isNativePlatform() ? (nativePrices?.[plan.id] ? `${nativePrices[plan.id]}/mo` : 'Store price unavailable')
+      : isFoundingMember ? plan.price : ({ interpret: '$8/mo', calendar: '$10/mo' }[plan.id] || plan.price);
   const foundingPrice = (tier) =>
     (nativePrices?.[tier] && `${nativePrices[tier]}/mo`) || FOUNDING_PRICE[tier];
   const [portalLoading, setPortalLoading] = useState(false);
@@ -137,14 +139,19 @@ export default function SubscriptionSection() {
     setPortalLoading(true);
     setPortalError(null);
     try {
-      let origin;
-      try { origin = window.top.location.origin; } catch { origin = window.location.origin; }
+      const storeUrl = subscriptionManagementUrl(user?.subscription_source);
+      if (storeUrl) {
+        await openExternalUrl(storeUrl);
+        return;
+      }
+      const origin = publicAppOrigin();
       const res = await base44.functions.invoke('createCustomerPortalSession', {
         returnUrl: `${origin}/profile`,
       });
-      window.top.location.href = res.data.url;
+      await openExternalUrl(res.data.url);
     } catch (err) {
       setPortalError('Could not open the billing portal. Please try again or contact support.');
+    } finally {
       setPortalLoading(false);
     }
   };
@@ -332,8 +339,9 @@ export default function SubscriptionSection() {
       </div>
 
       {/* Subscription management (real paid subscribers only) */}
-      {realTier !== 'free' && (
+      {(realTier !== 'free' || isNativePlatform()) && (
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3.5 space-y-2">
+          {realTier !== 'free' && <>
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 min-w-0">
               <CreditCard size={13} className="text-brass/60 shrink-0" />
@@ -352,7 +360,12 @@ export default function SubscriptionSection() {
           {portalError && (
             <p className="font-body text-[11px] text-red-400">{portalError}</p>
           )}
-          <p className="font-body text-[10px] text-brass/40">Update your card, switch plans, or cancel anytime through Stripe's secure billing portal.</p>
+          <p className="font-body text-[10px] text-brass/40">
+            {user?.subscription_source === 'apple' ? 'Manage, change or cancel your subscription in the App Store.'
+              : user?.subscription_source === 'google' ? 'Manage, change or cancel your subscription in Google Play.'
+                : 'Update your card, switch plans or cancel through Stripe’s billing portal.'}
+          </p>
+          </>}
           {isNativePlatform() && (
             <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/[0.06]">
               <p className="font-body text-xs text-white/70">Restore in-app purchases</p>

@@ -48,8 +48,14 @@ export const agents = {
       body: { conversation_id: conversation.id, message },
     });
     if (error) {
-      const err = new Error(error.message || 'navigator-chat failed');
-      err.data = error;
+      const err = Object.assign(new Error(error.message || 'navigator-chat failed'), {
+        code: undefined, status: error.context?.status, data: error,
+      });
+      // FunctionsHttpError carries the structured gate/quota response here.
+      try {
+        const body = await error.context?.json();
+        err.code = body?.code;
+      } catch { /* network errors may have no JSON response */ }
       throw err;
     }
     return data;

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, ChevronRight, CheckCircle2, Sparkles, RotateCcw, Users, Lightbulb } from 'lucide-react';
+import { X, ChevronRight, Sparkles, RotateCcw, Users, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import OrnamentDivider from '@/components/ui/OrnamentDivider';
 import { base44 } from '@/api/base44Client';

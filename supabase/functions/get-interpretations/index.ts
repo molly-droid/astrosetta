@@ -18,26 +18,13 @@ Deno.serve(async (req) => {
       return json({ error: 'Missing placement key' }, { status: 400 });
     }
 
-    // Call the interpretations seeding API
-    const response = await fetch(`https://astrosetta-api.base44.app/api/interpretations?key=${encodeURIComponent(key)}`, {
-      headers: {
-        'Accept': 'application/json',
-      },
+    // Cutover imports the second Base44 app's content into this table.
+    // Never depend on the retired app being reachable, even as a first attempt.
+    const local = await base44.asServiceRole.entities.Interpretation.filter({
+      placement_key: key, status: 'active',
     });
-
-    if (!response.ok) {
-      // Fall back to local DB interpretations
-      const local = await base44.asServiceRole.entities.Interpretation.filter({
-        placement_key: key,
-        status: 'active',
-      });
-      const sorted = local.sort((a, b) => (b.rating_score || 0) - (a.rating_score || 0)).slice(0, 3);
-      return json({ interpretations: sorted, source: 'local' });
-    }
-
-    const data = await response.json();
-    const sorted = (Array.isArray(data) ? data : []).sort((a, b) => (b.rating_score || 0) - (a.rating_score || 0));
-    return json({ interpretations: sorted.slice(0, 3), source: 'api' });
+    const sorted = local.sort((a, b) => (b.rating_score || 0) - (a.rating_score || 0)).slice(0, 3);
+    return json({ interpretations: sorted, source: 'local' });
   } catch (error) {
     return json({ error: error.message }, { status: 500 });
   }

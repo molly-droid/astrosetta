@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Circle, Lock } from 'lucide-react';
+import { CheckCircle2, Circle } from 'lucide-react';
 import TierBadge from './TierBadge';
 
 export const REQUIREMENTS = {

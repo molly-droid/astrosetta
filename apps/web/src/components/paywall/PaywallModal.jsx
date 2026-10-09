@@ -23,8 +23,8 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
   const [restoreMsg, setRestoreMsg] = useState(null);
   const [purchaseError, setPurchaseError] = useState(null);
   // Store-localized monthly price strings (native only); fall back to web copy
-  const [nativePrices, setNativePrices] = useState({});
-  const { reloadUser } = useAuth();
+  const [nativePrices, setNativePrices] = useState({ interpret: null, calendar: null });
+  const { user, reloadUser } = useAuth();
   const isCalendarUpgrade = variant === 'calendar';
   const platform = getPlatform();
   const isNative = platform === 'ios' || platform === 'android';
@@ -46,10 +46,16 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
     setLoading(tier);
     setPurchaseError(null);
 
-    if (isNative) {
-      await handleIapPurchase(tier);
-    } else {
-      await handleStripeCheckout(tier);
+    try {
+      if (isNative) {
+        await handleIapPurchase(tier);
+      } else {
+        await handleStripeCheckout(tier);
+      }
+    } catch {
+      setPurchaseError('Unable to open checkout. Check your connection and try again.');
+    } finally {
+      setLoading(null);
     }
   };
 
@@ -115,13 +121,13 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
 
   // On native, the store's localized price is authoritative (Apple price
   // points differ slightly from the web's Stripe prices).
-  const corePrice = (isNative && nativePrices.interpret) || '$5.55';
-  const premiumPrice = (isNative && nativePrices.calendar) || '$7.77';
+  const corePrice = isNative ? nativePrices.interpret || 'Price unavailable' : user?.is_founding_member ? '$5.55' : '$8';
+  const premiumPrice = isNative ? nativePrices.calendar || 'Price unavailable' : user?.is_founding_member ? '$7.77' : '$10';
 
   const config = isCalendarUpgrade ? {
     icon: <CalendarDays size={22} className="text-gold-accent" />,
     title: 'Become a Premium member',
-    price: `${premiumPrice}/mo`,
+    price: isNative && !nativePrices.calendar ? 'Price unavailable' : `${premiumPrice}/mo`,
     tierName: 'Premium Plan',
     description: fromTier === 'interpret'
       ? 'The deepest layer of Astrosetta — Black Moon Lilith, the asteroid pack, early access to new features, and founding patron recognition.'
@@ -135,13 +141,13 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
       '🏅 Founding patron recognition in-app',
     ],
     primaryLabel: isNative
-      ? `Subscribe${nativeSuffix} — ${premiumPrice}/mo`
-      : fromTier === 'interpret' ? 'Upgrade to Premium — $7.77/mo' : 'Become a Premium member — $7.77/mo',
+      ? nativePrices.calendar ? `Subscribe${nativeSuffix} — ${premiumPrice}/mo` : 'Store price unavailable'
+      : `Subscribe to Premium — ${premiumPrice}/mo`,
     secondaryLabel: fromTier === 'interpret' ? 'Keep Exploring' : 'Maybe Later',
   } : {
     icon: <Sparkles size={22} className="text-celestial-blue" />,
     title: 'Unlock Core',
-    price: `${corePrice}/mo`,
+    price: isNative && !nativePrices.interpret ? 'Price unavailable' : `${corePrice}/mo`,
     tierName: 'Core Plan',
     description: context
       ? `Learn what ${context} means for your life right now.`
@@ -155,8 +161,8 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
       '🤖 AI navigator chatbot',
     ],
     primaryLabel: isNative
-      ? `Subscribe${nativeSuffix} — ${corePrice}/mo`
-      : 'Unlock Core — $5.55/mo',
+      ? nativePrices.interpret ? `Subscribe${nativeSuffix} — ${corePrice}/mo` : 'Store price unavailable'
+      : `Unlock Core — ${corePrice}/mo`,
     secondaryLabel: 'Maybe Later',
   };
 
@@ -240,7 +246,7 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
           <div className="space-y-2 pt-1">
             <Button
               onClick={() => handleCheckout(isCalendarUpgrade ? 'calendar' : 'interpret')}
-              disabled={!!loading}
+              disabled={!!loading || (isNative && !nativePrices[isCalendarUpgrade ? 'calendar' : 'interpret'])}
               className="w-full bg-gold-primary hover:bg-gold-accent text-deep-blue font-body text-sm h-10 font-semibold"
             >
               {loading === (isCalendarUpgrade ? 'calendar' : 'interpret')
@@ -251,12 +257,12 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
               <Button
                 variant="outline"
                 onClick={() => handleCheckout('calendar')}
-                disabled={!!loading}
+                disabled={!!loading || (isNative && !nativePrices.calendar)}
                 className="w-full font-body text-sm h-9 border-gold-primary/30 text-brass"
               >
                 {loading === 'calendar'
                   ? <><Loader2 size={15} className="animate-spin mr-2" /> {isNative ? 'Processing…' : 'Redirecting...'}</>
-                  : 'Become a Premium member — $7.77/mo'}
+                  : `Subscribe to Premium — ${premiumPrice}/mo`}
               </Button>
             )}
             <button onClick={onClose} className="w-full font-body text-xs text-brass/50 hover:text-brass transition-colors py-1">

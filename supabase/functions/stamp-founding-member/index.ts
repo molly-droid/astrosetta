@@ -1,18 +1,13 @@
 /**
  * stampFoundingMember — called by entity automation on User create.
  *
- * BEFORE LAUNCH: LAUNCH_DATE is null, so everyone is a founding member.
- * AT LAUNCH: Set LAUNCH_DATE to the actual launch date (ISO string).
- *            Anyone who signs up within 30 days of that date gets founding member pricing.
- * AFTER 30 DAYS: New users get is_founding_member = false (regular pricing).
+ * The signup trigger and this legacy/manual repair share founding_eligible(),
+ * controlled by launch_configuration.founding_ends_at. Null preserves beta.
  */
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions, getAuthUser, isServiceRole } from '../_shared/edge.ts';
+import { json, handleOptions, isServiceRole, serviceClient } from '../_shared/edge.ts';
 
-// Set this to your launch date when you go live, e.g. "2026-08-01"
-// Leave null during beta — all signups are founding members
-const LAUNCH_DATE: string | null = null;
-const FOUNDING_WINDOW_DAYS = 30;
+// Set the database cutoff only after the client confirms the founding window.
 
 Deno.serve(async (req) => {
   const opt = handleOptions(req);
@@ -24,17 +19,13 @@ Deno.serve(async (req) => {
     const userId = body?.event?.entity_id;
     if (!userId) return json({ ok: false, reason: 'no entity_id' });
 
-    let isFoundingMember = true;
-
-    if (LAUNCH_DATE) {
-      const launch = new Date(LAUNCH_DATE);
-      const windowEnd = new Date(launch);
-      windowEnd.setDate(windowEnd.getDate() + FOUNDING_WINDOW_DAYS);
-      const now = new Date();
-      isFoundingMember = now <= windowEnd;
-    }
-
     const base44 = compatClient(req);
+    const account = await base44.asServiceRole.entities.User.get(userId);
+    // Signup trigger is authoritative; legacy automation must not rewrite an
+    // established cohort when replayed after launch.
+    if (account.is_founding_member !== null && account.is_founding_member !== undefined) return json({ ok: true, userId, unchanged: true });
+    const { data: isFoundingMember, error } = await serviceClient().rpc('founding_eligible', { p_created_at: account.created_date });
+    if (error) throw error;
     await base44.asServiceRole.entities.User.update(userId, {
       is_founding_member: isFoundingMember,
     });

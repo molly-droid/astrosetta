@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { getEffectiveTier, getPermissions, TIER_LABELS, TIER_COLORS } from '@/lib/permissions';
-import { CheckCircle2, XCircle, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Mail, UserPlus, Eye, EyeOff, Pencil, Check } from 'lucide-react';
+import { getEffectiveTier, getPermissions, TIER_LABELS } from '@/lib/permissions';
+import { CheckCircle2, XCircle, RefreshCw, ChevronDown, ChevronUp, Mail, UserPlus, Eye, EyeOff, Pencil, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import PaywallModal from '@/components/paywall/PaywallModal';
 

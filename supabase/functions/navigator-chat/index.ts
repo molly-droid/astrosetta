@@ -21,6 +21,8 @@
 import Anthropic from 'npm:@anthropic-ai/sdk';
 import { json, handleOptions, getAuthUser, serviceClient } from '../_shared/edge.ts';
 import { CHART_NAVIGATOR_INSTRUCTIONS } from '../_shared/chartNavigatorPersona.ts';
+import { reserveAiUsage } from '../_shared/aiAccess.ts';
+import { withAiTelemetry } from '../_shared/aiTelemetry.ts';
 
 // The Base44 agent replayed the conversation; context blocks are re-injected
 // by the client on each message, so older turns matter less. Bound history to
@@ -34,7 +36,7 @@ interface ChatMessage {
   content: string;
 }
 
-async function generateClaudeReply(history: ChatMessage[]): Promise<string> {
+async function generateClaudeReply(history: ChatMessage[], record: (metrics: any) => void): Promise<string> {
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY');
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY secret is not set');
   const client = new Anthropic({ apiKey });
@@ -44,9 +46,10 @@ async function generateClaudeReply(history: ChatMessage[]): Promise<string> {
     system: CHART_NAVIGATOR_INSTRUCTIONS,
     messages: history.slice(-HISTORY_LIMIT).map((m) => ({ role: m.role, content: m.content })),
   });
+  record({ model: response.model, input_tokens: response.usage.input_tokens, output_tokens: response.usage.output_tokens,
+    cache_read_tokens: response.usage.cache_read_input_tokens || 0, cache_write_tokens: response.usage.cache_creation_input_tokens || 0 });
   return response.content
-    .filter((b: { type: string }) => b.type === 'text')
-    .map((b: { text: string }) => b.text)
+    .flatMap(b => b.type === 'text' ? [b.text] : [])
     .join('');
 }
 
@@ -77,10 +80,15 @@ async function generateAstrologyApiReply(history: ChatMessage[]): Promise<string
   return content;
 }
 
-function generateReply(history: ChatMessage[]): Promise<string> {
-  return PROVIDER === 'astrology-api'
-    ? generateAstrologyApiReply(history)
-    : generateClaudeReply(history);
+function generateReply(history: ChatMessage[], userId: string): Promise<string> {
+  return withAiTelemetry({ userId, task: 'navigator-chat', provider: PROVIDER === 'astrology-api' ? 'astrology-api' : 'anthropic',
+    model: PROVIDER === 'astrology-api' ? 'astro-default' : MODEL }, async record => {
+    if (PROVIDER !== 'astrology-api') return generateClaudeReply(history, record);
+    const reply = await generateAstrologyApiReply(history);
+    // Base hosted-turn estimate only; vendor-side tool use is additional.
+    record({ estimated_credits: 25 });
+    return reply;
+  });
 }
 
 Deno.serve(async (req) => {
@@ -104,6 +112,9 @@ Deno.serve(async (req) => {
     if (error || !convo) return json({ error: 'Conversation not found' }, { status: 404 });
     if (convo.created_by_id !== user.id) return json({ error: 'Forbidden' }, { status: 403 });
 
+    const denied = await reserveAiUsage(db, user.id, 'core', 'navigator-chat');
+    if (denied) return denied;
+
     const messages: ChatMessage[] = Array.isArray(convo.messages) ? convo.messages : [];
     messages.push({ role: 'user', content: String(message.content) });
 
@@ -115,7 +126,7 @@ Deno.serve(async (req) => {
 
     let reply: string;
     try {
-      reply = await generateReply(messages);
+      reply = await generateReply(messages, user.id);
     } catch (llmErr) {
       console.error('navigator-chat generation failed:', llmErr);
       reply = 'The stars are quiet for a moment — something went wrong generating a reply. Please try again.';
@@ -132,6 +143,6 @@ Deno.serve(async (req) => {
 
     return json(updated);
   } catch (err) {
-    return json({ error: err.message }, { status: 500 });
+    return json({ error: err instanceof Error ? err.message : 'Navigator request failed' }, { status: 500 });
   }
 });

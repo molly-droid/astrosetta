@@ -6,7 +6,7 @@ import SignName from '@/components/ui/SignName';
 import { Share2 } from 'lucide-react';
 import { getCachedSynthesis, saveCachedSynthesis } from '@/lib/synthesisCache';
 import CollapsibleCardHeader from '@/components/ui/CollapsibleCardHeader';
-import { findNatalHouseForSign, ordinal } from '@/lib/houseUtils';
+import { findNatalHouseForSign } from '@/lib/houseUtils';
 import ShareSheet from '@/components/share/ShareSheet';
 import { buildIngressCardData } from '@/lib/shareCard';
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { BookOpen, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 
 function parseNotes(raw) {
   if (!raw) return null;

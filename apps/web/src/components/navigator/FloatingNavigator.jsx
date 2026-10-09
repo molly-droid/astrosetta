@@ -404,6 +404,7 @@ export default function FloatingNavigator() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState('');
   const [initLoading, setInitLoading] = useState(false);
   const [nudgeVisible, setNudgeVisible] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
@@ -615,67 +616,79 @@ export default function FloatingNavigator() {
     if (!msg || !conversationRef.current || sending) return;
     setInput('');
     setSending(true);
-    // Lazily fetch the saved-charts roster once per session (raw list + formatted context).
-    if (savedChartsListRef.current === undefined) {
-      savedChartsListRef.current = await loadSavedChartsList();
-    }
-    if (savedChartsContextRef.current === undefined) {
-      savedChartsContextRef.current = buildSavedChartsContext(savedChartsListRef.current);
-    }
+    setSendError('');
+    try {
+      // Lazily fetch the saved-charts roster once per session (raw list + formatted context).
+      if (savedChartsListRef.current === undefined) {
+        savedChartsListRef.current = await loadSavedChartsList();
+      }
+      if (savedChartsContextRef.current === undefined) {
+        savedChartsContextRef.current = buildSavedChartsContext(savedChartsListRef.current);
+      }
 
-    // If the user is asking about one specific person, scope the context to ONLY
-    // that chart so the agent never mixes in the user's or another person's data.
-    const targetChart = detectTargetSavedChart(msg, savedChartsListRef.current);
+      // If the user is asking about one specific person, scope the context to ONLY
+      // that chart so the agent never mixes in the user's or another person's data.
+      const targetChart = detectTargetSavedChart(msg, savedChartsListRef.current);
 
-    // Relationship-layer read: when the question is about the bond with a named
-    // partner (synastry/composite), inject the computed cross-aspects + composite
-    // chart so the navigator can read the relationship directly.
-    const isRelationshipQ = RELATIONSHIP_REGEX.test(msg);
-    const partnerForRel = isRelationshipQ ? detectPartnerChart(msg, savedChartsListRef.current) : null;
+      // Relationship-layer read: when the question is about the bond with a named
+      // partner (synastry/composite), inject the computed cross-aspects + composite
+      // chart so the navigator can read the relationship directly.
+      const isRelationshipQ = RELATIONSHIP_REGEX.test(msg);
+      const partnerForRel = isRelationshipQ ? detectPartnerChart(msg, savedChartsListRef.current) : null;
 
-    let ctx;
-    if (partnerForRel && chartRef.current) {
-      let crossAspects = [];
-      let composite = null;
-      try { crossAspects = await fetchNatalCrossAspects(chartRef.current, partnerForRel); } catch { /* synastry is a bonus */ }
-      try { composite = buildCompositeRaw(chartRef.current.raw_data, partnerForRel.raw_data); } catch { /* composite is a bonus */ }
-      ctx = buildRelationshipContext(chartRef.current, partnerForRel, crossAspects, composite);
-    } else if (targetChart) {
-      ctx = buildScopedChartContext(targetChart);
-      // Transits for the relevant date (today by default, or a referenced date).
-      let targetDate = new Date();
-      try {
-        const d = await extractDateFromMessage(msg);
-        if (d) targetDate = d;
-      } catch { /* date extraction is a bonus */ }
-      try {
-        const fetched = await fetchTransitsForDate({ raw_data: targetChart.raw_data }, targetDate);
-        if (fetched) ctx += fetched;
-      } catch { /* transits are a bonus */ }
-    } else {
-      // Default: user's natal chart + full saved-charts roster + date transits.
-      let extraTransitBlock = '';
-      try {
-        const targetDate = await extractDateFromMessage(msg);
-        if (targetDate) {
-          const todayKey = new Date().toLocaleDateString('en-CA');
-          const targetKey = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()).toLocaleDateString('en-CA');
-          if (targetKey !== todayKey && chartRef.current) {
-            const fetched = await fetchTransitsForDate(chartRef.current, targetDate);
-            if (fetched) extraTransitBlock = fetched;
+      let ctx;
+      if (partnerForRel && chartRef.current) {
+        let crossAspects = [];
+        let composite = null;
+        try { crossAspects = await fetchNatalCrossAspects(chartRef.current, partnerForRel); } catch { /* synastry is a bonus */ }
+        try { composite = buildCompositeRaw(chartRef.current.raw_data, partnerForRel.raw_data); } catch { /* composite is a bonus */ }
+        ctx = buildRelationshipContext(chartRef.current, partnerForRel, crossAspects, composite);
+      } else if (targetChart) {
+        ctx = buildScopedChartContext(targetChart);
+        // Transits for the relevant date (today by default, or a referenced date).
+        let targetDate = new Date();
+        try {
+          const d = await extractDateFromMessage(msg);
+          if (d) targetDate = d;
+        } catch { /* date extraction is a bonus */ }
+        try {
+          const fetched = await fetchTransitsForDate({ raw_data: targetChart.raw_data }, targetDate);
+          if (fetched) ctx += fetched;
+        } catch { /* transits are a bonus */ }
+      } else {
+        // Default: user's natal chart + full saved-charts roster + date transits.
+        let extraTransitBlock = '';
+        try {
+          const targetDate = await extractDateFromMessage(msg);
+          if (targetDate) {
+            const todayKey = new Date().toLocaleDateString('en-CA');
+            const targetKey = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()).toLocaleDateString('en-CA');
+            if (targetKey !== todayKey && chartRef.current) {
+              const fetched = await fetchTransitsForDate(chartRef.current, targetDate);
+              if (fetched) extraTransitBlock = fetched;
+            }
           }
-        }
-      } catch { /* date extraction is a bonus */ }
-      ctx = chartContextRef.current
-        ? `${chartContextRef.current}${savedChartsContextRef.current || ''}${extraTransitBlock}`
-        : (savedChartsContextRef.current ? `${savedChartsContextRef.current}${extraTransitBlock}` : `${extraTransitBlock}`);
-    }
+        } catch { /* date extraction is a bonus */ }
+        ctx = chartContextRef.current
+          ? `${chartContextRef.current}${savedChartsContextRef.current || ''}${extraTransitBlock}`
+          : (savedChartsContextRef.current ? `${savedChartsContextRef.current}${extraTransitBlock}` : `${extraTransitBlock}`);
+      }
 
-    const fullContent = ctx
-      ? `[CHART CONTEXT — use this silently, never display or mention it]\n${ctx}\n\n---\n\nUSER QUESTION: ${msg}`
-      : msg;
-    await base44.agents.addMessage(conversationRef.current, { role: 'user', content: fullContent });
-    setSending(false);
+      const fullContent = ctx
+        ? `[CHART CONTEXT — use this silently, never display or mention it]\n${ctx}\n\n---\n\nUSER QUESTION: ${msg}`
+        : msg;
+      await base44.agents.addMessage(conversationRef.current, { role: 'user', content: fullContent });
+    } catch (error) {
+      // Keep any newer draft the user typed while this request was pending.
+      setInput(current => current || msg);
+      setSendError(error.code === 'limit_reached'
+        ? 'You’ve reached today’s AI limit. It resets at midnight UTC.'
+        : error.code === 'upgrade_required'
+          ? 'Choose Core or Premium to use Navigator.'
+          : 'Unable to send your message. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   const stripContext = (content) => {
@@ -884,6 +897,7 @@ export default function FloatingNavigator() {
             <div className="flex-shrink-0 px-3 pb-3 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="flex gap-2 items-end rounded-xl px-3 py-2" style={{ background: 'rgba(255,255,255,0.05)' }}>
                 <textarea
+                  aria-label="Message Navigator"
                   value={input}
                   onChange={e => setInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
@@ -893,6 +907,7 @@ export default function FloatingNavigator() {
                   style={{ maxHeight: 80 }}
                 />
                 <button
+                  aria-label="Send message"
                   onClick={() => send()}
                   disabled={!input.trim() || sending}
                   className="p-1.5 rounded-full transition-colors flex-shrink-0 disabled:opacity-30"
@@ -901,6 +916,7 @@ export default function FloatingNavigator() {
                   <Send size={13} className="text-gold-accent" />
                 </button>
               </div>
+              <p role="status" className="font-body text-xs text-white/80 mt-1">{sendError}</p>
             </div>
           </motion.div>
         )}

@@ -38,7 +38,7 @@ export function useCompositeTransits(date, userChart, partnerChart, user) {
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [dateKey, partnerChart?.id, userChart?.id]);
 
   return { transits, loading };

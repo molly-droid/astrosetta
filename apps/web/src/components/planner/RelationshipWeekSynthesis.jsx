@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { invokeLLMTask } from '@/api/llmTasks';
-import { Loader2, Sparkles, ChevronDown, ChevronRight, RefreshCw, Heart, CalendarDays } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronRight, RefreshCw, Heart } from 'lucide-react';
 import { highlightSynthesisText } from '@/lib/transitUtils';
 import { getMoonPhaseEmoji } from '@/lib/moonPhase';
 import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
@@ -10,8 +10,6 @@ import {
   fetchNatalCrossAspects,
   buildWeekParams,
 } from '@/lib/relationshipSynthesis';
-import { useAuth } from '@/lib/AuthContext';
-import { getHiddenChartPoints } from '@/lib/chartPointVisibility';
 
 const CACHE_VERSION = 'rel-v1';
 const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

@@ -11,7 +11,6 @@ import PlannerDayView from '@/components/planner/PlannerDayView';
 import PlannerWeekView from '@/components/planner/PlannerWeekView';
 import PlannerMonthView from '@/components/planner/PlannerMonthView';
 import GoogleCalendarConnect from '@/components/profile/GoogleCalendarConnect';
-import PaywallModal from '@/components/paywall/PaywallModal';
 import { usePermissions, getEffectiveTier } from '@/lib/permissions';
 import { track, EVENTS } from '@/lib/analytics';
 import { useTabUrl } from '@/hooks/useTabUrl';

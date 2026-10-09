@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import { ChevronDown, ChevronRight, Layers, Flame, Mountain, Wind, Droplet, Loader2, Sparkles } from 'lucide-react';
-import { analyzeChartDynamics, SIGN_RULERS_MODERN, SIGN_ELEMENTS, SIGN_MODALITIES } from '@/lib/chartDynamics';
+import { ChevronDown, ChevronRight, Layers, Flame, Mountain, Wind, Droplet, Loader2 } from 'lucide-react';
+import { analyzeChartDynamics, SIGN_ELEMENTS, SIGN_MODALITIES } from '@/lib/chartDynamics';
 import { PLANET_GLYPHS, SIGN_GLYPHS, highlightSynthesisText } from '@/lib/transitUtils';
-import { getHouseShort, ordinal, HOUSE_NAMES } from '@/lib/houseUtils';
+import { getHouseShort, ordinal } from '@/lib/houseUtils';
 import { useDynamicsInterpretation } from './useDynamicsInterpretation';
 import SpotlightCallout from '@/components/shared/SpotlightCallout';
 

@@ -1,7 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Check, Sparkles, CalendarDays, GraduationCap } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 const PLANS = [
   {

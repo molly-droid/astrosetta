@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { invokeLLMTask } from '@/api/llmTasks';
-import { Loader2, Sparkles, Globe, RefreshCw, Heart } from 'lucide-react';
+import { Sparkles, Globe, RefreshCw, Heart } from 'lucide-react';
 import { highlightSynthesisText, PLANET_GLYPHS } from '@/lib/transitUtils';
 import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
 import CollapsibleCardHeader from '@/components/ui/CollapsibleCardHeader';

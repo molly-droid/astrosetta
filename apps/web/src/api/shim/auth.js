@@ -19,6 +19,9 @@ export const auth = {
     const authUser = sessionData?.session?.user;
     if (!authUser) throw authError(401, 'Not authenticated');
 
+    const { error: refreshError } = await supabase.rpc('refresh_billing_access', { p_user_id: authUser.id });
+    if (refreshError) throw authError(500, refreshError.message);
+
     const { data: row, error } = await supabase
       .from('users')
       .select('*')

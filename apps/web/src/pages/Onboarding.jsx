@@ -8,7 +8,7 @@ import OrnamentDivider from '@/components/ui/OrnamentDivider';
 import { track, EVENTS } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-import { Mail, Check, Sparkles, ArrowRight } from 'lucide-react';
+import { Mail, Check, ArrowRight } from 'lucide-react';
 import { depthFromOnboardingLevel } from '@/lib/knowledgeDensity';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
 

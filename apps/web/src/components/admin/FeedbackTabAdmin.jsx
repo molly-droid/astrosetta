@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Bug, Lightbulb, MessageSquare, ChevronDown, ChevronUp, ExternalLink, Send, Mail, TrendingDown } from 'lucide-react';
+import { Loader2, Bug, Lightbulb, MessageSquare, ChevronDown, ChevronUp, ExternalLink, Mail, TrendingDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const TYPE_META = {

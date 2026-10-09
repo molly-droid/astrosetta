@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { useTabUrl } from '@/hooks/useTabUrl';
 import { base44 } from '@/api/base44Client';
-import { Loader2, RefreshCw, ChevronDown, ChevronRight, ChevronLeft, Sparkles, ArrowRight, Plus, Eye } from 'lucide-react';
+import { Loader2, RefreshCw, ChevronDown, ChevronRight, ChevronLeft, Sparkles, ArrowRight, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import OrnamentDivider from '@/components/ui/OrnamentDivider';
 import PageHeader from '@/components/layout/PageHeader';

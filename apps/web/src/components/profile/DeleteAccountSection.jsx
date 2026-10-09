@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Loader2, Mail, ShieldAlert, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
-import { getPlatform } from '@/lib/platform';
+import { publicAppOrigin } from '@/lib/appUrls';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
 
@@ -40,9 +40,7 @@ export default function DeleteAccountSection() {
     setError(null);
     // The emailed link must open in a real browser — on native builds the
     // in-app origin isn't reachable, so fall back to the published web app.
-    let origin;
-    try { origin = window.top.location.origin; } catch { origin = window.location.origin; }
-    if (getPlatform() !== 'web') origin = 'https://astrosetta.base44.app';
+    const origin = publicAppOrigin();
     try {
       await base44.functions.invoke('accountDeletion', { action: 'request', origin });
       setStep('sent');

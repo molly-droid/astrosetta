@@ -97,6 +97,14 @@ async function handler(req): Promise<Response> {
         srv.entities.Feedback.deleteMany({ user_id: uid }),
         srv.entities.Feedback.deleteMany({ created_by_id: uid }),
       ];
+      // Remove new private integration state even if auth-user deletion later
+      // falls back to profile anonymization. Never retain usable OAuth tokens.
+      const privateDb = serviceClient();
+      for (const table of ['google_calendar_connections', 'google_calendar_states', 'calendar_feed_keys', 'ai_request_metrics', 'billing_snapshots']) {
+        wipes.push(privateDb.from(table).delete().eq('user_id', uid).then(({ error }) => {
+          if (error) throw error;
+        }));
+      }
       if (email) {
         wipes.push(srv.entities.WaitlistEmail.deleteMany({ email }));
         if (email.toLowerCase() !== email) {

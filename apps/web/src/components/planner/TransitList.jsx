@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
 import SignName from '@/components/ui/SignName';
-import { formatTransitLabel, HOUSE_THEMES, ASPECT_ANGLES, highlightSynthesisText, estimateTransitTime, formatTime } from '@/lib/transitUtils';
+import { formatTransitLabel, HOUSE_THEMES, highlightSynthesisText, estimateTransitTime, formatTime } from '@/lib/transitUtils';
 import { useAuth } from '@/lib/AuthContext';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
 import Eli5Button from '@/components/ui/Eli5Button';
 import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, ChevronDown, ChevronRight, SlidersHorizontal, Lock, ArrowUpDown } from 'lucide-react';
 import PaywallModal from '@/components/paywall/PaywallModal';
-import { usePermissions } from '@/lib/permissions';
 
 function ordinal(n) {
   if (!n) return '';

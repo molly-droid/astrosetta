@@ -13,13 +13,7 @@ export function getPlatform() {
     if (p === 'web') return 'web';
   }
 
-  if (typeof navigator === 'undefined') return 'web';
-
-  const ua = navigator.userAgent || '';
-  const standalone = navigator.standalone; // iOS standalone mode
-
-  if (/iPad|iPhone|iPod/.test(ua) || standalone) return 'ios';
-  if (/Android/.test(ua)) return 'android';
+  // A mobile browser/PWA is still web: it must use Stripe, not a native SDK.
   return 'web';
 }
 
@@ -28,7 +22,7 @@ export function isNativePlatform() {
 }
 
 export function isCapacitor() {
-  return typeof window !== 'undefined' && !!window.Capacitor;
+  return isNativePlatform();
 }
 
 export const PLATFORM = getPlatform();

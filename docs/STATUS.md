@@ -20,6 +20,12 @@ closed; needs Calendar API + redirect URI in the Google project that owns
 the OAuth client), optional `AI_MODEL_RATES_JSON`, and the standard-monthly
 Stripe/RevenueCat products (fail closed until the founding window ends)._
 
+_2026-10-09 (Tony): Molly ACKNOWLEDGED the iOS prices ($5.59/$7.79 monthly,
+$55/$77 yearly) — pricing is settled. AI daily limits stay at the implemented
+values (free 50 / Core 300 / Premium 600, admins unlimited) per Tony's call;
+no further sign-off gate. LLM_THINKING stays default-off. Next: TestFlight
+build for Molly (in progress)._
+
 ## Current completion pass — local code, not launch sign-off
 
 Confirmed by Jacob: annual prices are **Core $55 / Premium $77**, superseding

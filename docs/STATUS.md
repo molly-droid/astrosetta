@@ -47,7 +47,28 @@ unaffected. DECISION (Tony, 2026-10-09): don't chase it —
 the library hasn't been live, so parity needs nothing more; cutover step
 12 (interpretations import) is DONE. If Molly ever resurfaces a library
 export, the idempotent importer can top the table up anytime. TestFlight build 2 uploaded
-(tour-card fix)._
+(tour-card fix). Build 3 uploaded later that evening: safe-area fixes for
+the ModulePlayer/MasteryChallenge fullscreen overlays + landing top bar
+(device findings from Tony's test pass) — this is the Molly candidate.
+**Known parity quirk (kept by decision, Tony 2026-10-09):** during beta,
+Subscribe computes isCurrent from the effective tier, so every non-admin
+shows "You're on this plan" for Premium — beta users can lock in the Core
+founding rate but CANNOT buy/lock Premium. Identical in Molly's live app
+(her Subscribe.jsx:213). Flag to Molly alongside the lapse-rejoin policy
+question; the fix (drive isCurrent off the stored tier during beta) is
+one line if she wants it._
+
+_2026-10-09 (Tony): **Live Stripe STAGED** — Molly's real live account is a
+separate, previously-empty "Astrosetta" account (acct_1Tf0OG9W9ZFmhq7a; NOT
+Workforce Energetics — that other account's dead webhook/33 events remain
+unexplained but moot: zero customers/subscriptions here means NO
+active-subscriber export is needed at cutover). Created: products
+Astrosetta Core/Premium + 4 founding/yearly prices ($5.55 & $55 Core,
+$7.77 & $77 Premium; standard-monthly deferred by design) + webhook
+endpoint for our stripe-webhook (5 events). All IDs + live signing secret
+recorded as STRIPE_LIVE_* in supabase/functions/.env (gitignored),
+STAGED ONLY — hosted secrets stay on sandbox until cutover, when the
+flip is a two-minute secrets swap._
 
 ## Current completion pass — local code, not launch sign-off
 

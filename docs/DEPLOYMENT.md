@@ -193,6 +193,19 @@ interpretation dependency remains).
 - A planner day view (transit calculation) + one LLM synthesis panel.
 - Navigator conversation round-trip.
 - Stripe test-mode checkout → webhook updates `users.subscription_tier`.
+- **Live-Stripe coupon smoke (run once, right after swapping the hosted
+  secrets to the staged live values — see the STRIPE_LIVE_* block +
+  cutover mapping in supabase/functions/.env):**
+  1. In the live Astrosetta Stripe account, create a coupon: **100% off,
+     duration `forever`**, and a promotion code only we know.
+  2. Run one real web checkout for Core monthly using that code →
+     confirm checkout completes, the live webhook delivers (Stripe
+     dashboard → webhook endpoint `we_1UOpty9W9ZFmhq7a6rsKYwnm` shows
+     2xx), and `users.subscription_tier` flips to `interpret`.
+  3. Cancel that subscription immediately, archive the coupon/promo
+     code, and delete the test customer in Stripe.
+  Keep it brief and supervised: while live keys are set, every checkout
+  without the code charges real cards.
 - Emails: welcome (create a chart), one digest via manual
   `select public.invoke_edge_function('send-daily-email', '{"scheduled": true, "appUrl": "https://astrosetta.com"}'::jsonb);`
 - Cron jobs listed: `select jobname, schedule from cron.job;`

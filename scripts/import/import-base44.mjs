@@ -210,8 +210,15 @@ function transformRecord(entityName, rec) {
     if (k === 'id' || DROP_FIELDS.has(k)) continue;
     let v = rewriteUrls(vRaw);
     if (USER_REF_FIELDS.has(k) && typeof v === 'string' && v) {
-      if (userIdMap[v]) v = userIdMap[v];
-      else unmapped.push(`${entityName}.${k}=${v} (no matching user — kept as-is)`);
+      if (userIdMap[v]) {
+        v = userIdMap[v];
+      } else {
+        // User-ref columns are uuid-typed; a raw Base44 id would fail the
+        // insert. Null it — an idempotent re-run with User.json present
+        // upserts the mapped id back in.
+        unmapped.push(`${entityName}.${k}=${v} (no matching user — set to null)`);
+        v = null;
+      }
     } else if (ROW_REF_FIELDS.has(k) && typeof v === 'string' && v) {
       v = idToUuid(v);
     }

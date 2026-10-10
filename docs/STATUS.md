@@ -35,6 +35,20 @@ TestFlight: stage LIVE Stripe (create live prices + register live webhook,
 record IDs — but keep hosted secrets on sandbox until cutover) and grab the
 active-subscriber export while live-Stripe access is fresh._
 
+_2026-10-09 (Tony): **Content import done early** — 97 learning modules +
+20 interpretations imported to prod via import-base44.mjs (first real run;
+it caught and we fixed an importer bug: unmapped Base44 user refs now null
+instead of crashing uuid columns). Verified serving via REST + the
+get-interpretations function. **Second-app finding:** the interpretation
+"library" app (astrosetta-api.base44.app) returns App-not-found — the LIVE
+app has been running on the ~20 local fallback rows already, so we are at
+parity. Main placement interpretations are LLM-generated (llm-task) and
+unaffected. DECISION (Tony, 2026-10-09): don't chase it —
+the library hasn't been live, so parity needs nothing more; cutover step
+12 (interpretations import) is DONE. If Molly ever resurfaces a library
+export, the idempotent importer can top the table up anytime. TestFlight build 2 uploaded
+(tour-card fix)._
+
 ## Current completion pass — local code, not launch sign-off
 
 Confirmed by Jacob: annual prices are **Core $55 / Premium $77**, superseding

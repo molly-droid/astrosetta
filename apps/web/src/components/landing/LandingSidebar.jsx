@@ -75,7 +75,7 @@ export default function LandingSidebar({ collapsed, setCollapsed, onSignIn, load
       {/* Mobile — slim top bar (side rail is hidden < md) */}
       <div
         className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-5 py-3"
-        style={{ background: 'rgba(7,16,30,0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+        style={{ background: 'rgba(7,16,30,0.85)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingTop: 'max(0.75rem, calc(env(safe-area-inset-top, 0px) + 0.375rem))' }}
       >
         <button onClick={onSignIn} className="flex items-center">
           <img

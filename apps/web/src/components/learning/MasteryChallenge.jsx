@@ -113,7 +113,7 @@ export default function MasteryChallenge({ module: mod, progress, userId, onClos
   if (showComplete) {
     return (
       <div className="fixed inset-0 bg-cream z-[10020] flex flex-col">
-        <div className="bg-paper border-b border-gold-primary/30 px-4 pt-10 pb-4 flex items-center gap-3">
+        <div className="bg-paper border-b border-gold-primary/30 px-4 pb-4 flex items-center gap-3" style={{ paddingTop: 'max(2.5rem, calc(env(safe-area-inset-top, 0px) + 0.75rem))' }}>
           <button onClick={onClose} className="text-brass hover:text-white transition-colors">
             <X size={20} />
           </button>
@@ -170,7 +170,7 @@ export default function MasteryChallenge({ module: mod, progress, userId, onClos
   return (
     <div className="fixed inset-0 bg-cream z-[10020] flex flex-col">
       {/* Header */}
-      <div className="bg-paper border-b border-gold-accent/40 px-4 pt-10 pb-4 flex items-center gap-3">
+      <div className="bg-paper border-b border-gold-accent/40 px-4 pb-4 flex items-center gap-3" style={{ paddingTop: 'max(2.5rem, calc(env(safe-area-inset-top, 0px) + 0.75rem))' }}>
         <button onClick={onClose} className="text-brass hover:text-white transition-colors">
           <X size={20} />
         </button>

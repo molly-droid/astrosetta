@@ -109,9 +109,14 @@ export default function FirstVisitTooltips({ activeTab, onTabChange }) {
 
     const below = coords.top + coords.height + 12;
     const above = coords.top - 12;
-    // Prefer below; if not enough room, position above
-    const placeBelow = below + 200 < window.innerHeight;
-    const cardTop = placeBelow ? below : Math.max(16, above - 180);
+    // Keep the card clear of the bottom tab bar + iOS home-indicator inset:
+    // estimate the card tall (CARD_EST) and reserve bottom chrome, then clamp
+    // so the action buttons can never sink under the nav.
+    const CARD_EST = 260;
+    const BOTTOM_RESERVE = 112;
+    const lowest = window.innerHeight - BOTTOM_RESERVE - CARD_EST;
+    const placeBelow = below < lowest;
+    const cardTop = Math.max(16, Math.min(placeBelow ? below : above - CARD_EST, lowest));
 
     cardStyle = {
       position: 'fixed',

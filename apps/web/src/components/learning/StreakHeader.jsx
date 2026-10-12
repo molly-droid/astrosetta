@@ -18,7 +18,7 @@ export default function StreakHeader({ user, userProgress }) {
         <div className="flex items-center gap-1.5 bg-gold-primary/10 border border-gold-primary/40 rounded-full px-2.5 py-1 shrink-0" title={`${streak}-day streak`}>
           <Flame size={13} className={streak > 0 ? 'text-gold-accent' : 'text-white/20'} fill={streak > 0 ? '#C9A961' : 'transparent'} />
           <span className="font-display font-bold text-sm text-cream">{streak}</span>
-          <span className="font-body text-[9px] text-brass/60 uppercase tracking-wide ml-0.5 hidden sm:inline">streak</span>
+          <span className="font-body text-[0.5625rem] text-brass/60 uppercase tracking-wide ml-0.5 hidden sm:inline">streak</span>
         </div>
       </div>
       <LearningTierGauge userProgress={userProgress} />

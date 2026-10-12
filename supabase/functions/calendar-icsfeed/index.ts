@@ -202,6 +202,34 @@ function escapeICS(text) {
   return text.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
 }
 
+/**
+ * Fold a content line to 75 octets per RFC 5545 (B-17): continuation lines
+ * start with a single space. Our DESCRIPTION lines run well past 75 bytes and
+ * strict parsers truncate or reject unfolded ones. Counts UTF-8 bytes and
+ * never splits a multi-byte character (the feed is full of glyphs like ♀/℞).
+ */
+function foldICS(line) {
+  const enc = new TextEncoder();
+  if (enc.encode(line).length <= 75) return line;
+  const out = [];
+  let cur = '';
+  let curBytes = 0;
+  let limit = 75; // first line 75; continuation lines lose one octet to the space
+  for (const ch of line) {
+    const chBytes = enc.encode(ch).length;
+    if (curBytes + chBytes > limit) {
+      out.push(cur);
+      cur = '';
+      curBytes = 0;
+      limit = 74;
+    }
+    cur += ch;
+    curBytes += chBytes;
+  }
+  if (cur) out.push(cur);
+  return out.join('\r\n ');
+}
+
 function ordinal(n) {
   if (!n) return '';
   const s = ['th', 'st', 'nd', 'rd'];
@@ -260,13 +288,13 @@ function buildICS(events, req: Request) {
 
     ics.push(
       'BEGIN:VEVENT',
-      `UID:${uid}@astrosetta`,
+      foldICS(`UID:${uid}@astrosetta`),
       `DTSTAMP:${now}`,
       `DTSTART:${dtStart}`,
       `DTEND:${dtEnd}`,
-      `SUMMARY:${escapeICS(evt.summary)}`,
-      `DESCRIPTION:${escapeICS(descWithLink)}`,
-      `URL:${plannerUrl}`,
+      foldICS(`SUMMARY:${escapeICS(evt.summary)}`),
+      foldICS(`DESCRIPTION:${escapeICS(descWithLink)}`),
+      foldICS(`URL:${plannerUrl}`),
       'END:VEVENT'
     );
   }
@@ -291,7 +319,8 @@ Deno.serve(async (req) => {
     const userId = feed.user_id;
     if (!await calendarAllowed(db, userId)) return json({ error: 'Calendar subscription inactive' }, { status: 403 });
 
-    const charts = await base44.asServiceRole.entities.Chart.filter({ user_id: userId });
+    // Newest chart first (B-15) — see the same note in sync-astro-to-calendar.
+    const charts = await base44.asServiceRole.entities.Chart.filter({ user_id: userId }, '-created_date');
     if (!charts.length) {
       return new Response('No chart found', { status: 404 });
     }

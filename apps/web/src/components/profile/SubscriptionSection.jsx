@@ -242,20 +242,20 @@ export default function SubscriptionSection() {
           </p>
           <div className="grid grid-cols-2 gap-3 pt-1">
             <div>
-              <p className="font-body text-[10px] uppercase tracking-widest text-green-400/70 mb-1">You keep</p>
+              <p className="font-body text-[0.625rem] uppercase tracking-widest text-green-400/70 mb-1">You keep</p>
               <ul className="space-y-0.5">
                 {LAPSED_COPY[realTier].keeps.map(f => (
-                  <li key={f} className="font-body text-[11px] text-white/55 flex items-start gap-1">
+                  <li key={f} className="font-body text-[0.6875rem] text-white/55 flex items-start gap-1">
                     <Check size={9} className="text-green-400/60 mt-0.5 shrink-0" />{f}
                   </li>
                 ))}
               </ul>
             </div>
             <div>
-              <p className="font-body text-[10px] uppercase tracking-widest text-red-400/70 mb-1">You lost</p>
+              <p className="font-body text-[0.625rem] uppercase tracking-widest text-red-400/70 mb-1">You lost</p>
               <ul className="space-y-0.5">
                 {LAPSED_COPY[realTier].loses.map(f => (
-                  <li key={f} className="font-body text-[11px] text-white/40 flex items-start gap-1">
+                  <li key={f} className="font-body text-[0.6875rem] text-white/40 flex items-start gap-1">
                     <span className="mt-px shrink-0">✕</span><span className="line-through">{f}</span>
                   </li>
                 ))}
@@ -361,9 +361,9 @@ export default function SubscriptionSection() {
             </Button>
           </div>
           {portalError && (
-            <p className="font-body text-[11px] text-red-400">{portalError}</p>
+            <p className="font-body text-[0.6875rem] text-red-400">{portalError}</p>
           )}
-          <p className="font-body text-[10px] text-brass/40">
+          <p className="font-body text-[0.625rem] text-brass/40">
             {user?.subscription_source === 'apple' ? 'Manage, change or cancel your subscription in the App Store.'
               : user?.subscription_source === 'google' ? 'Manage, change or cancel your subscription in Google Play.'
                 : 'Update your card, switch plans or cancel through Stripe’s billing portal.'}
@@ -384,7 +384,7 @@ export default function SubscriptionSection() {
             </div>
           )}
           {restoreMsg && (
-            <p className="font-body text-[11px] text-starlight-muted">{restoreMsg}</p>
+            <p className="font-body text-[0.6875rem] text-starlight-muted">{restoreMsg}</p>
           )}
         </div>
       )}

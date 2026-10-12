@@ -295,14 +295,14 @@ export default function EditBirthDataModal({ open, onClose, user, existingChart,
             )}
 
             {effectiveLocation?.latitude != null && (
-              <p className="text-[11px] font-body text-brass/70 italic">
+              <p className="text-[0.6875rem] font-body text-brass/70 italic">
                 📍 {effectiveLocation.latitude.toFixed(4)}°, {effectiveLocation.longitude.toFixed(4)}°
                 {effectiveLocation.timezone ? ` · ${effectiveLocation.timezone}` : ''}
               </p>
             )}
 
             {cityChanged && !locationConfirmed && (
-              <p className="text-[11px] font-body text-brass/70 italic">
+              <p className="text-[0.6875rem] font-body text-brass/70 italic">
                 Type your city to search and select from the list.
               </p>
             )}

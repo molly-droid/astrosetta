@@ -89,7 +89,7 @@ function AspectMini({ a, transits, chart }) {
   const sym = ASPECT_SYMBOLS[a.aspect] || a.aspect;
   const house = natalPlanetHouse(transits, chart, a.natal_planet);
   return (
-    <span className="font-body text-[11px] text-white/85 leading-snug">
+    <span className="font-body text-[0.6875rem] text-white/85 leading-snug">
       {sym} <strong>{a.natal_planet}</strong>
       {house ? ` · ${ordinal(house)}H` : ''}
       <span className="text-brass/60 ml-1">{a.orb?.toFixed(1)}°</span>
@@ -144,12 +144,12 @@ function SharedTransitRow({ item, userTransits, partnerTransits, userChart, part
         <span className="flex items-center gap-2 min-w-0">
           <span className="opacity-70 text-sm">{glyph}</span>
           <strong className="font-body text-xs text-white">{item.transit_planet}</strong>
-          {tP?.sign && <SignName sign={tP.sign} className="font-body text-[11px] text-brass" />}
-          {tP?.retrograde && <span className="font-body text-[10px] text-gold-accent italic">℞</span>}
-          <span className="font-body text-[10px] text-celestial-pink/80 ml-1">· both charts</span>
+          {tP?.sign && <SignName sign={tP.sign} className="font-body text-[0.6875rem] text-brass" />}
+          {tP?.retrograde && <span className="font-body text-[0.625rem] text-gold-accent italic">℞</span>}
+          <span className="font-body text-[0.625rem] text-celestial-pink/80 ml-1">· both charts</span>
         </span>
         <span className="flex items-center gap-1.5 ml-2 shrink-0">
-          <span className="font-body text-[10px] text-brass">{item.minOrb.toFixed(1)}°</span>
+          <span className="font-body text-[0.625rem] text-brass">{item.minOrb.toFixed(1)}°</span>
           {!canViewInterpretations
             ? <Lock size={11} className="text-brass/30" />
             : loading ? <Loader2 size={11} className="animate-spin text-gold-primary" />
@@ -159,13 +159,13 @@ function SharedTransitRow({ item, userTransits, partnerTransits, userChart, part
 
       <div className="px-3 pb-2.5 pt-0.5 space-y-1 border-t border-white/[0.04]">
         <div className="flex flex-wrap gap-x-3 gap-y-0.5 items-baseline">
-          <span className="font-body text-[9px] uppercase tracking-widest text-celestial-blue/70">You:</span>
+          <span className="font-body text-[0.5625rem] uppercase tracking-widest text-celestial-blue/70">You:</span>
           {item.userAspects.map((a, i) => (
             <AspectMini key={`u${i}`} a={a} transits={userTransits} chart={userChart} />
           ))}
         </div>
         <div className="flex flex-wrap gap-x-3 gap-y-0.5 items-baseline">
-          <span className="font-body text-[9px] uppercase tracking-widest text-celestial-purple/70">{partnerName}:</span>
+          <span className="font-body text-[0.5625rem] uppercase tracking-widest text-celestial-purple/70">{partnerName}:</span>
           {item.partnerAspects.map((a, i) => (
             <AspectMini key={`p${i}`} a={a} transits={partnerTransits} chart={partnerChart} />
           ))}
@@ -177,7 +177,7 @@ function SharedTransitRow({ item, userTransits, partnerTransits, userChart, part
           {loading ? (
             <div className="flex items-center gap-1.5">
               <Loader2 size={11} className="animate-spin text-gold-primary" />
-              <span className="font-body text-[11px] text-brass italic">Reading the shared activation…</span>
+              <span className="font-body text-[0.6875rem] text-brass italic">Reading the shared activation…</span>
             </div>
           ) : text && (
             <p className="font-body text-xs text-white/90 leading-snug">{highlightSynthesisText(text, null, 'text-gold-primary')}</p>
@@ -228,7 +228,7 @@ export default function SharedTransitsList({ userTransits, partnerTransits, user
         <Heart size={13} className="text-celestial-pink" />
         <div>
           <p className="font-body text-xs text-white font-semibold">Shared Transits</p>
-          <p className="font-body text-[10px] text-brass">Activating both charts · {shared.length} planet{shared.length !== 1 ? 's' : ''}</p>
+          <p className="font-body text-[0.625rem] text-brass">Activating both charts · {shared.length} planet{shared.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
       <div className="p-2 space-y-1.5">

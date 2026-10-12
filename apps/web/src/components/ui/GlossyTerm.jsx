@@ -189,7 +189,7 @@ export default function GlossyTerm({ term, children, className = '' }) {
             <div className="flex items-center gap-2 mb-1.5">
               <BookOpen size={13} className="text-gold-accent shrink-0" />
               <span className="font-display text-sm font-semibold text-white capitalize">{displayName}</span>
-              <span className="font-body text-[9px] uppercase tracking-widest text-white/40 ml-auto">{category}</span>
+              <span className="font-body text-[0.5625rem] uppercase tracking-widest text-white/40 ml-auto">{category}</span>
             </div>
             {loadingItem ? (
               <p className="font-body text-xs text-brass/60 italic">Loading…</p>
@@ -201,7 +201,7 @@ export default function GlossyTerm({ term, children, className = '' }) {
                 {technical && !showTechByDefault && !showTechnical && (
                   <button
                     onClick={() => setShowTechnical(true)}
-                    className="mt-2 flex items-center gap-1 font-body text-[10px] text-gold-accent hover:text-gold-primary transition-colors"
+                    className="mt-2 flex items-center gap-1 font-body text-[0.625rem] text-gold-accent hover:text-gold-primary transition-colors"
                   >
                     <ChevronDown size={11} /> Reveal technical depth
                   </button>
@@ -209,7 +209,7 @@ export default function GlossyTerm({ term, children, className = '' }) {
                 {technical && showTechnical && !showTechByDefault && (
                   <button
                     onClick={() => setShowTechnical(false)}
-                    className="mt-2 flex items-center gap-1 font-body text-[10px] text-brass/60 hover:text-brass transition-colors"
+                    className="mt-2 flex items-center gap-1 font-body text-[0.625rem] text-brass/60 hover:text-brass transition-colors"
                   >
                     <ChevronDown size={11} className="rotate-180" /> Hide
                   </button>

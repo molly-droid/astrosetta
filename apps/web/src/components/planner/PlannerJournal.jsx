@@ -91,7 +91,7 @@ export default function PlannerJournal({ dateKey, userId, synthesis, periodLabel
         subtitle={thoughtStarter}
         expanded={open}
         onToggle={() => setOpen(!open)}
-        rightExtra={entry && hasContent ? <span className="font-body text-[9px] text-gold-accent/60 italic">Saved</span> : null}
+        rightExtra={entry && hasContent ? <span className="font-body text-[0.5625rem] text-gold-accent/60 italic">Saved</span> : null}
       />
 
       {open && (
@@ -100,7 +100,7 @@ export default function PlannerJournal({ dateKey, userId, synthesis, periodLabel
           {/* Field 1: Today's themes */}
           <div className="space-y-1.5">
             <p className="font-body text-xs text-gold-accent/80 leading-snug">{themesLabel}</p>
-            <p className="font-body text-[10px] text-white/40 italic mb-1">Which of these feels most alive for you right now?</p>
+            <p className="font-body text-[0.625rem] text-white/40 italic mb-1">Which of these feels most alive for you right now?</p>
             <textarea
               value={fields.themes_response}
               onChange={e => setField('themes_response', e.target.value)}
@@ -113,7 +113,7 @@ export default function PlannerJournal({ dateKey, userId, synthesis, periodLabel
           {/* Field 2: Today invites you to */}
           <div className="space-y-1.5">
             <p className="font-body text-xs text-gold-accent/80 leading-snug">{invitesLabel}</p>
-            <p className="font-body text-[10px] text-white/40 italic mb-1">How might you act on this energy today?</p>
+            <p className="font-body text-[0.625rem] text-white/40 italic mb-1">How might you act on this energy today?</p>
             <textarea
               value={fields.invites_response}
               onChange={e => setField('invites_response', e.target.value)}
@@ -125,7 +125,7 @@ export default function PlannerJournal({ dateKey, userId, synthesis, periodLabel
 
           {/* Field 3: Freeform */}
           <div className="space-y-1.5">
-            <p className="font-body text-xs text-brass/60 uppercase tracking-widest text-[10px]">Notes · Dreams · Reflections · Plans</p>
+            <p className="font-body text-xs text-brass/60 uppercase tracking-widest text-[0.625rem]">Notes · Dreams · Reflections · Plans</p>
             <textarea
               value={fields.freeform}
               onChange={e => setField('freeform', e.target.value)}

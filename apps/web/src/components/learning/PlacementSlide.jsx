@@ -178,7 +178,7 @@ export default function PlacementSlide({ chart, subjectKey }) {
       <div className="celestial-card p-5 border-gold-accent/40 bg-gold-primary/10">
         <div className="text-center mb-4">
           <div className="text-3xl text-gold-accent italic" style={{ fontVariantEmoji: 'text' }}>℞</div>
-          <p className="font-body text-[10px] text-brass/60 uppercase tracking-widest mt-1">Your Natal Retrogrades</p>
+          <p className="font-body text-[0.625rem] text-brass/60 uppercase tracking-widest mt-1">Your Natal Retrogrades</p>
         </div>
         {data.planets.length > 0 ? (
           <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -187,16 +187,16 @@ export default function PlacementSlide({ chart, subjectKey }) {
               return (
                 <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-white/[0.06] border border-gold-primary/15">
                   <span className="text-lg text-gold-accent" style={{ fontVariantEmoji: 'text' }}>{p.glyph}</span>
-                  <span className="font-body text-[10px] text-white/80">{p.name}</span>
+                  <span className="font-body text-[0.625rem] text-white/80">{p.name}</span>
                   <span className="text-base" style={{ fontVariantEmoji: 'text', color: elColor }}>{p.signGlyph}</span>
-                  {p.house && <span className="font-body text-[9px] text-brass/40">H{p.house}</span>}
+                  {p.house && <span className="font-body text-[0.5625rem] text-brass/40">H{p.house}</span>}
                   <span className="text-gold-accent italic text-xs">℞</span>
                 </div>
               );
             })}
           </div>
         ) : (
-          <p className="font-body text-[11px] text-brass/60 italic text-center">
+          <p className="font-body text-[0.6875rem] text-brass/60 italic text-center">
             You have no natal retrogrades — each planet moves forward in your birth chart.
           </p>
         )}
@@ -208,7 +208,7 @@ export default function PlacementSlide({ chart, subjectKey }) {
   if (data.type === 'big3') {
     return (
       <div className="celestial-card p-5 border-gold-accent/40 bg-gold-primary/10">
-        <p className="font-body text-[10px] text-brass/60 uppercase tracking-widest text-center mb-4">Your Big Three</p>
+        <p className="font-body text-[0.625rem] text-brass/60 uppercase tracking-widest text-center mb-4">Your Big Three</p>
         <div className="flex items-center justify-center gap-6">
           {[
             { label: 'Sun', glyph: '☉', data: data.sun },
@@ -219,12 +219,12 @@ export default function PlacementSlide({ chart, subjectKey }) {
             return (
               <div key={label} className="text-center">
                 <div className="text-lg text-gold-accent font-display">{glyph}</div>
-                <div className="text-[9px] font-body uppercase tracking-widest text-brass">{label}</div>
+                <div className="text-[0.5625rem] font-body uppercase tracking-widest text-brass">{label}</div>
                 {d ? (
                   <>
                     <div className="text-2xl mt-0.5" style={{ fontVariantEmoji: 'text', color: elColor }}>{d.signGlyph || SIGN_GLYPHS[d.sign] || ''}</div>
-                    <div className="font-body text-[10px] text-white/80"><SignName sign={d.sign} /></div>
-                    {d.house ? <div className="font-body text-[9px] text-brass/40">H{d.house}</div> : null}
+                    <div className="font-body text-[0.625rem] text-white/80"><SignName sign={d.sign} /></div>
+                    {d.house ? <div className="font-body text-[0.5625rem] text-brass/40">H{d.house}</div> : null}
                   </>
                 ) : (
                   <div className="text-2xl mt-0.5 text-brass/30">—</div>
@@ -246,34 +246,34 @@ export default function PlacementSlide({ chart, subjectKey }) {
         <div className="flex items-center justify-center gap-4 mb-4">
           <div className="text-center">
             <div className="text-4xl text-gold-accent" style={{ fontVariantEmoji: 'text' }}>{data.glyph}</div>
-            <p className="font-body text-[10px] text-brass/60 uppercase tracking-widest mt-1">{data.planet}</p>
+            <p className="font-body text-[0.625rem] text-brass/60 uppercase tracking-widest mt-1">{data.planet}</p>
           </div>
           <div className="text-xl text-brass/30 font-body italic">in</div>
           <div className="text-center">
             <div className="text-4xl" style={{ fontVariantEmoji: 'text', color: elColor }}>{data.signGlyph}</div>
-            <p className="font-body text-[10px] text-brass/60 uppercase tracking-widest mt-1"><SignName sign={data.sign} /></p>
+            <p className="font-body text-[0.625rem] text-brass/60 uppercase tracking-widest mt-1"><SignName sign={data.sign} /></p>
           </div>
         </div>
 
         {/* Badges */}
         <div className="flex items-center justify-center gap-2 flex-wrap">
           {data.house && (
-            <span className="font-body text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/80">
+            <span className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-white/10 text-white/80">
               {data.house}{getOrdinalSuffix(data.house)} House
             </span>
           )}
           {data.element && (
-            <span className="font-body text-[10px] px-2 py-0.5 rounded-full" style={{ background: `${elColor}22`, color: elColor }}>
+            <span className="font-body text-[0.625rem] px-2 py-0.5 rounded-full" style={{ background: `${elColor}22`, color: elColor }}>
               {data.element}
             </span>
           )}
           {data.modality && (
-            <span className="font-body text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/60">
+            <span className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-white/10 text-white/60">
               {data.modality}
             </span>
           )}
           {data.retrograde && (
-            <span className="font-body text-[10px] px-2 py-0.5 rounded-full bg-gold-accent/20 text-gold-accent italic">
+            <span className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-gold-accent/20 text-gold-accent italic">
               ℞ Retrograde
             </span>
           )}
@@ -282,14 +282,14 @@ export default function PlacementSlide({ chart, subjectKey }) {
         {/* Key aspects */}
         {data.aspects.length > 0 && (
           <div className="mt-4 pt-3 border-t border-gold-primary/15">
-            <p className="font-body text-[10px] text-brass/50 uppercase tracking-widest text-center mb-2">Key Aspects in Your Chart</p>
+            <p className="font-body text-[0.625rem] text-brass/50 uppercase tracking-widest text-center mb-2">Key Aspects in Your Chart</p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               {data.aspects.map((a, i) => (
                 <div key={i} className="flex items-center gap-1.5">
                   <span className="text-lg text-gold-accent" style={{ fontVariantEmoji: 'text' }}>{data.glyph}</span>
                   <span className="text-sm text-gold-accent">{ASPECT_SYMBOLS[a.aspect] || a.aspect}</span>
                   <span className="text-lg" style={{ fontVariantEmoji: 'text' }}>{PLANET_GLYPHS[a.other] || '✦'}</span>
-                  <span className="font-body text-[9px] text-brass/40">{a.orb?.toFixed(1)}°</span>
+                  <span className="font-body text-[0.5625rem] text-brass/40">{a.orb?.toFixed(1)}°</span>
                 </div>
               ))}
             </div>
@@ -307,14 +307,14 @@ export default function PlacementSlide({ chart, subjectKey }) {
         <div className="flex items-center justify-center gap-4 mb-4">
           <div className="text-center">
             <div className="font-display text-4xl font-bold text-gold-accent">{data.house}</div>
-            <p className="font-body text-[10px] text-brass/60 uppercase tracking-widest mt-1">House</p>
+            <p className="font-body text-[0.625rem] text-brass/60 uppercase tracking-widest mt-1">House</p>
           </div>
           {data.cuspSign && (
             <>
               <div className="text-xl text-brass/30">·</div>
               <div className="text-center">
                 <div className="text-4xl" style={{ fontVariantEmoji: 'text', color: elColor }}>{data.cuspSignGlyph}</div>
-                <p className="font-body text-[10px] text-brass/60 uppercase tracking-widest mt-1"><SignName sign={data.cuspSign} /> cusp</p>
+                <p className="font-body text-[0.625rem] text-brass/60 uppercase tracking-widest mt-1"><SignName sign={data.cuspSign} /> cusp</p>
               </div>
             </>
           )}
@@ -322,18 +322,18 @@ export default function PlacementSlide({ chart, subjectKey }) {
 
         {data.planetsInHouse.length > 0 ? (
           <div className="mt-2 pt-3 border-t border-gold-primary/15">
-            <p className="font-body text-[10px] text-brass/50 uppercase tracking-widest text-center mb-2">Planets in This House</p>
+            <p className="font-body text-[0.625rem] text-brass/50 uppercase tracking-widest text-center mb-2">Planets in This House</p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               {data.planetsInHouse.map((p, i) => (
                 <div key={i} className="flex items-center gap-1">
                   <span className="text-xl text-gold-accent" style={{ fontVariantEmoji: 'text' }}>{p.glyph}</span>
-                  <span className="font-body text-[10px] text-white/70">{p.name}{p.retrograde ? ' ℞' : ''}</span>
+                  <span className="font-body text-[0.625rem] text-white/70">{p.name}{p.retrograde ? ' ℞' : ''}</span>
                 </div>
               ))}
             </div>
           </div>
         ) : (
-          <p className="font-body text-[11px] text-brass/50 italic text-center mt-2">
+          <p className="font-body text-[0.6875rem] text-brass/50 italic text-center mt-2">
             No planets here — this house flows through its sign's ruler.
           </p>
         )}
@@ -352,25 +352,25 @@ export default function PlacementSlide({ chart, subjectKey }) {
         </div>
 
         <div className="flex items-center justify-center gap-2 flex-wrap mb-3">
-          <span className="font-body text-[10px] px-2 py-0.5 rounded-full" style={{ background: `${elColor}22`, color: elColor }}>{data.element}</span>
-          <span className="font-body text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/60">{data.modality}</span>
+          <span className="font-body text-[0.625rem] px-2 py-0.5 rounded-full" style={{ background: `${elColor}22`, color: elColor }}>{data.element}</span>
+          <span className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-white/10 text-white/60">{data.modality}</span>
         </div>
 
         {data.planetsInSign.length > 0 ? (
           <div className="pt-3 border-t border-gold-primary/15">
-            <p className="font-body text-[10px] text-brass/50 uppercase tracking-widest text-center mb-2">Your Planets in {data.sign}</p>
+            <p className="font-body text-[0.625rem] text-brass/50 uppercase tracking-widest text-center mb-2">Your Planets in {data.sign}</p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               {data.planetsInSign.map((p, i) => (
                 <div key={i} className="flex items-center gap-1">
                   <span className="text-xl text-gold-accent" style={{ fontVariantEmoji: 'text' }}>{p.glyph}</span>
-                  <span className="font-body text-[10px] text-white/70">{p.name}{p.retrograde ? ' ℞' : ''}</span>
-                  {p.house && <span className="font-body text-[9px] text-brass/40">H{p.house}</span>}
+                  <span className="font-body text-[0.625rem] text-white/70">{p.name}{p.retrograde ? ' ℞' : ''}</span>
+                  {p.house && <span className="font-body text-[0.5625rem] text-brass/40">H{p.house}</span>}
                 </div>
               ))}
             </div>
           </div>
         ) : data.houseWithSign ? (
-          <p className="font-body text-[11px] text-brass/50 italic text-center pt-2">
+          <p className="font-body text-[0.6875rem] text-brass/50 italic text-center pt-2">
             No planets here, but your {data.houseWithSign}{getOrdinalSuffix(data.houseWithSign)} house cusp falls in this sign.
           </p>
         ) : null}

@@ -111,9 +111,9 @@ export default function PrivacyNutritionLabel() {
                 <div key={item.name} className="flex flex-col gap-1">
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="font-body text-xs text-white/85">{item.name}</span>
-                    <span className="font-label text-[9px] font-medium uppercase tracking-[0.05em] text-gold-accent/70 shrink-0">{item.purposeType}</span>
+                    <span className="font-label text-[0.5625rem] font-medium uppercase tracking-[0.05em] text-gold-accent/70 shrink-0">{item.purposeType}</span>
                   </div>
-                  <p className="font-body text-[11px] text-white/45 leading-relaxed">{item.purpose}</p>
+                  <p className="font-body text-[0.6875rem] text-white/45 leading-relaxed">{item.purpose}</p>
                 </div>
               ))}
             </div>
@@ -130,9 +130,9 @@ export default function PrivacyNutritionLabel() {
         <div className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-3">
             <span className="font-body text-xs text-white/85">Anonymous aggregate usage stats</span>
-            <span className="font-label text-[9px] font-medium uppercase tracking-[0.05em] text-gold-accent/70 shrink-0">App Functionality &amp; Analytics</span>
+            <span className="font-label text-[0.5625rem] font-medium uppercase tracking-[0.05em] text-gold-accent/70 shrink-0">App Functionality &amp; Analytics</span>
           </div>
-          <p className="font-body text-[11px] text-white/45 leading-relaxed">
+          <p className="font-body text-[0.6875rem] text-white/45 leading-relaxed">
             Aggregate counts of readings generated and features used, kept only in anonymous form. When an account is
             deleted, every personal record is permanently erased and only these anonymous aggregates remain — nothing
             in them can be linked back to you.

@@ -41,8 +41,8 @@ export function getHiddenChartPoints(user) {
 
   if (user?.show_asteroids !== true || !isPremium) ASTEROID_POINTS.forEach((n) => hidden.add(n));
   if (user?.show_lots !== true) LOT_POINTS.forEach((n) => hidden.add(n));
-  if (user?.show_nodes === false) NODE_POINTS.forEach((n) => hidden.add(n));
-  if (user?.show_lilith === false || !isPremium) LILITH_POINTS.forEach((n) => hidden.add(n));
+  if (user?.show_nodes !== true) NODE_POINTS.forEach((n) => hidden.add(n));
+  if (user?.show_lilith !== true || !isPremium) LILITH_POINTS.forEach((n) => hidden.add(n));
   return hidden;
 }
 

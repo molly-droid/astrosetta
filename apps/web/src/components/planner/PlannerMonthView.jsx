@@ -62,13 +62,13 @@ function DaySynthesisPopover({ date, chart, onClose }) {
               {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
             </p>
             {lunation && (
-              <span className="font-body text-[10px] px-2 py-0.5 rounded-full bg-gold-primary/15 text-gold-accent border border-gold-primary/30 flex items-center gap-1">
+              <span className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-gold-primary/15 text-gold-accent border border-gold-primary/30 flex items-center gap-1">
                 <span style={{ fontVariantEmoji: 'text' }}>{lunation.emoji}</span> {lunation.type === 'new' ? 'New' : 'Full'} Moon {lunation.sign && <span className="emoji-glyph">{calendarSign(lunation.sign)}</span>}
               </span>
             )}
           </div>
           <button onClick={onClose} className="flex items-center gap-1 text-brass/60 hover:text-white transition-colors">
-            <span className="font-body text-[10px] uppercase tracking-widest">Close</span>
+            <span className="font-body text-[0.625rem] uppercase tracking-widest">Close</span>
             <X size={16} />
           </button>
         </div>
@@ -124,14 +124,14 @@ function MonthDayDot({ date, chart, onSelect, sparkleColors = [], tintColor = nu
           >
             {date.getDate()}
           </span>
-          {isBirthday && <span className="emoji-glyph font-body text-[9px] sm:text-base text-gold-primary leading-none">☀️</span>}
+          {isBirthday && <span className="emoji-glyph font-body text-[0.5625rem] sm:text-base text-gold-primary leading-none">☀️</span>}
         </div>
         {sparkleColors.length > 0 && (
           <div className="flex flex-wrap items-center gap-0.5 max-w-full">
             {sparkleColors.map((color, i) => (
               <span
                 key={i}
-                className="font-body text-[9px] sm:text-sm leading-none"
+                className="font-body text-[0.5625rem] sm:text-sm leading-none"
                 style={{ color, textShadow: `0 0 5px ${color}` }}
               >✦</span>
             ))}
@@ -143,8 +143,8 @@ function MonthDayDot({ date, chart, onSelect, sparkleColors = [], tintColor = nu
       <div className="flex flex-col items-center gap-0 w-full">
         {!isNewMoon && !isFullMoon && moonSign && (
           <span className="flex items-center gap-0.5 leading-none" title={`Moon in ${moonSign}`}>
-            <span className="text-[10px] sm:text-base leading-none">{moonIcon}</span>
-            <span className="emoji-glyph font-body text-[8px] sm:text-base leading-none text-brass/60">{calendarSign(moonSign)}</span>
+            <span className="text-[0.625rem] sm:text-base leading-none">{moonIcon}</span>
+            <span className="emoji-glyph font-body text-[0.5rem] sm:text-base leading-none text-brass/60">{calendarSign(moonSign)}</span>
           </span>
         )}
         {data?.stations?.length > 0 && (
@@ -155,9 +155,9 @@ function MonthDayDot({ date, chart, onSelect, sparkleColors = [], tintColor = nu
                 title={`${s.planet}${s.sign ? ` in ${s.sign}` : ''} stations ${s.type}`}
                 className={`flex items-center gap-0 leading-none ${s.type === 'retrograde' ? 'text-gold-accent' : 'text-green-soft'}`}
               >
-                <span className="emoji-glyph font-body text-[10px] sm:text-base">{calendarPlanet(s.planet)}</span>
-                {s.sign && <span className="emoji-glyph font-body text-[8px] sm:text-base opacity-70">{calendarSign(s.sign)}</span>}
-                <span className="font-body text-[10px] sm:text-sm">{s.type === 'retrograde' ? '℞' : '↗'}</span>
+                <span className="emoji-glyph font-body text-[0.625rem] sm:text-base">{calendarPlanet(s.planet)}</span>
+                {s.sign && <span className="emoji-glyph font-body text-[0.5rem] sm:text-base opacity-70">{calendarSign(s.sign)}</span>}
+                <span className="font-body text-[0.625rem] sm:text-sm">{s.type === 'retrograde' ? '℞' : '↗'}</span>
               </span>
             ))}
           </div>
@@ -177,9 +177,9 @@ function MonthDayDot({ date, chart, onSelect, sparkleColors = [], tintColor = nu
             className="flex items-center gap-0.5 leading-none"
             title={data?.isEclipse ? ECLIPSE_META[data.eclipseType]?.label : `${isNewMoon ? 'New' : 'Full'} Moon${lunation?.sign ? ` in ${lunation.sign}` : ''}`}
           >
-            {data?.isEclipse && <span className="font-body text-[7px] sm:text-[10px] text-gold-accent font-bold uppercase leading-none tracking-wide">ecl</span>}
-            <span className="text-[10px] sm:text-xl leading-none" style={data?.isEclipse ? { filter: `drop-shadow(0 0 4px ${isNewMoon ? 'rgba(212,175,133,0.9)' : 'rgba(251,191,36,0.9)'})` } : {}}>{isNewMoon ? '🌑' : '🌕'}</span>
-            {lunation?.sign && <span className="emoji-glyph font-body text-[8px] sm:text-base leading-none text-brass/70">{calendarSign(lunation.sign)}</span>}
+            {data?.isEclipse && <span className="font-body text-[0.4375rem] sm:text-[0.625rem] text-gold-accent font-bold uppercase leading-none tracking-wide">ecl</span>}
+            <span className="text-[0.625rem] sm:text-xl leading-none" style={data?.isEclipse ? { filter: `drop-shadow(0 0 4px ${isNewMoon ? 'rgba(212,175,133,0.9)' : 'rgba(251,191,36,0.9)'})` } : {}}>{isNewMoon ? '🌑' : '🌕'}</span>
+            {lunation?.sign && <span className="emoji-glyph font-body text-[0.5rem] sm:text-base leading-none text-brass/70">{calendarSign(lunation.sign)}</span>}
           </span>
         )}
         {(data?.ingresses || []).some(ing => ing.exact) && (
@@ -188,7 +188,7 @@ function MonthDayDot({ date, chart, onSelect, sparkleColors = [], tintColor = nu
               <span
                 key={i}
                 title={`${ing.planet} enters ${ing.to_sign}${ing.from_sign ? ` (from ${ing.from_sign})` : ''}`}
-                className="font-body text-[8px] sm:text-base leading-none text-celestial-purple flex items-center justify-between w-full px-0.5"
+                className="font-body text-[0.5rem] sm:text-base leading-none text-celestial-purple flex items-center justify-between w-full px-0.5"
               >
                 <span className="emoji-glyph">{calendarPlanet(ing.planet)}</span>
                 <span className="opacity-60">→</span>
@@ -413,7 +413,7 @@ function CalendarAndThemes({ date, chart }) {
                 </div>
               ) : topicResult && (
                 <>
-                  <p className={`font-body text-[10px] uppercase tracking-widest font-semibold ${topic.color}`}>
+                  <p className={`font-body text-[0.625rem] uppercase tracking-widest font-semibold ${topic.color}`}>
                     <span style={{ fontVariantEmoji: 'emoji' }}>{topic.glyph}</span> {topic.fullLabel}
                   </p>
                   <p className="font-body text-xs text-white/90 leading-relaxed">{highlightOnWhite(topicResult.overview)}</p>
@@ -421,17 +421,17 @@ function CalendarAndThemes({ date, chart }) {
                     <div className="space-y-1 pt-1">
                       {topicResult.key_transits.map((t, i) => (
                         <div key={i} className="flex items-center gap-2">
-                          <span className={`font-body text-[9px] px-1.5 py-0.5 rounded-full ${t.type === 'natal' ? 'bg-celestial-blue/15 text-celestial-blue' : 'bg-celestial-purple/15 text-celestial-purple'}`}>
+                          <span className={`font-body text-[0.5625rem] px-1.5 py-0.5 rounded-full ${t.type === 'natal' ? 'bg-celestial-blue/15 text-celestial-blue' : 'bg-celestial-purple/15 text-celestial-purple'}`}>
                             {t.type}
                           </span>
-                          <span className="font-body text-[11px] text-white/70">{highlightOnWhite(t.description)}</span>
-                          <span className="font-body text-[10px] text-brass/60 ml-auto">~{t.date}</span>
+                          <span className="font-body text-[0.6875rem] text-white/70">{highlightOnWhite(t.description)}</span>
+                          <span className="font-body text-[0.625rem] text-brass/60 ml-auto">~{t.date}</span>
                         </div>
                       ))}
                     </div>
                   )}
                   {topicResult.best_windows && (
-                    <p className={`font-body text-[11px] ${topic.color} italic`}>⟡ {topicResult.best_windows}</p>
+                    <p className={`font-body text-[0.6875rem] ${topic.color} italic`}>⟡ {topicResult.best_windows}</p>
                   )}
                 </>
               )}
@@ -442,7 +442,7 @@ function CalendarAndThemes({ date, chart }) {
           <div>
             <div className="grid grid-cols-7 gap-0.5 mb-1">
               {DOW.map(d => (
-                <div key={d} className="text-center font-body text-[10px] text-brass/50 uppercase py-1">{d}</div>
+                <div key={d} className="text-center font-body text-[0.625rem] text-brass/50 uppercase py-1">{d}</div>
               ))}
             </div>
             <div className="space-y-0">
@@ -481,17 +481,17 @@ function CalendarAndThemes({ date, chart }) {
 
           {/* Legend */}
           <div className="flex justify-center gap-3 flex-wrap pt-1">
-            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm ring-1 ring-gold-accent/50 bg-gold-primary/10"/><span className="font-body text-[9px] text-brass/50">peak (3+ transits)</span></div>
-            <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-celestial-blue/80"/><span className="font-body text-[9px] text-brass/50">natal transits</span></div>
-            <div className="flex items-center gap-1"><span className="emoji-glyph text-[10px]" style={{ fontVariantEmoji: 'emoji' }}>🌑♍️</span><span className="font-body text-[9px] text-brass/50">new/full moon + sign</span></div>
-            <div className="flex items-center gap-1"><span className="font-body text-[9px] text-gold-accent">℞</span><span className="font-body text-[9px] text-brass/50">station retrograde</span></div>
-            <div className="flex items-center gap-1"><span className="font-body text-[9px] text-green-soft">↗</span><span className="font-body text-[9px] text-brass/50">station direct</span></div>
-            <div className="flex items-center gap-1"><span className="emoji-glyph font-body text-[9px] text-celestial-purple" style={{ fontVariantEmoji: 'emoji' }}>☿→♋️</span><span className="font-body text-[9px] text-brass/50">planet ingresses</span></div>
+            <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm ring-1 ring-gold-accent/50 bg-gold-primary/10"/><span className="font-body text-[0.5625rem] text-brass/50">peak (3+ transits)</span></div>
+            <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-celestial-blue/80"/><span className="font-body text-[0.5625rem] text-brass/50">natal transits</span></div>
+            <div className="flex items-center gap-1"><span className="emoji-glyph text-[0.625rem]" style={{ fontVariantEmoji: 'emoji' }}>🌑♍️</span><span className="font-body text-[0.5625rem] text-brass/50">new/full moon + sign</span></div>
+            <div className="flex items-center gap-1"><span className="font-body text-[0.5625rem] text-gold-accent">℞</span><span className="font-body text-[0.5625rem] text-brass/50">station retrograde</span></div>
+            <div className="flex items-center gap-1"><span className="font-body text-[0.5625rem] text-green-soft">↗</span><span className="font-body text-[0.5625rem] text-brass/50">station direct</span></div>
+            <div className="flex items-center gap-1"><span className="emoji-glyph font-body text-[0.5625rem] text-celestial-purple" style={{ fontVariantEmoji: 'emoji' }}>☿→♋️</span><span className="font-body text-[0.5625rem] text-brass/50">planet ingresses</span></div>
             <div className="flex items-center gap-1">
               {activeTopic
-                ? <span className="font-body text-[9px]" style={{ color: topic.hex }}>✦</span>
-                : <span className="flex items-center gap-0.5">{TOPICS.slice(0, 4).map(t => <span key={t.key} className="font-body text-[9px]" style={{ color: t.hex }}>✦</span>)}</span>}
-              <span className="font-body text-[9px] text-brass/50">{activeTopic ? `${topic.label} key date` : 'theme key dates'}</span>
+                ? <span className="font-body text-[0.5625rem]" style={{ color: topic.hex }}>✦</span>
+                : <span className="flex items-center gap-0.5">{TOPICS.slice(0, 4).map(t => <span key={t.key} className="font-body text-[0.5625rem]" style={{ color: t.hex }}>✦</span>)}</span>}
+              <span className="font-body text-[0.5625rem] text-brass/50">{activeTopic ? `${topic.label} key date` : 'theme key dates'}</span>
             </div>
           </div>
         </div>
@@ -518,7 +518,7 @@ function CollapsiblePlanetTracker({ dates, chart }) {
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-gold-primary/5 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <span className="font-body text-[14px] text-gold-accent" style={{ fontVariantEmoji: 'text' }}>☿</span>
+          <span className="font-body text-[0.875rem] text-gold-accent" style={{ fontVariantEmoji: 'text' }}>☿</span>
           <span className="font-display text-sm font-semibold text-white">Planet Positions</span>
         </div>
         <ChevronDown size={13} className={`text-brass/50 transition-transform ${open ? 'rotate-180' : ''}`} />

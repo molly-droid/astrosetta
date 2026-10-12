@@ -68,7 +68,7 @@ function IngressLinkBanner({ ingresses, onClick }) {
           <p className="font-display text-sm font-semibold text-white truncate">
             {ing.planet} {titleVerb} <SignName sign={ing.to_sign} />
           </p>
-          <p className="font-body text-[10px] text-brass/70 truncate">
+          <p className="font-body text-[0.625rem] text-brass/70 truncate">
             {sub}{more > 0 && ` · ${more} more`}<span className="text-brass/40 ml-1">· tap for reading</span>
           </p>
         </div>
@@ -103,7 +103,7 @@ function StationsLinkBanner({ stations, onClick }) {
           <p className="font-display text-sm font-semibold text-white truncate">
             {s.planet} stations {isRx ? 'retrograde ℞' : 'direct ↗'}
           </p>
-          <p className="font-body text-[10px] text-brass/70 truncate">
+          <p className="font-body text-[0.625rem] text-brass/70 truncate">
             {sub}{more > 0 && ` · ${more} more`}<span className="text-brass/40 ml-1">· tap for reading</span>
           </p>
         </div>

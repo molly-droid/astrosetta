@@ -267,7 +267,7 @@ export default function MonthSynthesis({ date, chart }) {
         {headerTags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5 pl-5">
             {headerTags.map((tag, i) => (
-              <span key={i} className="font-body text-[10px] px-1.5 py-0.5 rounded-full bg-gold-primary/15 text-brass">{tag}</span>
+              <span key={i} className="font-body text-[0.625rem] px-1.5 py-0.5 rounded-full bg-gold-primary/15 text-brass">{tag}</span>
             ))}
           </div>
         )}
@@ -288,7 +288,7 @@ export default function MonthSynthesis({ date, chart }) {
               <div className="flex border-b border-white/[0.06]">
                 <button
                   onClick={() => setActiveTab('personal')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${
                     activeTab === 'personal'
                       ? 'border-gold-accent text-white font-semibold'
                       : 'border-transparent text-white/35 hover:text-white/60'
@@ -298,7 +298,7 @@ export default function MonthSynthesis({ date, chart }) {
                 </button>
                 <button
                   onClick={() => setActiveTab('collective')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${
                     activeTab === 'collective'
                       ? 'border-gold-accent text-white font-semibold'
                       : 'border-transparent text-white/35 hover:text-white/60'
@@ -320,7 +320,7 @@ export default function MonthSynthesis({ date, chart }) {
                     {synthesis.best_areas?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {synthesis.best_areas.map((a, i) => (
-                          <span key={i} className="font-body text-[10px] px-2 py-0.5 rounded-full bg-gold-primary/15 border border-gold-primary/30 text-brass">{a}</span>
+                          <span key={i} className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-gold-primary/15 border border-gold-primary/30 text-brass">{a}</span>
                         ))}
                       </div>
                     )}
@@ -335,7 +335,7 @@ export default function MonthSynthesis({ date, chart }) {
                     {synthesis.collective_tags?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mb-2">
                         {synthesis.collective_tags.map((tag, i) => (
-                          <span key={i} className="font-body text-[10px] px-2 py-0.5 rounded-full bg-celestial-blue/15 border border-celestial-blue/30 text-celestial-blue">{tag}</span>
+                          <span key={i} className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-celestial-blue/15 border border-celestial-blue/30 text-celestial-blue">{tag}</span>
                         ))}
                       </div>
                     )}
@@ -352,7 +352,7 @@ export default function MonthSynthesis({ date, chart }) {
                     {explainLoading ? (
                       <div className="flex items-center gap-1.5">
                         <Loader2 size={11} className="animate-spin text-gold-primary" />
-                        <span className="font-body text-[10px] text-brass italic">Simplifying...</span>
+                        <span className="font-body text-[0.625rem] text-brass italic">Simplifying...</span>
                       </div>
                     ) : (
                       <p className="font-body text-xs text-white/85 leading-snug">{highlightOnWhite(explainText)}</p>
@@ -361,18 +361,18 @@ export default function MonthSynthesis({ date, chart }) {
                 )}
                 <div className="flex items-center justify-end gap-3 pt-1 border-t border-gold-primary/15">
                   <button onClick={handleExplain}
-                    className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-gold-accent transition-colors">
+                    className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-gold-accent transition-colors">
                     {explainLoading ? <Loader2 size={10} className="animate-spin" /> : <Lightbulb size={10} />} Explain it
                   </button>
                   <button
                     onClick={() => { clearMemCache('month', periodKey, chart?.user_id); hasGenerated.current = false; generate(); }}
-                    className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-brass transition-colors"
+                    className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-brass transition-colors"
                   >
                     <RefreshCw size={10} /> Regenerate
                   </button>
                   {!chart?.raw_data?.unknown_time && (
                   <button onClick={handleShare}
-                    className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-gold-accent transition-colors">
+                    className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-gold-accent transition-colors">
                     {shareLoading ? <Loader2 size={10} className="animate-spin" /> : <Share2 size={10} />} Share
                   </button>
                   )}

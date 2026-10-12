@@ -1,6 +1,68 @@
 import { compatClient } from '../_shared/base44Compat.ts';
 import { json, handleOptions, getAuthUser, isServiceRole } from '../_shared/edge.ts';
 
+// E-01 — the client's house copy. One line per house, then a personalized
+// line built from this user's chart.
+const HOUSE_COVERS: Record<number, string> = {
+  1: 'You: your body, presence, and how you come across',
+  2: 'Money, possessions, and what you value in yourself',
+  3: 'Communication, siblings, neighbors, and your everyday mind',
+  4: 'Home, family, roots, and your private life',
+  5: 'Creativity, romance, play, and children',
+  6: 'Daily routines, work habits, and health',
+  7: 'Partnerships: marriage, close one-on-ones, and open rivals',
+  8: 'Shared resources, intimacy, and transformation',
+  9: 'Beliefs, travel, and higher learning',
+  10: 'Career, reputation, and your public role',
+  11: 'Friends, community, and hopes for the future',
+  12: 'Solitude, rest, endings, and what is hidden',
+};
+
+const SIGN_APPROACH: Record<string, string> = {
+  Aries: 'directness and a will to start', Taurus: 'steadiness and a need for comfort',
+  Gemini: 'curiosity and a need to talk it through', Cancer: 'care and a need to feel safe',
+  Leo: 'warmth and a need to be seen', Virgo: 'precision and a need to be useful',
+  Libra: 'a need for balance and fairness', Scorpio: 'depth and a need for honesty',
+  Sagittarius: 'optimism and a need for room to roam', Capricorn: 'patience and a need to build something lasting',
+  Aquarius: 'independence and a need to do it your own way', Pisces: 'sensitivity and a need for meaning',
+};
+
+const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'];
+
+function buildHouseSection(chartData: Record<string, unknown>, CARD: string, GOLD: string, GOLD2: string, TEXT: string, MUTED: string): string {
+  const raw = (chartData.raw_data || {}) as Record<string, unknown>;
+  if (raw.unknown_time) return ''; // no birth time, no houses
+  const houses = (raw.houses as Array<Record<string, unknown>>) || [];
+  const planets = (raw.planets as Array<Record<string, unknown>>) || [];
+  if (!houses.length) return '';
+
+  const rows = houses.slice(0, 12).map((h, i) => {
+    const num = (h.number as number) || i + 1;
+    const sign = (h.sign as string) || '';
+    const here = planets.filter((p) => p.house === num).map((p) => p.name as string);
+    const approach = SIGN_APPROACH[sign] || 'your own approach';
+    const personal = sign
+      ? `Your ${ORDINALS[num]} house is in ${sign}, so you approach this area with ${approach}.${here.length ? ` ${here.join(', ')} ${here.length > 1 ? 'live' : 'lives'} here, which makes this a big theme in your life.` : ''}`
+      : '';
+    return `
+      <tr><td style="padding:10px 16px;background:${CARD};border-radius:10px;border:1px solid ${GOLD}22;">
+        <div style="font-family:Georgia,serif;font-size:14px;color:${GOLD2};margin-bottom:3px;">${ORDINALS[num]} house${sign ? ` · ${sign}` : ''}</div>
+        <div style="font-family:Georgia,serif;font-size:13px;color:${TEXT};line-height:1.5;">${HOUSE_COVERS[num] || ''}</div>
+        ${personal ? `<div style="font-family:Georgia,serif;font-size:13px;color:${MUTED};line-height:1.5;margin-top:4px;">${personal}</div>` : ''}
+      </td></tr>
+      <tr><td style="height:8px;line-height:8px;">&nbsp;</td></tr>`;
+  }).join('');
+
+  return `
+  <tr><td style="padding:12px 28px 6px;">
+    <h2 style="font-family:Georgia,serif;font-size:20px;color:${TEXT};margin:0 0 6px;">Your twelve houses</h2>
+    <p style="font-family:Georgia,serif;font-size:14px;line-height:1.6;color:${MUTED};margin:0 0 14px;">The houses are the twelve areas of life your chart divides into. Here is what each one covers, and how it shows up in yours.</p>
+  </td></tr>
+  <tr><td style="padding:0 28px 8px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
+  </td></tr>`;
+}
+
 Deno.serve(async (req) => {
   const opt = handleOptions(req);
   if (opt) return opt;
@@ -52,6 +114,8 @@ Deno.serve(async (req) => {
       <span style="font-family:Georgia,serif;font-size:16px;color:${GOLD2};">${bigThree}</span>
     </div>
   </td></tr>
+
+  ${buildHouseSection(chartData, CARD, GOLD, GOLD2, TEXT, MUTED)}
 
   <tr><td style="padding:0 28px 20px;">
     <p style="font-family:Georgia,serif;font-size:15px;line-height:1.7;color:${TEXT};margin:0 0 14px;">You've just taken the first step toward reading your own chart — not someone else's interpretation, but your own living understanding of the sky.</p>

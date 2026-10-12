@@ -66,7 +66,7 @@ export default function ImpersonationBanner() {
           <span className="font-body text-xs text-amber-600/80">
             — viewing as <strong className="text-amber-800">{impersonatedUser.display_name || impersonatedUser.full_name || impersonatedUser.email}</strong>
             {effectiveTier && (
-              <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-[9px] font-semibold text-amber-700">
+              <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-[0.5625rem] font-semibold text-amber-700">
                 {TIER_LABELS[effectiveTier] || effectiveTier}
               </span>
             )}
@@ -104,7 +104,7 @@ export default function ImpersonationBanner() {
         {/* User picker dropdown */}
         {userPickerOpen && (
           <div className="absolute top-full right-0 mt-1.5 w-64 bg-white border border-amber-200 rounded-xl shadow-xl z-[10000] overflow-hidden">
-            <p className="font-body text-[9px] uppercase tracking-widest text-brass/40 px-3 pt-2.5 pb-1">View app as...</p>
+            <p className="font-body text-[0.5625rem] uppercase tracking-widest text-brass/40 px-3 pt-2.5 pb-1">View app as...</p>
             {loadingUsers ? (
               <p className="font-body text-xs text-brass/50 px-3 py-3 italic">Loading users...</p>
             ) : allUsers.length === 0 ? (
@@ -122,9 +122,9 @@ export default function ImpersonationBanner() {
                     >
                       <div className="min-w-0">
                         <p className="text-deep-blue truncate">{u.display_name || u.full_name || u.email}</p>
-                        <p className="text-[10px] text-brass/50 truncate">{u.email}</p>
+                        <p className="text-[0.625rem] text-brass/50 truncate">{u.email}</p>
                       </div>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-muted border border-brass/20 text-brass shrink-0">
+                      <span className="text-[0.5625rem] px-1.5 py-0.5 rounded-full bg-muted border border-brass/20 text-brass shrink-0">
                         {tier}
                       </span>
                     </button>
@@ -133,7 +133,7 @@ export default function ImpersonationBanner() {
               </div>
             )}
             <div className="border-t border-amber-100 px-3 py-2">
-              <p className="font-body text-[9px] text-brass/30">Admins only · not visible to users</p>
+              <p className="font-body text-[0.5625rem] text-brass/30">Admins only · not visible to users</p>
             </div>
           </div>
         )}

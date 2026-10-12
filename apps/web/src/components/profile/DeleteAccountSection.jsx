@@ -69,7 +69,7 @@ export default function DeleteAccountSection() {
                 Delete your account?
               </h2>
             </div>
-            <p className="font-body text-[15px] leading-[22px] text-starlight-muted">
+            <p className="font-body text-[0.9375rem] leading-[1.375rem] text-starlight-muted">
               This permanently erases everything you've built in Astrosetta:
             </p>
             <ul className="space-y-1.5">
@@ -80,7 +80,7 @@ export default function DeleteAccountSection() {
                 </li>
               ))}
             </ul>
-            <p className="font-body text-[11px] leading-snug text-starlight-muted/70 italic">
+            <p className="font-body text-[0.6875rem] leading-snug text-starlight-muted/70 italic">
               Only anonymous aggregate usage stats are kept — nothing in them can be linked back to you.
             </p>
             <div className="flex items-center gap-2.5 pt-1">
@@ -99,7 +99,7 @@ export default function DeleteAccountSection() {
             <h2 className="font-display text-2xl font-semibold text-starlight leading-tight pr-6">
               Last step — confirm by email
             </h2>
-            <p className="font-body text-[15px] leading-[22px] text-starlight-muted">
+            <p className="font-body text-[0.9375rem] leading-[1.375rem] text-starlight-muted">
               We'll send a deletion link to <span className="text-starlight font-semibold">{user?.email}</span>.
               Nothing is deleted until you open that link and confirm — and it expires in 24 hours.
             </p>
@@ -121,7 +121,7 @@ export default function DeleteAccountSection() {
               <Mail size={20} className="text-gold-foil" />
             </div>
             <h2 className="font-display text-2xl font-semibold text-starlight">Check your inbox</h2>
-            <p className="font-body text-[15px] leading-[22px] text-starlight-muted">
+            <p className="font-body text-[0.9375rem] leading-[1.375rem] text-starlight-muted">
               We sent a confirmation link to <span className="text-starlight font-semibold">{user?.email}</span>.
               Tap it within 24 hours to permanently delete your account.
             </p>

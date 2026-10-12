@@ -22,7 +22,7 @@ export default function RoadmapMarketingTab() {
           <button
             key={key}
             onClick={() => setView(key)}
-            className={`flex items-center gap-1.5 font-body text-[11px] px-3 py-1.5 rounded-full border transition-colors ${
+            className={`flex items-center gap-1.5 font-body text-[0.6875rem] px-3 py-1.5 rounded-full border transition-colors ${
               view === key
                 ? 'border-gold-accent bg-gold-primary/20 text-white'
                 : 'border-white/20 text-white/50 hover:border-white/40 hover:text-white/70'

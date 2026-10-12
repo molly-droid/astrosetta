@@ -58,7 +58,7 @@ export default function DowngradeSurveyModal({ planLabel, onClose, onContinue })
               <CreditCard size={15} className="text-gold-accent" />
             </div>
             <div>
-              <p className="font-body text-[10px] text-gold-primary/70 uppercase tracking-widest">Manage billing</p>
+              <p className="font-body text-[0.625rem] text-gold-primary/70 uppercase tracking-widest">Manage billing</p>
               <h2 className="font-display text-base font-bold text-cream leading-tight">Making a change today?</h2>
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function DowngradeSurveyModal({ planLabel, onClose, onContinue })
 
             <div className="pt-1 pb-0.5 flex items-center gap-2">
               <div className="h-px flex-1 bg-white/[0.08]" />
-              <span className="font-body text-[9px] uppercase tracking-widest text-brass/40">Considering leaving?</span>
+              <span className="font-body text-[0.5625rem] uppercase tracking-widest text-brass/40">Considering leaving?</span>
               <div className="h-px flex-1 bg-white/[0.08]" />
             </div>
 

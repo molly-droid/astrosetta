@@ -40,7 +40,7 @@ export default function AccountDeletion() {
             <div className="text-3xl text-gold-foil font-display animate-pulse">✦</div>
             <div className="flex items-center justify-center gap-2">
               <Loader2 size={14} className="animate-spin text-gold-foil" />
-              <p className="font-body text-[15px] leading-[22px] text-starlight-muted">Confirming your deletion…</p>
+              <p className="font-body text-[0.9375rem] leading-[1.375rem] text-starlight-muted">Confirming your deletion…</p>
             </div>
           </>
         )}
@@ -51,7 +51,7 @@ export default function AccountDeletion() {
             <h1 className="font-display font-semibold text-starlight" style={{ fontSize: 32, lineHeight: '40px' }}>
               Your account has been deleted
             </h1>
-            <p className="font-body text-[15px] leading-[22px] text-starlight-muted">
+            <p className="font-body text-[0.9375rem] leading-[1.375rem] text-starlight-muted">
               Everything personal — your charts, readings, journal, and learning progress — has been permanently
               erased. Only anonymous aggregate usage stats remain, and nothing in them can be linked back to you.
             </p>
@@ -74,7 +74,7 @@ export default function AccountDeletion() {
             <h1 className="font-display font-semibold text-starlight" style={{ fontSize: 24, lineHeight: '32px' }}>
               This link didn't work
             </h1>
-            <p className="font-body text-[15px] leading-[22px] text-starlight-muted">{message}</p>
+            <p className="font-body text-[0.9375rem] leading-[1.375rem] text-starlight-muted">{message}</p>
             <button
               onClick={returnHome}
               className="w-full bg-gold-foil hover:bg-gold-foil/90 text-velvet font-body text-sm font-semibold px-4 py-3 rounded-full transition-colors"

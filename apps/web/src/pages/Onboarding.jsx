@@ -24,11 +24,36 @@ const ASTRO_LEVELS = [
   { key: 'advanced', label: "Practiced or advanced",       desc: "I interpret charts and follow transits regularly", start: 'aspects' },
 ];
 
+// Steps that can be resumed after an app restart (they need no in-memory
+// state from earlier steps). Killing the app mid-onboarding used to silently
+// skip everything after chart creation — including the plan slide (F-01) —
+// because Home only routes to onboarding when the account has no chart.
+const RESUMABLE_STEPS = new Set(['email_digest', 'plan', 'plan_confirm']);
+export const ONBOARDING_RESUME_KEY = 'onboarding_resume_step';
+
+// The marker is scoped to the signed-in user so a different account on the
+// same device never inherits someone else's resume point.
+export function pendingOnboardingStep(userId) {
+  if (!userId) return null;
+  try {
+    const raw = localStorage.getItem(ONBOARDING_RESUME_KEY);
+    if (!raw) return null;
+    const [uid, s] = raw.split('|');
+    return uid === userId && RESUMABLE_STEPS.has(s) ? s : null;
+  } catch { return null; }
+}
+
 export default function Onboarding() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { knowledgeDepth: currentDepth, reload: reloadPrefs } = useUserPrefs();
-  const [step, setStep] = useState('age_gate');
+  const [step, setStepState] = useState(() => pendingOnboardingStep(user?.id) || 'age_gate');
+  const setStep = (s) => {
+    setStepState(s);
+    try {
+      if (RESUMABLE_STEPS.has(s) && user?.id) localStorage.setItem(ONBOARDING_RESUME_KEY, `${user.id}|${s}`);
+    } catch { /* storage unavailable — resume is best-effort */ }
+  };
   const [selectedLevel, setSelectedLevel] = useState(null);
   const [referralSource, setReferralSource] = useState(null);
   const [chartData, setChartData] = useState(null);
@@ -55,6 +80,7 @@ export default function Onboarding() {
   };
 
   const handleStartLearning = async () => {
+    try { localStorage.removeItem(ONBOARDING_RESUME_KEY); } catch { /* best-effort */ }
     const startSection = selectedLevel?.start || 'foundations';
     track(EVENTS.ONBOARDING_COMPLETED, { sun_sign: sunSign, moon_sign: moonSign, ascendant_sign: ascSign, start_section: startSection });
     // Persist chosen start section so the Learn page can queue the right modules
@@ -147,7 +173,7 @@ export default function Onboarding() {
                     I confirm that I am at least <strong className="text-white/90">13 years old</strong>, and I understand that purchasing a subscription requires me to be <strong className="text-white/90">18 or older</strong>.
                   </span>
                 </label>
-                <p className="font-body text-[10px] text-brass/40 leading-relaxed">
+                <p className="font-body text-[0.625rem] text-brass/40 leading-relaxed">
                   By continuing you agree to our <a href="/terms" className="text-gold-accent underline hover:text-gold-primary">Terms of Service</a> and <a href="/privacy" className="text-gold-accent underline hover:text-gold-primary">Privacy Policy</a>.
                 </p>
               </div>
@@ -250,7 +276,7 @@ export default function Onboarding() {
                 <label className="flex items-center justify-between cursor-pointer">
                   <div>
                     <p className="font-body text-sm font-semibold text-white">Send me the daily digest</p>
-                    <p className="font-body text-[10px] text-brass/60">To {user?.email || 'your email'}</p>
+                    <p className="font-body text-[0.625rem] text-brass/60">To {user?.email || 'your email'}</p>
                   </div>
                   <button
                     type="button"
@@ -335,7 +361,7 @@ function DigestRow({ title, desc }) {
       </div>
       <div>
         <p className="font-body text-xs font-semibold text-white">{title}</p>
-        <p className="font-body text-[11px] text-brass/70 leading-snug">{desc}</p>
+        <p className="font-body text-[0.6875rem] text-brass/70 leading-snug">{desc}</p>
       </div>
     </div>
   );

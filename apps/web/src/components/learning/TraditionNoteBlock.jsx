@@ -33,7 +33,7 @@ export default function TraditionNoteBlock({ notes, activeTradition }) {
       >
         {open ? <Minus size={13} className="text-gold-accent" /> : <Plus size={13} className="text-gold-accent" />}
         <span className="font-display text-xs font-bold text-gold-accent uppercase tracking-widest">⊕ Tradition lens</span>
-        <span className="font-body text-[10px] text-brass/50 ml-auto">
+        <span className="font-body text-[0.625rem] text-brass/50 ml-auto">
           {ordered.map(t => t.short).join(' · ')}
         </span>
       </button>
@@ -48,7 +48,7 @@ export default function TraditionNoteBlock({ notes, activeTradition }) {
                 <button
                   key={t.key}
                   onClick={() => setActiveTab(t.key)}
-                  className={`flex-1 px-2 py-1 rounded-full font-body text-[10px] transition-all flex items-center justify-center gap-1 ${
+                  className={`flex-1 px-2 py-1 rounded-full font-body text-[0.625rem] transition-all flex items-center justify-center gap-1 ${
                     isActive ? 'text-white font-semibold' : 'text-white/40 hover:text-white/60'
                   }`}
                   style={isActive ? { background: `${t.color}33`, color: t.color } : {}}
@@ -65,7 +65,7 @@ export default function TraditionNoteBlock({ notes, activeTradition }) {
           {/* Content */}
           {active && (
             <div>
-              <p className="font-body text-[10px] uppercase tracking-widest mb-1.5" style={{ color: getTradition(active.tradition).color }}>
+              <p className="font-body text-[0.625rem] uppercase tracking-widest mb-1.5" style={{ color: getTradition(active.tradition).color }}>
                 In {getTradition(active.tradition).label} tradition
               </p>
               <div className="font-body text-sm text-white/90 leading-relaxed

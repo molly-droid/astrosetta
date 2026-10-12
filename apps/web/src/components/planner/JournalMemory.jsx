@@ -75,28 +75,28 @@ export default function JournalMemory({ dateKey, userId }) {
     <div className="celestial-card p-4 space-y-3 border-l-2" style={{ borderLeftColor: 'rgba(168, 212, 217, 0.4)' }}>
       <div className="flex items-center gap-2">
         <Clock size={13} className="text-celestial-blue" />
-        <p className="font-body text-[10px] uppercase tracking-widest text-celestial-blue">
+        <p className="font-body text-[0.625rem] uppercase tracking-widest text-celestial-blue">
           {yearsAgo > 1 ? `${yearsAgo} years ago` : 'Last year'} · {formatDateLabel(memory.date_key)}
         </p>
       </div>
 
       {parsed.themes_response && (
         <div className="space-y-1">
-          <p className="font-body text-[10px] text-brass/50 uppercase tracking-wide">Themes</p>
+          <p className="font-body text-[0.625rem] text-brass/50 uppercase tracking-wide">Themes</p>
           <p className="font-body text-xs text-white/70 italic leading-relaxed">{parsed.themes_response}</p>
         </div>
       )}
 
       {parsed.invites_response && (
         <div className="space-y-1">
-          <p className="font-body text-[10px] text-brass/50 uppercase tracking-wide">Invitations</p>
+          <p className="font-body text-[0.625rem] text-brass/50 uppercase tracking-wide">Invitations</p>
           <p className="font-body text-xs text-white/70 italic leading-relaxed">{parsed.invites_response}</p>
         </div>
       )}
 
       {parsed.freeform && (
         <div className="space-y-1">
-          <p className="font-body text-[10px] text-brass/50 uppercase tracking-wide">Reflections</p>
+          <p className="font-body text-[0.625rem] text-brass/50 uppercase tracking-wide">Reflections</p>
           <p className="font-body text-xs text-white/70 leading-relaxed whitespace-pre-wrap">{parsed.freeform}</p>
         </div>
       )}

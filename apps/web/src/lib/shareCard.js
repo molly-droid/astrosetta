@@ -1,6 +1,7 @@
 import html2canvas from 'html2canvas';
 import { PLANET_GLYPHS, SIGN_GLYPHS } from '@/lib/chartUtils';
 import { ECLIPSE_META } from '@/lib/eclipseUtils';
+import { isNativePlatform } from '@/lib/platform';
 
 const PLANET_DOMAINS = {
   Sun: 'identity, vitality, and creative purpose',
@@ -34,7 +35,18 @@ function hashtag(str) {
 }
 
 /**
- * Capture a DOM element (the 1080×1080 share card) as a PNG download.
+ * Capture a DOM element (the 1080×1080 share card) as a PNG and hand it to the
+ * user (B-03).
+ *
+ * On web that's an <a download>. In the native app that link is a no-op —
+ * WKWebView ignores downloads of data: URLs, which is why "Download image" did
+ * nothing on Molly's phone. Native instead writes the PNG to the app's cache
+ * and opens the system share sheet, whose "Save Image" action saves to Photos
+ * (iOS shows the NSPhotoLibraryAddUsageDescription prompt at that point) and
+ * also allows sharing straight to Messages/Instagram — the point of a share
+ * card.
+ *
+ * Returns 'shared' | 'downloaded'; throws if the capture itself fails.
  */
 export async function captureCardAsPng(element, filename) {
   const canvas = await html2canvas(element, {
@@ -47,10 +59,29 @@ export async function captureCardAsPng(element, filename) {
     windowWidth: 1080,
     windowHeight: 1080,
   });
+  const dataUrl = canvas.toDataURL('image/png');
+
+  if (isNativePlatform()) {
+    const [{ Filesystem, Directory }, { Share }] = await Promise.all([
+      import('@capacitor/filesystem'),
+      import('@capacitor/share'),
+    ]);
+    const path = `${filename}-${Date.now()}.png`;
+    await Filesystem.writeFile({
+      path,
+      data: dataUrl.split(',')[1], // base64 payload without the data: prefix
+      directory: Directory.Cache,
+    });
+    const { uri } = await Filesystem.getUri({ path, directory: Directory.Cache });
+    await Share.share({ title: filename, files: [uri] });
+    return 'shared';
+  }
+
   const link = document.createElement('a');
   link.download = `${filename}.png`;
-  link.href = canvas.toDataURL('image/png');
+  link.href = dataUrl;
   link.click();
+  return 'downloaded';
 }
 
 export async function copyShareText(text) {
@@ -125,8 +156,15 @@ export function buildRisingSignCardData(sign, content, dateStr) {
   const bullets = Array.isArray(content?.bullets) ? content.bullets : [];
   const headline = content?.headline || `What today means for ${sign} Rising`;
   const hashtags = ['#astrology', hashtag(sign), '#rising', '#horoscope', '#astrosetta'];
+  // AI-01: the image shows the short standalone summary (the full bullet list
+  // overflowed the square card). The copied text keeps the bullets, where
+  // there is no size limit.
+  const summary = typeof content?.summary === 'string' ? content.summary.trim() : '';
   const textFallback = `${headline}\n${dateStr}\n\n${bullets.map(b => `✦ ${b}`).join('\n')}\n\n${hashtags.join(' ')}\n\nGet your chart → astrosetta.com`;
-  return { glyph, glyphColor: '#C9A961', kicker: 'DAILY HOROSCOPE', title: headline, bodyType: 'bullets', bullets, dateStr, hashtags, textFallback };
+  const base = { glyph, glyphColor: '#C9A961', kicker: 'DAILY HOROSCOPE', title: headline, dateStr, hashtags, textFallback };
+  return summary
+    ? { ...base, bodyType: 'prose', body: summary, bullets }
+    : { ...base, bodyType: 'bullets', bullets };
 }
 
 /** Format today's top collective transits into a context string for the rising-sign LLM. */

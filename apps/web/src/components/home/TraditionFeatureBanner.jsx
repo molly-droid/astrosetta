@@ -28,7 +28,7 @@ export default function TraditionFeatureBanner() {
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent font-semibold mb-0.5">New · Three Traditions</p>
+            <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent font-semibold mb-0.5">New · Three Traditions</p>
             <p className="font-display text-sm font-bold text-white leading-tight">Modern, Hellenistic &amp; Vedic — one chart</p>
           </div>
           <button onClick={close} className="p-1 rounded-full hover:bg-white/10 transition-colors shrink-0">
@@ -39,7 +39,7 @@ export default function TraditionFeatureBanner() {
           Switch your live chart's zodiac, house system, and rulerships — every reading recalculates to match.
         </p>
         <div className="mt-2 rounded-lg border border-gold-primary/15 bg-gold-primary/5 px-2.5 py-1.5">
-          <p className="font-body text-[10px] text-brass/80 leading-relaxed">
+          <p className="font-body text-[0.625rem] text-brass/80 leading-relaxed">
             <span className="text-cream font-semibold">Free</span> — explore the Traditions curriculum in Learn.{' '}
             <span className="text-cream font-semibold">Core &amp; Premium</span> — switch your live chart in Profile.
           </p>
@@ -47,14 +47,14 @@ export default function TraditionFeatureBanner() {
         <div className="flex flex-wrap gap-2 mt-2.5">
           <button
             onClick={() => navigate('/profile')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-body text-[11px] font-semibold transition-all hover:opacity-90"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-body text-[0.6875rem] font-semibold transition-all hover:opacity-90"
             style={{ background: 'linear-gradient(135deg, #D4AF85, #C9A961)', color: '#0f1a2e' }}
           >
             Switch in Profile <ArrowRight size={11} />
           </button>
           <button
             onClick={() => navigate('/learn?section=traditions')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-body text-[11px] font-semibold transition-all border border-gold-primary/30 hover:bg-gold-primary/10"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-body text-[0.6875rem] font-semibold transition-all border border-gold-primary/30 hover:bg-gold-primary/10"
             style={{ color: '#D4AF85' }}
           >
             <GraduationCap size={11} /> Learn the traditions

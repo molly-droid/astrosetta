@@ -58,7 +58,7 @@ export default function MundanePatternBanner({ transits, onHighlight }) {
                 <span className="text-lg text-gold-primary" style={{ fontVariantEmoji: 'text', fontVariant: 'normal' }}>{style.icon}</span>
                 <div className="text-left">
                   <p className="font-display text-sm font-semibold text-white">{p.type}</p>
-                  <p className="font-body text-[10px] text-brass/70">
+                  <p className="font-body text-[0.625rem] text-brass/70">
                     Mundane · {p.planets.join(' · ')}
                     {p.cycle && <span className="text-brass/40"> · {p.cycle}</span>}
                   </p>
@@ -78,7 +78,7 @@ export default function MundanePatternBanner({ transits, onHighlight }) {
                     {p.planetDetails.map((pd, j) => (
                       <span
                         key={j}
-                        className="font-body text-[10px] px-2 py-0.5 rounded-full border"
+                        className="font-body text-[0.625rem] px-2 py-0.5 rounded-full border"
                         style={{ background: style.bg, borderColor: style.border, color: style.color }}
                       >
                         <span style={{ fontVariantEmoji: 'text', fontFamily: 'serif' }}>
@@ -92,7 +92,7 @@ export default function MundanePatternBanner({ transits, onHighlight }) {
                     {p.planets.map((name, j) => (
                       <span
                         key={j}
-                        className="font-body text-[10px] px-2 py-0.5 rounded-full border"
+                        className="font-body text-[0.625rem] px-2 py-0.5 rounded-full border"
                         style={{ background: style.bg, borderColor: style.border, color: style.color }}
                       >
                         <span style={{ fontVariantEmoji: 'text', fontFamily: 'serif' }}>
@@ -105,21 +105,21 @@ export default function MundanePatternBanner({ transits, onHighlight }) {
                 {/* Aspect web — the specific geometry of the pattern */}
                 {p.aspects && p.aspects.length > 0 && (
                   <div className="space-y-1">
-                    <p className="font-body text-[9px] uppercase tracking-widest text-brass/40">Aspect Web</p>
+                    <p className="font-body text-[0.5625rem] uppercase tracking-widest text-brass/40">Aspect Web</p>
                     {p.aspects.map((a, j) => (
-                      <div key={j} className="font-body text-[10px] text-brass/70 flex items-center gap-1.5">
+                      <div key={j} className="font-body text-[0.625rem] text-brass/70 flex items-center gap-1.5">
                         <span style={{ fontVariantEmoji: 'text', fontFamily: 'serif' }}>{PLANET_GLYPHS[a.planet1] || '✦'}</span>
                         <span className="text-white/60">{a.planet1}</span>
                         <span style={{ fontVariantEmoji: 'text', color: style.color }}>{ASPECT_SYMBOLS[a.aspect] || a.aspect}</span>
                         <span style={{ fontVariantEmoji: 'text', fontFamily: 'serif' }}>{PLANET_GLYPHS[a.planet2] || '✦'}</span>
                         <span className="text-white/60">{a.planet2}</span>
-                        <span className="text-brass/40 text-[9px]">{a.orb?.toFixed(1)}°</span>
+                        <span className="text-brass/40 text-[0.5625rem]">{a.orb?.toFixed(1)}°</span>
                       </div>
                     ))}
                   </div>
                 )}
                 {(p.sign || p.element || p.apex) && (
-                  <div className="flex flex-wrap gap-3 text-[10px] font-body text-brass/50">
+                  <div className="flex flex-wrap gap-3 text-[0.625rem] font-body text-brass/50">
                     {p.sign && <span>📍 {p.sign}</span>}
                     {p.element && <span>{p.element}</span>}
                     {p.apex && <span>Apex: {p.apex}</span>}

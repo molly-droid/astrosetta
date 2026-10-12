@@ -27,12 +27,12 @@ function TransitContextStrip({ transits }) {
   const aspects = transits.aspects?.slice(0, 2) || [];
   return (
     <div className="flex flex-wrap items-center gap-1.5 pb-3 border-b border-gold-primary/15">
-      <span className="font-body text-[10px] text-brass uppercase tracking-widest font-semibold mr-0.5">Today's sky</span>
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-deep-blue/8 border border-gold-primary/20 font-body text-[11px] text-white">
+      <span className="font-body text-[0.625rem] text-brass uppercase tracking-widest font-semibold mr-0.5">Today's sky</span>
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-deep-blue/8 border border-gold-primary/20 font-body text-[0.6875rem] text-white">
         <span style={{ fontVariantEmoji: 'text', fontFamily:'serif' }}>{forceTextGlyph('☽')}</span> Moon in {transits.moonSign}
       </span>
       {aspects.map((a, i) => (
-        <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-gold-primary/20 font-body text-[11px] text-white/80" style={{fontVariantEmoji:'text'}}>
+        <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 border border-gold-primary/20 font-body text-[0.6875rem] text-white/80" style={{fontVariantEmoji:'text'}}>
           {forceTextGlyph(PLANET_GLYPHS[a.planet] || '✦')} {a.planet} {a.aspect} {forceTextGlyph(PLANET_GLYPHS[a.natal_planet] || '')}{a.natal_planet || a.sign || ''}
         </span>
       ))}
@@ -286,7 +286,7 @@ export default function DailyQuizCard({ userProgress, onProgressUpdate, transits
             </div>
             <div className="text-right">
               <p className="font-display text-3xl font-bold text-white">{finalScore ?? quiz.score}%</p>
-              <p className="font-body text-[10px] text-brass font-semibold">score</p>
+              <p className="font-body text-[0.625rem] text-brass font-semibold">score</p>
             </div>
           </div>
 
@@ -294,7 +294,7 @@ export default function DailyQuizCard({ userProgress, onProgressUpdate, transits
             <span className="text-lg">✦</span>
             <div>
               <p className="font-body text-xs text-white font-semibold">Practitioner's Lens unlocked</p>
-              <p className="font-body text-[10px] text-gold-accent">Your daily deep-dive transit insight is ready</p>
+              <p className="font-body text-[0.625rem] text-gold-accent">Your daily deep-dive transit insight is ready</p>
             </div>
           </div>
 
@@ -367,6 +367,9 @@ export default function DailyQuizCard({ userProgress, onProgressUpdate, transits
         section: learn.section,
         blockIndex: learn.block_index,
         title: learn.title,
+        // UX-06: Back in the module returns here instead of walking back
+        // through the module's earlier slides.
+        returnToQuiz: true,
       },
     });
   };

@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
           model: def.model,
           telemetry: { userId: String(target.user_id), task: `pre-gen:${TASK}` },
         });
-        await svc.create({
+        const payload = {
           user_id: target.user_id,
           period_type: 'interpretation',
           period_key: item.key,
@@ -79,7 +79,16 @@ Deno.serve(async (req) => {
           description: typeof text === 'string' ? text : JSON.stringify(text),
           data: text,
           generated_at: new Date().toISOString(),
-        });
+        };
+        // Re-check before writing: a concurrent run (or the user's own device)
+        // may have saved this item while we were generating — update, don't
+        // duplicate.
+        const nowExisting = await svc.filter({ user_id: target.user_id, period_type: 'interpretation', period_key: item.key });
+        if (nowExisting[0]) {
+          await svc.update(nowExisting[0].id, payload);
+        } else {
+          await svc.create(payload);
+        }
         results.push({ item: item.label, status: 'ok' });
       } catch (err) {
         results.push({ item: item.label, status: 'error', error: (err as Error).message });

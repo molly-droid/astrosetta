@@ -28,7 +28,7 @@ export default function TierBadge({ tier = 'apprentice' }) {
   const config = TIER_CONFIG[tier] || TIER_CONFIG.apprentice;
 
   return (
-    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-body ${config.bg} ${config.border} ${config.text}`}>
+    <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full border text-[0.6875rem] font-body ${config.bg} ${config.border} ${config.text}`}>
       <span className="font-display">{config.glyph}</span>
       <span>{config.label}</span>
     </div>

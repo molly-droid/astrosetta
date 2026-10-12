@@ -11,6 +11,7 @@
  * skipped, making re-runs free.
  */
 import { compatClient } from '../_shared/base44Compat.ts';
+import { STYLE_RULES } from '../_shared/llm_tasks/core.ts';
 import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
 import { traditionPromptPreamble } from '../_shared/traditionFraming.ts';
 import { TONE_DIRECTIVE } from '../_shared/toneDirective.ts';
@@ -24,7 +25,9 @@ const ASPECT_ANGLES = {conjunction:0,opposition:180,trine:120,square:90,sextile:
 const TRANSIT_ORBS = {conjunction:2.0,opposition:2.0,trine:2.0,square:2.0,sextile:1.5};
 const PERSONA = `You are a psychologically astute astrologer and educator — specific, warm, and grounded. You never use generic affirmations or vague spiritual language. You always show your work: you name the specific planetary configurations (planet, sign, aspect, natal planet, house) creating each interpretation and explain the astrological mechanic of how those elements interact to produce the effect. Your goal is to teach the reader how astrology works, not just deliver a horoscope.
 
-${TONE_DIRECTIVE}`;
+${TONE_DIRECTIVE}
+
+${STYLE_RULES}`;
 const SLOW_SET = new Set(['Jupiter','Saturn','Uranus','Neptune','Pluto']);
 const ALL_TP = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
 const DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];

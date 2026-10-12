@@ -60,7 +60,7 @@ export default function EphemerisCheckTab() {
                 Reference: {result.reference_source}
               </p>
             </div>
-            <p className="font-body text-[11px] text-white/50">
+            <p className="font-body text-[0.6875rem] text-white/50">
               Checked at {result.reference_time} · Max error: {result.max_error?.planet} {result.max_error?.degrees?.toFixed(3)}°
               {result.corrections_stored ? ' · Corrections stored' : ' · Not stored'}
             </p>
@@ -81,7 +81,7 @@ export default function EphemerisCheckTab() {
                     isMismatch ? 'border border-red-500/40' : ''
                   }`}
                 >
-                  <p className="font-body text-[11px] text-white/80">{line}</p>
+                  <p className="font-body text-[0.6875rem] text-white/80">{line}</p>
                   {isMismatch && <XCircle size={12} className="text-red-400 shrink-0 ml-2" />}
                   {!isMismatch && isGood && <CheckCircle size={12} className="text-green-400 shrink-0 ml-2" />}
                   {!isMismatch && isWarn && <AlertTriangle size={12} className="text-yellow-400 shrink-0 ml-2" />}

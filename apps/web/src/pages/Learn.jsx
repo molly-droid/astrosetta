@@ -35,6 +35,9 @@ export default function Learn() {
   const [activeModule, setActiveModule] = useState(null);
   const [showCompleted, setShowCompleted] = useState(false);
   const [resumeBlockIndex, setResumeBlockIndex] = useState(null);
+  // Set when the module was opened from the daily quiz — Back returns there
+  // instead of into the module's earlier slides (UX-06).
+  const [returnToQuiz, setReturnToQuiz] = useState(false);
   const navigate = useNavigate();
 
   const openModule = (mod, blockIndex = null) => {
@@ -78,7 +81,10 @@ export default function Learn() {
       const { section, subjectKey } = location.state;
       if (section) handleSetSection(section);
       const match = mods.find(m => m.subject_key === subjectKey);
-      if (match) openModule(match, location.state?.blockIndex);
+      if (match) {
+        setReturnToQuiz(!!location.state?.returnToQuiz);
+        openModule(match, location.state?.blockIndex);
+      }
     } else if (searchParams.get('section')) {
       const urlSection = searchParams.get('section');
       if (SECTIONS.find(s => s.key === urlSection)) setActiveSection(urlSection);
@@ -187,12 +193,12 @@ export default function Learn() {
           <div className="flex items-center gap-2">
             <h3 className="font-display text-sm font-bold text-cream">{mod.title}</h3>
             {isInProgress && (
-              <span className="text-[10px] font-body px-1.5 py-0.5 bg-gold-primary/20 text-brass rounded-full border border-gold-primary/30">
+              <span className="text-[0.625rem] font-body px-1.5 py-0.5 bg-gold-primary/20 text-brass rounded-full border border-gold-primary/30">
                 In Progress
               </span>
             )}
             {NEW_MODULE_KEYS.has(mod.subject_key) && !isCompleted && (
-              <span className="text-[9px] font-body px-1.5 py-0.5 bg-gold-accent/20 text-gold-accent rounded-full border border-gold-accent/40 uppercase tracking-wide font-bold flex items-center gap-0.5">
+              <span className="text-[0.5625rem] font-body px-1.5 py-0.5 bg-gold-accent/20 text-gold-accent rounded-full border border-gold-accent/40 uppercase tracking-wide font-bold flex items-center gap-0.5">
                 <Bell size={8} className="fill-gold-accent/30" /> New
               </span>
             )}
@@ -201,19 +207,19 @@ export default function Learn() {
             <p className="font-body text-xs text-brass mt-0.5 truncate">{mod.subtitle}</p>
           )}
           <div className="flex items-center gap-3 mt-1">
-            <span className="font-body text-[10px] text-brass">
+            <span className="font-body text-[0.625rem] text-brass">
               {mod.content_blocks?.length || 0} blocks
             </span>
-            <span className="font-body text-[10px] text-gold-accent">
+            <span className="font-body text-[0.625rem] text-gold-accent">
               +{mod.xp_reward || 50} XP
             </span>
             {isCompleted && prog?.xp_earned > 0 && (
-              <span className="font-body text-[10px] text-brass">
+              <span className="font-body text-[0.625rem] text-brass">
                 ✓ earned {prog.xp_earned} XP
               </span>
             )}
             {isPractitionerPlus && mod.mastery_blocks?.length > 0 && (
-              <span className="font-body text-[10px] px-1.5 py-0.5 bg-gold-accent/15 text-gold-accent rounded-full border border-gold-accent/30 flex items-center gap-0.5">
+              <span className="font-body text-[0.625rem] px-1.5 py-0.5 bg-gold-accent/15 text-gold-accent rounded-full border border-gold-accent/30 flex items-center gap-0.5">
                 <Sparkles size={8} /> Mastery
               </span>
             )}
@@ -254,7 +260,11 @@ export default function Learn() {
         modules={modules}
         initialBlockIndex={resumeBlockIndex ?? 0}
         activeTradition={userProgress?.active_tradition || 'modern'}
-        onClose={() => setActiveModule(null)}
+        onClose={() => {
+          if (returnToQuiz) { setReturnToQuiz(false); navigate('/home?tab=learn'); return; }
+          setActiveModule(null);
+        }}
+        backReturnsToCaller={returnToQuiz}
         onComplete={handleModuleComplete}
         onNavigate={handleNavigate}
         onViewChart={handleViewChart}

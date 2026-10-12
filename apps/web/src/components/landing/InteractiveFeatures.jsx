@@ -53,10 +53,10 @@ export default function InteractiveFeatures() {
             >
               <div className="text-left flex-1">
                 <h3 className="font-display text-lg font-bold text-white mb-1.5">{f.title}</h3>
-                {f.subtitle && <p className="font-body text-[11px] text-gold-accent mb-1">{f.subtitle}</p>}
+                {f.subtitle && <p className="font-body text-[0.6875rem] text-gold-accent mb-1">{f.subtitle}</p>}
                 <p className="font-body text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>{f.description}</p>
                 {f.unlock && (
-                  <p className="font-body text-[10px] mt-2 inline-block px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,169,97,0.12)', border: '1px solid rgba(201,169,97,0.25)', color: '#C9A961' }}>
+                  <p className="font-body text-[0.625rem] mt-2 inline-block px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,169,97,0.12)', border: '1px solid rgba(201,169,97,0.25)', color: '#C9A961' }}>
                     {f.unlock}
                   </p>
                 )}

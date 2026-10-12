@@ -30,6 +30,21 @@ function makeOptions(correct, pool, count = 4) {
   return { options: opts, correct_index: opts.indexOf(correct) };
 }
 
+/**
+ * B-04: drop any question whose answer choices contain the term being asked
+ * about — those give the answer away. `subject` is the term a generator is
+ * quizzing on; the question text itself may name it, the options may not.
+ */
+function leaksSubject(q) {
+  if (!q?.subject || !Array.isArray(q.options)) return false;
+  const needles = String(q.subject).toLowerCase().split(/[\s,]+/).filter(w => w.length > 3);
+  if (!needles.length) return false;
+  return q.options.some(o => {
+    const text = String(o).toLowerCase();
+    return needles.some(w => text.includes(w));
+  });
+}
+
 function buildBonusQuestions(transitPlanets, mundaneAspects, tier) {
   const questions = [];
   let id = 1;
@@ -42,8 +57,11 @@ function buildBonusQuestions(transitPlanets, mundaneAspects, tier) {
       return {
         id: id++, type: 'sign_keywords',
         question: `Which phrase best describes the energy of ${sign}?`,
-        options: shuffle([SIGN_KEYWORDS[sign], ...shuffle(ALL_SIGNS.filter(s => s !== sign)).slice(0,3).map(s => SIGN_KEYWORDS[s])]),
-        get correct_index() { return this.options.indexOf(SIGN_KEYWORDS[sign]); },
+        ...(() => {
+          const opts = shuffle([SIGN_KEYWORDS[sign], ...shuffle(ALL_SIGNS.filter(s => s !== sign)).slice(0,3).map(s => SIGN_KEYWORDS[s])]);
+          return { options: opts, correct_index: opts.indexOf(SIGN_KEYWORDS[sign]) };
+        })(),
+        subject: sign,
         explanation: `${sign} is known for being ${SIGN_KEYWORDS[sign]}.`
       };
     },
@@ -81,7 +99,7 @@ function buildBonusQuestions(transitPlanets, mundaneAspects, tier) {
       const keyword = PLANET_KEYWORDS[planet].split(',')[0];
       const others = shuffle(ALL_PLANETS.filter(p => p !== planet)).slice(0,3).map(p => PLANET_KEYWORDS[p].split(',')[0]);
       const opts = shuffle([keyword, ...others]);
-      return { id: id++, type: 'planet_keywords', question: `${planet} is most associated with which theme?`, options: opts, correct_index: opts.indexOf(keyword), explanation: `${planet} governs ${PLANET_KEYWORDS[planet]}.` };
+      return { id: id++, type: 'planet_keywords', subject: planet, question: `${planet} is most associated with which theme?`, options: opts, correct_index: opts.indexOf(keyword), explanation: `${planet} governs ${PLANET_KEYWORDS[planet]}.` };
     },
     // House meaning
     () => {
@@ -98,8 +116,13 @@ function buildBonusQuestions(transitPlanets, mundaneAspects, tier) {
         ? usable[Math.floor(Math.random() * usable.length)].aspect.toLowerCase()
         : Object.keys(ASPECT_MEANINGS)[Math.floor(Math.random() * 5)];
       const allAspects = Object.keys(ASPECT_MEANINGS);
-      const { options, correct_index } = makeOptions(aspect, allAspects);
-      return { id: id++, type: 'aspect_meaning', question: `What energy does a ${aspect} generally bring between two planets?`, options: options.map(a => `${a.charAt(0).toUpperCase() + a.slice(1)} — ${ASPECT_MEANINGS[a]}`), correct_index, explanation: `A ${aspect} brings ${ASPECT_MEANINGS[aspect]}.` };
+      // B-04: options used to be labelled "Trine — flowing harmony…", so the
+      // correct answer announced itself. Meanings only; the name appears in
+      // the explanation after answering.
+      const meaning = ASPECT_MEANINGS[aspect];
+      const others = shuffle(allAspects.filter(a => a !== aspect)).slice(0, 3).map(a => ASPECT_MEANINGS[a]);
+      const opts = shuffle([meaning, ...others]);
+      return { id: id++, subject: aspect, type: 'aspect_meaning', question: `What energy does a ${aspect} generally bring between two planets?`, options: opts, correct_index: opts.indexOf(meaning), explanation: `A ${aspect} brings ${ASPECT_MEANINGS[aspect]}.` };
     },
     // Current transit planet sign (if available)
     () => {
@@ -114,10 +137,9 @@ function buildBonusQuestions(transitPlanets, mundaneAspects, tier) {
   for (const gen of generators) {
     if (questions.length >= 5) break;
     const q = gen();
-    if (q) questions.push(q);
+    if (q && !leaksSubject(q)) questions.push(q);
   }
 
-  // Fix any generator that computed correct_index lazily (planet_glyph bug guard)
   return questions.map((q, i) => ({ ...q, id: i + 1 }));
 }
 

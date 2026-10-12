@@ -4,7 +4,9 @@ import { REQUIREMENTS } from './TierProgressCard';
 const TIER_LABELS = { apprentice: 'Apprentice', adept: 'Adept', maestro: 'Maestro' };
 
 const CRITERION_NOUN = {
-  quiz_days: 'quizzes',
+  // "quiz days", not "quizzes" — a second quiz on the same day doesn't
+  // advance this counter, and the old wording made it look stuck (B-05/B-06).
+  quiz_days: 'quiz days',
   accuracy: 'accuracy',
   modules: 'modules',
 };
@@ -27,8 +29,8 @@ export default function LearningTierGauge({ userProgress }) {
     return (
       <div className="space-y-1.5">
         <div className="flex justify-between items-center">
-          <span className="text-[11px] font-body text-gold-accent uppercase tracking-widest">Maestro</span>
-          <span className="text-[11px] font-body text-brass/50 uppercase tracking-widest">Top tier reached</span>
+          <span className="text-[0.6875rem] font-body text-gold-accent uppercase tracking-widest">Maestro</span>
+          <span className="text-[0.6875rem] font-body text-brass/50 uppercase tracking-widest">Top tier reached</span>
         </div>
         <div className="h-1.5 bg-muted rounded-full overflow-hidden">
           <div className="h-full rounded-full" style={{ width: '100%', background: 'linear-gradient(90deg, #C9A961, #D4AF85)' }} />
@@ -55,8 +57,8 @@ export default function LearningTierGauge({ userProgress }) {
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between items-center">
-        <span className="text-[11px] font-body text-brass uppercase tracking-widest">{TIER_LABELS[tier] || tier}</span>
-        <span className="text-[11px] font-body text-brass/60 uppercase tracking-widest">→ {nextLabel}</span>
+        <span className="text-[0.6875rem] font-body text-brass uppercase tracking-widest">{TIER_LABELS[tier] || tier}</span>
+        <span className="text-[0.6875rem] font-body text-brass/60 uppercase tracking-widest">→ {nextLabel}</span>
       </div>
       <div className="h-1.5 bg-muted rounded-full overflow-hidden">
         <div
@@ -64,7 +66,7 @@ export default function LearningTierGauge({ userProgress }) {
           style={{ width: `${bottleneck.pct}%`, background: 'linear-gradient(90deg, #C9A961, #D4AF85)' }}
         />
       </div>
-      <div className="text-[11px] font-body text-brass/80 text-right">
+      <div className="text-[0.6875rem] font-body text-brass/80 text-right">
         {bottleneck.pct >= 100 ? `Ready to advance to ${nextLabel}` : `${valueText} to ${nextLabel}`}
       </div>
     </div>

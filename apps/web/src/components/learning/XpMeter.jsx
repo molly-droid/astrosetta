@@ -15,10 +15,10 @@ export default function XpMeter({ xpTotal = 0 }) {
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between items-center">
-        <span className="text-[11px] font-body text-brass uppercase tracking-widest">
+        <span className="text-[0.6875rem] font-body text-brass uppercase tracking-widest">
           {level.label} · {xpTotal} XP
         </span>
-        <span className="text-[11px] font-body text-brass/60 uppercase tracking-widest">
+        <span className="text-[0.6875rem] font-body text-brass/60 uppercase tracking-widest">
           {next ? `→ ${next.label}` : 'Max level'}
         </span>
       </div>
@@ -29,7 +29,7 @@ export default function XpMeter({ xpTotal = 0 }) {
         />
       </div>
       {next && (
-        <div className="text-[11px] font-body text-brass/80 text-right">
+        <div className="text-[0.6875rem] font-body text-brass/80 text-right">
           {Math.max(0, next.min - xpTotal)} XP to {next.label}
         </div>
       )}

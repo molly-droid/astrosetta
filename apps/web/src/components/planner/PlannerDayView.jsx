@@ -13,9 +13,10 @@ import MundaneRitualBanner from './MundaneRitualBanner';
 import TransitNatalFormationsBanner from './TransitNatalFormationsBanner';
 import IngressBanner from './IngressBanner';
 import NavigatorPrompts from './NavigatorPrompts';
+import JournalHistory from './JournalHistory';
 import { usePermissions } from '@/lib/permissions';
 
-export default function PlannerDayView({ date, chart, user, spotlightDynamics = false, onSpotlightDismiss, onHighlightPattern, onHighlightTransit, onTransitData }) {
+export default function PlannerDayView({ date, chart, user, spotlightDynamics = false, onSpotlightDismiss, onHighlightPattern, onHighlightTransit, onTransitData, onSelectDate = null }) {
   const { data, loading } = useTransits(date, chart);
   const { canViewTransitInterpretations } = usePermissions(user);
   const dateKey = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toLocaleDateString('en-CA');
@@ -91,6 +92,8 @@ export default function PlannerDayView({ date, chart, user, spotlightDynamics = 
           <TodayHighlightBanners transits={data} chart={chart} onLinkToHighlights={scrollToHighlights} />
           <PlannerJournal dateKey={dateKey} userId={user?.id} synthesis={synthesis} />
           <JournalMemory dateKey={dateKey} userId={user?.id} />
+          {/* F-03: every past entry, not just the one written on this date. */}
+          <JournalHistory userId={user?.id} currentDateKey={dateKey} onOpenDate={onSelectDate} />
           <NavigatorPrompts date={date} />
         </div>
       )}

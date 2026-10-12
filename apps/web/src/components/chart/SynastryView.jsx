@@ -90,7 +90,7 @@ function CrossAspectRow({ aspect, person1Name, person2Name, chart1Data, chart2Da
           {p2?.sign ? <> in <SignName sign={p2.sign} /></> : ''}
         </span>
         <div className="flex items-center gap-1.5 ml-2 shrink-0">
-          <span className="font-body text-[10px] text-brass">{aspect.orb?.toFixed(1)}°</span>
+          <span className="font-body text-[0.625rem] text-brass">{aspect.orb?.toFixed(1)}°</span>
           {loading ? <Loader2 size={11} className="animate-spin text-gold-primary" />
             : open ? <ChevronDown size={12} className="text-brass/40" /> : <ChevronRight size={12} className="text-brass/30" />}
         </div>
@@ -100,7 +100,7 @@ function CrossAspectRow({ aspect, person1Name, person2Name, chart1Data, chart2Da
           {loading ? (
             <div className="flex items-center gap-1.5 py-1">
               <Loader2 size={11} className="animate-spin text-gold-primary" />
-              <span className="font-body text-[11px] text-brass italic">Reading the synastry...</span>
+              <span className="font-body text-[0.6875rem] text-brass italic">Reading the synastry...</span>
             </div>
           ) : (
             <p className="font-body text-xs text-white/80 leading-relaxed">{highlightSynthesisText(text, undefined, 'text-gold-primary')}</p>
@@ -272,16 +272,16 @@ export default function SynastryView({ userChart, savedChart, user, onSynastryDa
           <div className="min-w-0">
             <span className="font-display text-sm text-cream block truncate">{userName} & {partnerName}</span>
             {savedChart?.relationship && (
-              <span className="font-body text-[10px] text-brass/60 italic">{savedChart.chart_type === 'event' ? savedChart.relationship : isPersonalPrimary ? `Your ${savedChart.relationship}` : `${savedChart.relationship} (to you)`}</span>
+              <span className="font-body text-[0.625rem] text-brass/60 italic">{savedChart.chart_type === 'event' ? savedChart.relationship : isPersonalPrimary ? `Your ${savedChart.relationship}` : `${savedChart.relationship} (to you)`}</span>
             )}
             {savedChart?.deceased && (
-              <span className="font-body text-[10px] text-purple-soft italic">✦ in memoriam{savedChart?.date_of_death ? ` · ${savedChart.date_of_death}` : ''}</span>
+              <span className="font-body text-[0.625rem] text-purple-soft italic">✦ in memoriam{savedChart?.date_of_death ? ` · ${savedChart.date_of_death}` : ''}</span>
             )}
           </div>
         </div>
         {c2Data?.angles?.ascendant?.sign && (
           <div className="text-right">
-            <div className="font-body text-[10px] uppercase tracking-widest text-brass/60">{partnerName} Rising</div>
+            <div className="font-body text-[0.625rem] uppercase tracking-widest text-brass/60">{partnerName} Rising</div>
             <div className="text-xs font-display font-bold" style={{ color: '#B8A5C8' }}>
               <SignName sign={c2Data.angles.ascendant.sign} />
             </div>
@@ -326,10 +326,10 @@ export default function SynastryView({ userChart, savedChart, user, onSynastryDa
 
       {/* Cross-aspect list */}
       <div className="space-y-3">
-        <p className="font-body text-[10px] uppercase tracking-widest text-brass/50 px-1">Cross-Chart Aspects</p>
+        <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50 px-1">Cross-Chart Aspects</p>
         {ASPECT_ORDER.filter(a => grouped[a]?.length).map(asp => (
           <div key={asp}>
-            <p className="font-body text-[10px] text-white/40 uppercase tracking-wide mb-1">{ASPECT_LABELS[asp]}</p>
+            <p className="font-body text-[0.625rem] text-white/40 uppercase tracking-wide mb-1">{ASPECT_LABELS[asp]}</p>
             <div className="space-y-1">
               {grouped[asp]
                 .sort((a, b) => a.orb - b.orb)

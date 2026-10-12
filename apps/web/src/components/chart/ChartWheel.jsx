@@ -104,10 +104,10 @@ export default function ChartWheel({ chartData, transitData = null, transitEndDa
   // Each show* prop can be passed explicitly; otherwise fall back to the user's
   // saved Chart Display preferences. Hidden points drop from the wheel (natal +
   // transit) and any aspect involving one is dropped too.
-  const showAst = showAsteroids ?? (user?.show_asteroids !== false);
-  const showLotsEff = showLots ?? (user?.show_lots !== false);
-  const showNodesEff = showNodes ?? (user?.show_nodes !== false);
-  const showLilithEff = showLilith ?? (user?.show_lilith !== false);
+  const showAst = showAsteroids ?? (user?.show_asteroids === true);
+  const showLotsEff = showLots ?? (user?.show_lots === true);
+  const showNodesEff = showNodes ?? (user?.show_nodes === true);
+  const showLilithEff = showLilith ?? (user?.show_lilith === true);
   const hiddenPoints = new Set([
     ...(showAst ? [] : ASTEROIDS),
     ...(showLotsEff ? [] : LOTS),

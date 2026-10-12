@@ -154,20 +154,20 @@ export default function LunarHighlight({ lunation, chart, date, autoExpand = fal
           {reading && (
             <>
               <div>
-                <p className="font-body text-[10px] uppercase tracking-widest text-brass/50 mb-1">Collective</p>
+                <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50 mb-1">Collective</p>
                 <p className="font-body text-sm text-white/90 leading-relaxed">{highlightSynthesisText(reading.collective)}</p>
               </div>
               <div>
-                <p className="font-body text-[10px] uppercase tracking-widest text-brass/50 mb-1">Personal · Your Chart</p>
+                <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50 mb-1">Personal · Your Chart</p>
                 <p className="font-body text-sm text-white/90 leading-relaxed">{highlightSynthesisText(reading.personal)}</p>
               </div>
               <div className="rounded-lg bg-gold-primary/10 border border-gold-primary/20 px-3 py-2">
-                <p className="font-body text-[10px] uppercase tracking-widest text-brass/50 mb-1">✦ Today's Ritual</p>
+                <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50 mb-1">✦ Today's Ritual</p>
                 <p className="font-body text-xs text-brass leading-relaxed">{highlightSynthesisText(reading.ritual)}</p>
               </div>
               <button
                 onClick={() => setShareCard(buildLunationCardData({ phase, moonSign, isEclipse, eclipseType }, shareDateStr))}
-                className="flex items-center gap-1.5 self-start font-body text-[10px] text-brass/60 hover:text-gold-accent transition-colors pt-1"
+                className="flex items-center gap-1.5 self-start font-body text-[0.625rem] text-brass/60 hover:text-gold-accent transition-colors pt-1"
               >
                 <Share2 size={11} /> Share this {isEclipse ? 'eclipse' : phase.toLowerCase()}
               </button>

@@ -146,7 +146,7 @@ export default function EventGiftPanel({ billing, user, onEventContext }) {
                 ✦ At the <span className="text-gold-accent">{ongoing.event_name}</span> right now?
               </p>
             </div>
-            <p className="font-body text-[11px] text-white/50 mb-2.5">
+            <p className="font-body text-[0.6875rem] text-white/50 mb-2.5">
               Tap below to tag your signup and claim your founding gift.
             </p>
             <button
@@ -191,13 +191,13 @@ export default function EventGiftPanel({ billing, user, onEventContext }) {
                 Apply
               </button>
             </div>
-            {promoError && <p className="font-body text-[11px] text-red-300">{promoError}</p>}
+            {promoError && <p className="font-body text-[0.6875rem] text-red-300">{promoError}</p>}
           </div>
         ) : (
           <button
             type="button"
             onClick={() => setPromoOpen(true)}
-            className="font-body text-[11px] text-gold-accent/80 underline underline-offset-2"
+            className="font-body text-[0.6875rem] text-gold-accent/80 underline underline-offset-2"
           >
             Have a promo code?
           </button>
@@ -222,7 +222,7 @@ export default function EventGiftPanel({ billing, user, onEventContext }) {
       </div>
 
       <div>
-        <label className="font-label text-[10px] font-semibold uppercase tracking-[0.05em] text-brass/60">
+        <label className="font-label text-[0.625rem] font-semibold uppercase tracking-[0.05em] text-brass/60">
           First name
         </label>
         <input
@@ -238,7 +238,7 @@ export default function EventGiftPanel({ billing, user, onEventContext }) {
         <div className="space-y-2">
           <div className="flex items-start gap-2 rounded-lg bg-white/[0.04] p-2.5">
             <Mail size={13} className="text-gold-accent shrink-0 mt-0.5" />
-            <p className="font-body text-[11px] text-white/60 leading-relaxed">
+            <p className="font-body text-[0.6875rem] text-white/60 leading-relaxed">
               Your founding gift will be mailed once the event wraps — a slightly smaller keepsake version, made just
               for remote members.
             </p>
@@ -282,7 +282,7 @@ export default function EventGiftPanel({ billing, user, onEventContext }) {
             value={jewelry}
             onChange={setJewelry}
           />
-          <p className="font-body text-[10px] text-gold-accent/60 italic">
+          <p className="font-body text-[0.625rem] text-gold-accent/60 italic">
             While supplies last — if a piece sells out, your founding spot is still locked in and we'll mail you one
             once more are made.
           </p>
@@ -290,7 +290,7 @@ export default function EventGiftPanel({ billing, user, onEventContext }) {
       ) : (
         <div className="flex items-start gap-2 rounded-lg bg-white/[0.04] p-2.5">
           <Gift size={13} className="text-gold-accent shrink-0 mt-0.5" />
-          <p className="font-body text-[11px] text-white/60">
+          <p className="font-body text-[0.6875rem] text-white/60">
             Monthly signups receive the {event.event_name} keychain gift — show your confirmation at the table to pick
             it up.
           </p>

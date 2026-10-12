@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Loader2, Sparkles, RefreshCw, ThumbsUp, ThumbsDown, Bookmark, Globe, Layers, Lightbulb, Share2 } from 'lucide-react';
+import { Loader2, Sparkles, Globe, Layers, Lightbulb, Share2 } from 'lucide-react';
 import { invokeLLMTask } from '@/api/llmTasks';
 import { formatTransitLabelProse as formatTransitLabel, highlightSynthesisText, getChartRuler, PLANET_GLYPHS, mergeNatalPoints } from '@/lib/transitUtils';
 import { getMoonPhaseName, getMoonPhaseEmoji } from '@/lib/moonPhase';
 import { detectEclipse, ECLIPSE_META } from '@/lib/eclipseUtils';
-import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
+import { getCachedSynthesis, saveCachedSynthesis } from '@/lib/synthesisCache';
 import { findNatalHouseForSign } from '@/lib/houseUtils';
 import { analyzeChartDynamics, getActivatedDynamics } from '@/lib/chartDynamics';
 import { analyzeChartDignities, getNotableTransitDignities } from '@/lib/essentialDignities';
@@ -32,9 +32,6 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(autoExpand);
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const [rating, setRating] = useState(null); // 'thumbs_up' | 'thumbs_down' | null
-  const [bookmarked, setBookmarked] = useState(false);
-  const [ratingRecord, setRatingRecord] = useState(null);
   const [cacheChecked, setCacheChecked] = useState(false);
   const [explainOpen, setExplainOpen] = useState(false);
   const [explainText, setExplainText] = useState(null);
@@ -49,22 +46,6 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
   // Opposite-color highlighting: gold body copy → white highlights; white body copy → gold highlights
   const highlightOnGold = (text) => highlightSynthesisText(text, onHighlightTransit, 'text-white');
   const highlightOnWhite = (text) => highlightSynthesisText(text, onHighlightTransit, 'text-gold-primary');
-
-  // Load existing rating for this date
-  useEffect(() => {
-    if (!userId || !dateKey) return;
-    base44.entities.SynthesisRating.filter({ user_id: userId, date_key: dateKey }).then(records => {
-      if (records[0]) {
-        setRatingRecord(records[0]);
-        setRating(records[0].rating || null);
-        setBookmarked(records[0].bookmarked || false);
-      } else {
-        setRatingRecord(null);
-        setRating(null);
-        setBookmarked(false);
-      }
-    });
-  }, [dateKey, userId]);
 
   // Reset "Explain it" panel when the day or density changes
   useEffect(() => {
@@ -402,37 +383,6 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
     }
   };
 
-  const saveRating = async (newRating, newBookmarked) => {
-    if (!userId || !dateKey) return;
-    const data = {
-      user_id: userId,
-      date_key: dateKey,
-      chart_id: chart?.id || '',
-      rating: newRating,
-      bookmarked: newBookmarked,
-      synthesis_overview: synthesis?.overview?.slice(0, 300) || '',
-    };
-    if (ratingRecord) {
-      const updated = await base44.entities.SynthesisRating.update(ratingRecord.id, data);
-      setRatingRecord(updated);
-    } else {
-      const created = await base44.entities.SynthesisRating.create(data);
-      setRatingRecord(created);
-    }
-  };
-
-  const handleRating = async (val) => {
-    const newRating = rating === val ? null : val;
-    setRating(newRating);
-    await saveRating(newRating, bookmarked);
-  };
-
-  const handleBookmark = async () => {
-    const newBookmarked = !bookmarked;
-    setBookmarked(newBookmarked);
-    await saveRating(rating, newBookmarked);
-  };
-
   const explainContext = synthesis ? [
     synthesis.overview,
     ...(synthesis.personal_reading || []),
@@ -497,7 +447,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
               <div className="flex border-b border-white/[0.08]">
                 <button
                   onClick={() => setActiveTab('personal')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${
                     activeTab === 'personal'
                       ? 'border-gold-accent text-white font-semibold'
                       : 'border-transparent text-white/40 hover:text-white/70'
@@ -507,7 +457,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
                 </button>
                 <button
                   onClick={() => setActiveTab('collective')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${
                     activeTab === 'collective'
                       ? 'border-gold-accent text-white font-semibold'
                       : 'border-transparent text-white/40 hover:text-white/70'
@@ -519,15 +469,15 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
 
               <div className="px-4 pt-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="font-body text-[10px] uppercase tracking-widest font-semibold text-brass">
+                  <p className="font-body text-[0.625rem] uppercase tracking-widest font-semibold text-brass">
                     {activeTab === 'personal' ? 'Your Sky' : 'The Collective'}
                   </p>
                   <div className="flex items-center gap-1.5">
-                    <span className="font-body text-[10px] text-brass/70">
+                    <span className="font-body text-[0.625rem] text-brass/70">
                       {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </span>
                     {synthesis._lunation && (
-                      <span className="font-body text-[9px] px-2 py-0.5 rounded-full bg-gold-primary/15 text-gold-accent border border-gold-primary/30 flex items-center gap-1">
+                      <span className="font-body text-[0.5625rem] px-2 py-0.5 rounded-full bg-gold-primary/15 text-gold-accent border border-gold-primary/30 flex items-center gap-1">
                         <span style={{ fontVariantEmoji: 'text' }}>
                           {synthesis._lunation.isEclipse
                             ? (synthesis._lunation.eclipseType === 'solar' ? '🌑' : '🌕')
@@ -544,13 +494,13 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
                 {synthesis.key_themes?.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5">
                     {synthesis.power_planet && (
-                      <span className="font-body text-[9px] font-semibold px-2 py-0.5 rounded-full bg-gold-primary/15 text-gold-accent border border-gold-primary/30 flex items-center gap-1">
+                      <span className="font-body text-[0.5625rem] font-semibold px-2 py-0.5 rounded-full bg-gold-primary/15 text-gold-accent border border-gold-primary/30 flex items-center gap-1">
                         <span className="opacity-70">{PLANET_GLYPHS[synthesis.power_planet] || '✦'}</span>
                         {synthesis.power_planet}
                       </span>
                     )}
                     {synthesis.key_themes.map((theme, i) => (
-                      <span key={i} className="font-body text-[9px] px-2 py-0.5 rounded-full bg-white/[0.06] text-brass border border-gold-primary/15">
+                      <span key={i} className="font-body text-[0.5625rem] px-2 py-0.5 rounded-full bg-white/[0.06] text-brass border border-gold-primary/15">
                         {theme}
                       </span>
                     ))}
@@ -567,7 +517,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
                         {highlightOnGold(synthesis.collective_highlight)}
                       </p>
                     )}
-                    <p className="font-body text-[10px] text-brass/60 italic pt-1">
+                    <p className="font-body text-[0.625rem] text-brass/60 italic pt-1">
                       The full transit-by-transit breakdown lives in the Transits tab.
                     </p>
                   </div>
@@ -585,7 +535,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
                       <>
                         {synthesis.dynamics_insight && (
                           <div className="rounded-lg border border-celestial-purple/30 bg-celestial-purple/10 p-3">
-                            <p className="font-body text-[10px] uppercase tracking-widest font-semibold mb-1.5 text-celestial-purple">
+                            <p className="font-body text-[0.625rem] uppercase tracking-widest font-semibold mb-1.5 text-celestial-purple">
                               <Layers size={11} className="inline mr-1" /> Chart Dynamics
                             </p>
                             <p className="font-body text-xs leading-snug text-white">{highlightOnWhite(synthesis.dynamics_insight)}</p>
@@ -605,7 +555,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
                         ctaLabel="Unlock Core — $5.55/mo"
                       />
                     )}
-                    <p className="font-body text-[10px] text-brass/60 italic pt-1">
+                    <p className="font-body text-[0.625rem] text-brass/60 italic pt-1">
                       The full transit-by-transit breakdown lives in the Transits tab.
                     </p>
                   </div>
@@ -616,45 +566,29 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
                     {explainLoading ? (
                       <div className="flex items-center gap-1.5">
                         <Loader2 size={11} className="animate-spin text-gold-primary" />
-                        <span className="font-body text-[10px] text-brass italic">Simplifying...</span>
+                        <span className="font-body text-[0.625rem] text-brass italic">Simplifying...</span>
                       </div>
                     ) : (
                       <p className="font-body text-xs text-white/85 leading-snug">{highlightOnWhite(explainText)}</p>
                     )}
                   </div>
                 )}
-                {/* Rating & Bookmark bar */}
-                <div className="flex items-center justify-between pt-1 border-t border-gold-primary/15">
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => handleRating('thumbs_up')} title="Helpful reading"
-                      className={`p-1.5 rounded-lg transition-all ${rating === 'thumbs_up' ? 'bg-green-soft/20 text-green-soft' : 'text-brass/30 hover:text-green-soft hover:bg-green-soft/10'}`}>
-                      <ThumbsUp size={13} />
-                    </button>
-                    <button onClick={() => handleRating('thumbs_down')} title="Not useful"
-                      className={`p-1.5 rounded-lg transition-all ${rating === 'thumbs_down' ? 'bg-gold-accent/20 text-gold-accent' : 'text-brass/30 hover:text-gold-accent hover:bg-gold-accent/10'}`}>
-                      <ThumbsDown size={13} />
-                    </button>
-                    <button onClick={handleBookmark} title="Save this synthesis"
-                      className={`p-1.5 rounded-lg transition-all ${bookmarked ? 'bg-gold-primary/20 text-gold-accent' : 'text-brass/30 hover:text-gold-accent hover:bg-gold-primary/10'}`}>
-                      <Bookmark size={13} className={bookmarked ? 'fill-gold-accent' : ''} />
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button onClick={handleExplain}
-                      className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-gold-accent transition-colors">
-                      {explainLoading ? <Loader2 size={10} className="animate-spin" /> : <Lightbulb size={10} />} Explain it
-                    </button>
-                    <button onClick={() => { if (cacheKey) delete synthesisCache[cacheKey]; clearMemCache('day', dbKey, chart?.user_id); hasGenerated.current = false; autoExpand ? fetchTransitsAndGenerate() : generate(transits); }}
-                      className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-brass transition-colors">
-                      <RefreshCw size={10} /> Regenerate
-                    </button>
-                    {!chart?.raw_data?.unknown_time && (
+                {/* UX-05: Regenerate, thumbs up/down and Save were removed —
+                    the reading is generated once a day and kept, so Regenerate
+                    contradicted that, and the ratings/bookmark added clutter
+                    with nothing reading them back. "Explain it" and "Share"
+                    stay. */}
+                <div className="flex items-center justify-end gap-3 pt-1 border-t border-gold-primary/15">
+                  <button onClick={handleExplain}
+                    className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-gold-accent transition-colors">
+                    {explainLoading ? <Loader2 size={10} className="animate-spin" /> : <Lightbulb size={10} />} Explain it
+                  </button>
+                  {!chart?.raw_data?.unknown_time && (
                     <button onClick={handleShare}
-                      className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-gold-accent transition-colors">
+                      className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-gold-accent transition-colors">
                       {shareLoading ? <Loader2 size={10} className="animate-spin" /> : <Share2 size={10} />} Share
                     </button>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             </>

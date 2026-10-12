@@ -260,6 +260,51 @@ validation cannot be repeated here. Native and live-provider QA remain gates.
       - **TestFlight build 4 uploaded (2026-10-12)** with this whole batch —
         the Molly candidate for feedback round 1 verification.
 
+- [x] **Feedback round 1, Batch E — the 11 P1 bugs (2026-10-12)** — client
+      changes uncommitted; the four edge functions are deployed. Per-bug root
+      causes in `docs/FEEDBACK_ROUND1.md` §E. Highlights worth knowing:
+      - B-03 share-card save could never have worked in the app (`<a download>`
+        of a data: URL is ignored by WKWebView). Now writes to the app cache
+        and opens the iOS share sheet — **new native deps**
+        `@capacitor/share` + `@capacitor/filesystem` (pods change; `cap sync`
+        done) and `NSPhotoLibraryAddUsageDescription` added to Info.plist.
+      - B-05/B-06 had a genuine server bug: accuracy counters were gated on
+        "new day", so a second quiz the same day scored nothing. Molly's own
+        row shows it (`total_answered` 10 vs `apprentice_questions_total` 5).
+      - B-11 required converting every px-literal Tailwind text size to rem
+        (132 files) — `--app-font-scale` only rescales the root rem.
+      - B-13 is NOT fixed: the card renders full-width in code and her doc has
+        no screenshot for it; needs a repro from Molly.
+      - **Deploy flakiness (new, important):** `functions deploy` currently
+        returns `500 Function deploy failed due to an internal error` on
+        roughly one call in three, for unmodified functions too (verified by
+        deploying a pristine git copy). It is Supabase-side, not our code —
+        just retry; don't go hunting for a syntax error like I did.
+
+- [x] **Feedback round 1, Batches F + G (2026-10-12)** — UX polish and the
+      AI/content/email items. Client uncommitted; 11 edge functions deployed;
+      migration `20261012000002_chart_display_defaults_off.sql` applied.
+      Details per item in `docs/FEEDBACK_ROUND1.md` §F/§G. Things to know:
+      - **Chart display toggles now default OFF for NEW accounts only.** The
+        migration deliberately does not reset existing rows (that would
+        silently overwrite real choices); the one-line SQL to flip beta
+        accounts too is in the migration's comment if Molly wants it.
+      - **Em-dash removal is central**, in `_shared/llm.ts` `invokeLLM` —
+        every function's output passes through it, structured JSON included.
+        Molly's five style rules live in `STYLE_RULES` inside the shared
+        PERSONA (plus the two local PERSONA copies). Verified live: a fresh
+        generation came back with zero dashes, and the share-card summary
+        came in at 187 characters.
+      - **The daily quiz never computed transit-to-natal aspects** — its
+        `mundaneAspects` is transit×transit despite the field names. Added
+        that computation plus three generators that ask about real hits to
+        the user's own chart, offered ahead of the generic trivia (AI-03).
+      - AI-02 needed no work: the bonus round is a deterministic template,
+        fixed under B-04.
+      - Verification used a temporary account (`ai-verify-20261012@…`),
+        deleted afterwards along with its test cache row; the three real
+        accounts were confirmed intact.
+
 ### Tony to run (blocked for Claude by permissions)
 
 Seed the vault so ALL scheduled jobs start working (paste as one `!` command):

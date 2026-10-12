@@ -70,11 +70,15 @@ function buildTourSteps(user) {
       page: '/profile',
       title: 'Profile & Settings',
       description: 'Personalize your experience and manage your account.',
+      // UX-03: the tour now calls out the three settings people were missing —
+      // the plan, the zodiac/house choice, and the chart display toggles.
       bullets: [
+        'Plan — see your current plan, upgrade, or change billing (Core and Premium)',
+        'Zodiac & Houses — choose Tropical or Sidereal, and Whole Sign or Placidus; your chart recalculates',
+        'Chart display — switch on the angles, lunar nodes, lots, asteroids and Lilith you want drawn',
         'Birth data — update your info and regenerate your chart anytime',
         'Knowledge Density — scale every reading from plain-language Essential to full Technical',
         'Timezone, font size, and daily email digest preferences',
-        'Plan — manage or upgrade your subscription',
       ],
     },
   ];
@@ -229,7 +233,7 @@ export default function FullAppTour() {
             <div className="flex flex-col items-center text-center space-y-3">
               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold-primary/15 border border-gold-accent/30">
                 <Sparkles size={11} className="text-gold-accent" />
-                <span className="font-body text-[10px] uppercase tracking-widest text-gold-accent font-semibold">
+                <span className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent font-semibold">
                   {s.badge}
                 </span>
               </div>
@@ -241,7 +245,7 @@ export default function FullAppTour() {
               <div className="space-y-1.5 text-left">
                 {s.bullets.map((b, i) => (
                   <div key={i} className="flex items-start gap-2">
-                    <span className="text-gold-accent text-[10px] mt-0.5">✦</span>
+                    <span className="text-gold-accent text-[0.625rem] mt-0.5">✦</span>
                     <p className="font-body text-xs text-brass/90 leading-snug">{b}</p>
                   </div>
                 ))}
@@ -321,7 +325,7 @@ export default function FullAppTour() {
 
           <div className="px-5 pt-5 pb-4 space-y-3">
             <div className="space-y-1.5 pr-6">
-              <span className="font-body text-[10px] uppercase tracking-widest text-gold-accent font-semibold">
+              <span className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent font-semibold">
                 {s.badge}
               </span>
               <h2 className="font-display text-lg font-bold text-cream leading-tight">{s.title}</h2>
@@ -332,8 +336,8 @@ export default function FullAppTour() {
               <div className="space-y-1.5">
                 {s.bullets.map((b, i) => (
                   <div key={i} className="flex items-start gap-2">
-                    <span className="text-gold-accent text-[10px] mt-0.5">✦</span>
-                    <p className="font-body text-[11px] text-brass/80 leading-snug">{b}</p>
+                    <span className="text-gold-accent text-[0.625rem] mt-0.5">✦</span>
+                    <p className="font-body text-[0.6875rem] text-brass/80 leading-snug">{b}</p>
                   </div>
                 ))}
               </div>

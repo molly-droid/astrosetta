@@ -127,7 +127,7 @@ export default function RoadmapTab() {
       <div className="flex items-center gap-2 flex-wrap border-b border-white/[0.06] pb-3">
         <button
           onClick={() => setSortBy('category')}
-          className={`font-body text-[10px] px-3 py-1 rounded-full border transition-colors ${
+          className={`font-body text-[0.625rem] px-3 py-1 rounded-full border transition-colors ${
             sortBy === 'category'
               ? 'border-gold-accent bg-gold-primary/20 text-white'
               : 'border-white/20 text-white/50 hover:border-white/40 hover:text-white/70'
@@ -139,7 +139,7 @@ export default function RoadmapTab() {
           <button
             key={cat.key}
             onClick={() => setSortBy(cat.key)}
-            className={`font-body text-[10px] px-3 py-1 rounded-full border transition-colors ${
+            className={`font-body text-[0.625rem] px-3 py-1 rounded-full border transition-colors ${
               sortBy === cat.key
                 ? 'border-gold-accent bg-gold-primary/20 text-white'
                 : 'border-white/20 text-white/50 hover:border-white/40 hover:text-white/70'
@@ -150,7 +150,7 @@ export default function RoadmapTab() {
         ))}
         <button
           onClick={() => setHideDone(h => !h)}
-          className={`ml-auto flex items-center gap-1 font-body text-[10px] px-3 py-1 rounded-full border transition-colors ${
+          className={`ml-auto flex items-center gap-1 font-body text-[0.625rem] px-3 py-1 rounded-full border transition-colors ${
             hideDone
               ? 'border-gold-accent bg-gold-primary/20 text-white'
               : 'border-white/20 text-white/50 hover:border-white/40 hover:text-white/70'
@@ -164,7 +164,7 @@ export default function RoadmapTab() {
       {/* Groups */}
       {grouped.map(group => (
           <div key={group.key} className="space-y-1.5">
-            <p className="font-body text-[10px] uppercase tracking-widest text-white/50 px-1">{group.label}</p>
+            <p className="font-body text-[0.625rem] uppercase tracking-widest text-white/50 px-1">{group.label}</p>
             {group.items.map(item => (
               <div
                 key={item.id}
@@ -178,9 +178,9 @@ export default function RoadmapTab() {
                     {item.title}
                   </p>
                   {item.notes && (
-                    <p className="font-body text-[11px] text-white/60 mt-0.5 leading-snug">{item.notes}</p>
+                    <p className="font-body text-[0.6875rem] text-white/60 mt-0.5 leading-snug">{item.notes}</p>
                   )}
-                  <span className={`inline-block mt-1 font-body text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded-full border ${
+                  <span className={`inline-block mt-1 font-body text-[0.5625rem] uppercase tracking-widest px-1.5 py-0.5 rounded-full border ${
                     item.status === 'done' ? 'border-green-soft/40 text-green-soft/60 bg-green-soft/10' :
                     item.status === 'in_progress' ? 'border-gold-accent/40 text-gold-accent bg-gold-primary/10' :
                     'border-brass/20 text-brass/50 bg-transparent'

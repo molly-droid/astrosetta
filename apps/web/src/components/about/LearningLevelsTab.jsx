@@ -86,7 +86,7 @@ export default function LearningLevelsTab() {
                 <span className={`font-display text-lg ${tier.labelColor}`}>{tier.glyph}</span>
                 <p className={`font-display text-base font-bold ${tier.labelColor}`}>{tier.name}</p>
                 {tier.coming_soon && (
-                  <span className="font-body text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/[0.06] text-white/40 border border-white/10">
+                  <span className="font-body text-[0.5625rem] uppercase tracking-widest px-2 py-0.5 rounded-full bg-white/[0.06] text-white/40 border border-white/10">
                     In development
                   </span>
                 )}
@@ -98,7 +98,7 @@ export default function LearningLevelsTab() {
           <p className="font-body text-sm text-white/70 leading-relaxed">{tier.description}</p>
 
           <div className="space-y-1.5">
-            <p className="font-body text-[10px] uppercase tracking-widest text-brass/60">Daily quiz focuses on</p>
+            <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/60">Daily quiz focuses on</p>
             {tier.quiz_focus.map((item, i) => (
               <div key={i} className="flex gap-2">
                 <span className="text-gold-accent text-xs mt-0.5 shrink-0">·</span>

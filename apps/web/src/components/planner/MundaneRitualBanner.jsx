@@ -78,7 +78,7 @@ export default function MundaneRitualBanner({ transits, onHighlight }) {
                     <span className="text-base" style={{ fontVariantEmoji: 'text', fontVariant: 'normal', color: style.color }}>{style.icon}</span>
                     <div className="text-left">
                       <p className="font-body text-xs font-semibold text-white">{p.type}</p>
-                      <p className="font-body text-[10px] text-brass/60">
+                      <p className="font-body text-[0.625rem] text-brass/60">
                         Activated · {p.planets.join(' · ')}
                       </p>
                     </div>
@@ -95,7 +95,7 @@ export default function MundaneRitualBanner({ transits, onHighlight }) {
                       {p.planets.map((name, j) => (
                         <span
                           key={j}
-                          className="font-body text-[10px] px-2 py-0.5 rounded-full border"
+                          className="font-body text-[0.625rem] px-2 py-0.5 rounded-full border"
                           style={{ background: style.bg, borderColor: style.border, color: style.color }}
                         >
                           <span style={{ fontVariantEmoji: 'text', fontFamily: 'serif' }}>
@@ -105,7 +105,7 @@ export default function MundaneRitualBanner({ transits, onHighlight }) {
                       ))}
                     </div>
                     {(p.sign || p.element || p.apex) && (
-                      <div className="flex flex-wrap gap-3 text-[10px] font-body text-brass/50">
+                      <div className="flex flex-wrap gap-3 text-[0.625rem] font-body text-brass/50">
                         {p.sign && <span>📍 {p.sign}</span>}
                         {p.element && <span>{p.element}</span>}
                         {p.apex && <span>Apex: {p.apex}</span>}

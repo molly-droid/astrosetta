@@ -89,21 +89,21 @@ export default function MovementReading({ item, chart, periodLabel = 'this perio
         <div className="px-3 py-2.5 flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0 space-y-1.5">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-body text-[11px] text-gold-accent font-semibold">{glyph} {item?.planet}</span>
-              <span className="font-body text-[10px] text-white/60">{startSign} → {endSign}</span>
-              {item?.retrograde && <span className="font-body text-[9px] text-gold-accent italic">℞ Retrograde</span>}
+              <span className="font-body text-[0.6875rem] text-gold-accent font-semibold">{glyph} {item?.planet}</span>
+              <span className="font-body text-[0.625rem] text-white/60">{startSign} → {endSign}</span>
+              {item?.retrograde && <span className="font-body text-[0.5625rem] text-gold-accent italic">℞ Retrograde</span>}
             </div>
-            <p className="font-body text-[10px] text-brass/50 uppercase tracking-wide">{periodLabel} · movement</p>
+            <p className="font-body text-[0.625rem] text-brass/50 uppercase tracking-wide">{periodLabel} · movement</p>
             {loading ? (
               <div className="flex items-center gap-2 py-1">
                 <Loader2 size={12} className="animate-spin text-gold-accent" />
-                <span className="font-body text-[11px] text-brass italic">Reading the movement...</span>
+                <span className="font-body text-[0.6875rem] text-brass italic">Reading the movement...</span>
               </div>
             ) : (
-              <p className="font-body text-[12px] text-white/85 leading-relaxed">{highlightSynthesisText(reading, null, 'text-gold-primary')}</p>
+              <p className="font-body text-[0.75rem] text-white/85 leading-relaxed">{highlightSynthesisText(reading, null, 'text-gold-primary')}</p>
             )}
           </div>
-          <button onClick={onClose} className="font-body text-[9px] text-brass/30 hover:text-brass transition-colors shrink-0">✕</button>
+          <button onClick={onClose} className="font-body text-[0.5625rem] text-brass/30 hover:text-brass transition-colors shrink-0">✕</button>
         </div>
       </div>
     </div>

@@ -84,7 +84,7 @@ export default function UpgradeTab() {
                 <Icon size={16} className={plan.iconColor} />
                 <p className="font-display text-base font-bold text-white">{plan.name}</p>
                 {plan.highlight && (
-                  <span className="font-body text-[9px] uppercase tracking-widest px-2 py-0.5 rounded-full bg-gold-primary/15 text-gold-accent border border-gold-primary/30">
+                  <span className="font-body text-[0.5625rem] uppercase tracking-widest px-2 py-0.5 rounded-full bg-gold-primary/15 text-gold-accent border border-gold-primary/30">
                     Popular
                   </span>
                 )}
@@ -103,7 +103,7 @@ export default function UpgradeTab() {
         );
       })}
 
-      <p className="font-body text-[11px] text-white/30 text-center">
+      <p className="font-body text-[0.6875rem] text-white/30 text-center">
         You can manage or cancel your subscription anytime from the Profile page.
       </p>
     </div>

@@ -30,7 +30,7 @@ export default function CollapsibleCardHeader({
         <div className="text-left min-w-0">
           <p className="font-display text-sm font-semibold text-white leading-5 truncate">{title}</p>
           {subtitle != null && subtitle !== '' && (
-            <p className="font-body text-[10px] text-brass/70 truncate">{subtitle}</p>
+            <p className="font-body text-[0.625rem] text-brass/70 truncate">{subtitle}</p>
           )}
         </div>
       </div>

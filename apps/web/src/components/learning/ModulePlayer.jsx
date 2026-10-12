@@ -147,7 +147,11 @@ function buildSectionSynthesis(chart, section) {
   const aspects = raw.aspects || [];
   const sun = planets.find(p => p.name === 'Sun');
   const moon = planets.find(p => p.name === 'Moon');
-  const asc = raw.ascendant_sign;
+  // B-07: ascendant lives in different spots depending on chart vintage —
+  // fall back through them (and never show one for unknown birth times).
+  const asc = raw.unknown_time
+    ? null
+    : (raw.ascendant_sign || chart?.ascendant_sign || raw.angles?.ascendant?.sign || null);
   const big3 = `Your foundational placements are Sun in ${sun?.sign || '?'}, Moon in ${moon?.sign || '?'}, and ${asc ? `a ${asc} Ascendant` : 'your rising sign'}.`;
 
   if (section === 'foundations' || section === 'planets') {
@@ -429,7 +433,7 @@ const EXPLORE_SECTIONS = [
   { key: 'dynamics', label: 'Dynamics', glyph: '◇', blurb: 'Chart ruler, stelliums, empty houses, and patterns — your chart as a whole.' },
 ];
 
-export default function ModulePlayer({ module: mod, progress, userId, user, chart, modules, onClose, onComplete, onNavigate, initialBlockIndex, onViewChart, activeTradition = 'modern' }) {
+export default function ModulePlayer({ module: mod, progress, userId, user, chart, modules, onClose, onComplete, onNavigate, initialBlockIndex, onViewChart, activeTradition = 'modern', backReturnsToCaller = false }) {
   const [blockIndex, setBlockIndex] = useState(() => (typeof initialBlockIndex === 'number' ? initialBlockIndex : 0));
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [answered, setAnswered] = useState(false);
@@ -545,6 +549,8 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
     : null;
 
   const handleBack = () => {
+    // Deep-linked from the quiz: Back goes straight back to it (UX-06).
+    if (backReturnsToCaller) { onClose(); return; }
     if (blockIndex === 0) { onClose(); return; }
     setBlockIndex(blockIndex - 1);
     setSelectedAnswer(null);
@@ -708,19 +714,19 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
           {onViewChart && (
             <button onClick={() => onViewChart(blockIndex)} className="flex items-center gap-1 px-2 py-1 rounded-md bg-gold-primary/15 border border-gold-primary/30 text-gold-accent hover:bg-gold-primary/25 transition-colors" title="View your chart">
               <Compass size={12} />
-              <span className="font-body text-[9px] uppercase tracking-wide">Chart</span>
+              <span className="font-body text-[0.5625rem] uppercase tracking-wide">Chart</span>
             </button>
           )}
           {hasMastery && !masteryCompleted && (
             <button onClick={() => setShowMastery(true)} className="flex items-center gap-1 px-2 py-1 rounded-md bg-gold-accent/15 border border-gold-accent/30 text-gold-accent hover:bg-gold-accent/25 transition-colors" title="Practitioner's Lens">
               <Sparkles size={12} />
-              <span className="font-body text-[9px] uppercase tracking-wide">Lens</span>
+              <span className="font-body text-[0.5625rem] uppercase tracking-wide">Lens</span>
             </button>
           )}
           {masteryCompleted && (
             <span className="flex items-center gap-1 px-2 py-1 rounded-md bg-green-soft/10 border border-green-soft/20 text-green-soft" title="Practitioner's Lens completed">
               <CheckCircle2 size={12} />
-              <span className="font-body text-[9px] uppercase tracking-wide">Lens</span>
+              <span className="font-body text-[0.5625rem] uppercase tracking-wide">Lens</span>
             </span>
           )}
           <button onClick={onClose} className="text-brass/50 hover:text-white transition-colors">
@@ -813,7 +819,7 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
                   >
                     <span className="text-xl w-7 text-center flex-shrink-0" style={{ fontVariantEmoji: 'text', fontVariant: 'normal', color: gc }}>{(item.glyph || '').replace(/\uFE0F/g, '') + '\uFE0E'}</span>
                     <span className="font-body text-sm text-white">{item.label}</span>
-                    {el && <span className="ml-auto font-body text-[10px] opacity-40">{el}</span>}
+                    {el && <span className="ml-auto font-body text-[0.625rem] opacity-40">{el}</span>}
                   </div>
                 );
               })}
@@ -883,7 +889,7 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
                   className="flex items-start gap-3 py-2.5 px-3 rounded-lg transition-transform hover:scale-[1.01]"
                   style={{ background: 'rgba(212,175,133,0.06)', border: '1px solid rgba(212,175,133,0.12)' }}
                 >
-                  <span className="font-body text-[10px] text-gold-accent font-semibold uppercase tracking-widest w-24 flex-shrink-0 pt-0.5">{key}</span>
+                  <span className="font-body text-[0.625rem] text-gold-accent font-semibold uppercase tracking-widest w-24 flex-shrink-0 pt-0.5">{key}</span>
                   <span className="font-body text-sm text-white/90 leading-snug flex-1">{value}</span>
                 </div>
               ))}

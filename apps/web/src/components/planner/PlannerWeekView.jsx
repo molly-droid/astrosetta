@@ -49,7 +49,7 @@ function TransitRow({ a, transitPlanets, natalPlanets }) {
   return (
     <span
       title={applying ? 'Applying — energy building' : 'Separating — energy fading'}
-      className="font-body text-[11px] text-celestial-blue/90 tracking-wider leading-snug whitespace-nowrap flex items-center gap-0.5"
+      className="font-body text-[0.6875rem] text-celestial-blue/90 tracking-wider leading-snug whitespace-nowrap flex items-center gap-0.5"
     >
       {PLANET_GLYPHS[a.transit_planet] || ''}{ASPECT_GLYPHS[a.aspect] || ''}{PLANET_GLYPHS[a.natal_planet] || ''}
       <span
@@ -97,8 +97,8 @@ function WeekDayCard({ date, chart, daySentence, dayTopics = [], synthLoading, o
     >
       {/* Moon phase + sign — the single moon representation, top right */}
       <div className="flex items-center justify-end gap-1 w-full">
-        {data?.isEclipse && <span className="font-body text-[7px] text-gold-accent font-bold uppercase leading-none tracking-wide">ecl</span>}
-        {isBirthday && <span className="emoji-glyph font-body text-[10px] text-gold-primary leading-none">☀️</span>}
+        {data?.isEclipse && <span className="font-body text-[0.4375rem] text-gold-accent font-bold uppercase leading-none tracking-wide">ecl</span>}
+        {isBirthday && <span className="emoji-glyph font-body text-[0.625rem] text-gold-primary leading-none">☀️</span>}
         {moonEmoji && (
           <span
             className="text-sm leading-none"
@@ -109,14 +109,14 @@ function WeekDayCard({ date, chart, daySentence, dayTopics = [], synthLoading, o
           </span>
         )}
         {displayMoonSign && (
-          <span className="font-body text-[9px] text-brass/60 leading-none">{displayMoonSign}</span>
+          <span className="font-body text-[0.5625rem] text-brass/60 leading-none">{displayMoonSign}</span>
         )}
       </div>
 
       {/* DOW pill + date number on the left, body text to their right */}
       <div className="flex gap-2.5 mt-1 items-start flex-1 w-full">
         <div className="flex flex-col items-start gap-1 shrink-0">
-          <span className={`font-body text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
+          <span className={`font-body text-[0.5rem] uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
             isToday ? 'bg-gold-accent/20 text-gold-accent font-semibold' : 'bg-gold-primary/10 text-brass'
           }`}>
             {DOW_SHORT[date.getDay()]}
@@ -126,13 +126,13 @@ function WeekDayCard({ date, chart, daySentence, dayTopics = [], synthLoading, o
           </p>
         </div>
         <div className="flex-1 min-w-0 space-y-1">
-          <p className="font-body text-[13px] text-white/90 leading-snug">
+          <p className="font-body text-[0.8125rem] text-white/90 leading-snug">
             {synthLoading && !daySentence ? 'Reading the week...' : daySentence ? highlightOnWhite(daySentence) : 'quiet day'}
           </p>
           {majorEvents.length > 0 && (
             <div className="flex flex-wrap gap-x-2.5 gap-y-0.5">
               {majorEvents.map(ev => (
-                <span key={ev.key} className="font-body text-[10px] text-gold-accent whitespace-nowrap">
+                <span key={ev.key} className="font-body text-[0.625rem] text-gold-accent whitespace-nowrap">
                   {ev.label}
                 </span>
               ))}
@@ -145,14 +145,14 @@ function WeekDayCard({ date, chart, daySentence, dayTopics = [], synthLoading, o
       {topics.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
           {topics.map(t => (
-            <span key={t.key} className={`font-body text-[9px] px-1.5 py-0.5 rounded-full border ${t.bg} ${t.color} ${t.border}`}>
+            <span key={t.key} className={`font-body text-[0.5625rem] px-1.5 py-0.5 rounded-full border ${t.bg} ${t.color} ${t.border}`}>
               <span style={{ fontVariantEmoji: 'emoji' }}>{t.glyph}</span> {t.label}
             </span>
           ))}
         </div>
       )}
 
-      <span className="font-body text-[9px] text-gold-accent mt-2 flex items-center gap-0.5">
+      <span className="font-body text-[0.5625rem] text-gold-accent mt-2 flex items-center gap-0.5">
         Daily reading <ChevronRight size={10} />
       </span>
     </button>
@@ -294,7 +294,7 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
             <div className="flex items-center gap-2">
               <Sparkles size={13} className="text-gold-accent flex-shrink-0" />
               <span className="font-display text-sm font-semibold text-white">Week at a Glance</span>
-              <span className="font-body text-[10px] text-brass/40">{weekLabel}</span>
+              <span className="font-body text-[0.625rem] text-brass/40">{weekLabel}</span>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
               {synthLoading && <Loader2 size={13} className="animate-spin text-gold-primary/60" />}
@@ -308,7 +308,7 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
             return tags.length > 0 ? (
               <div className="flex flex-wrap gap-1 mt-1.5 pl-5">
                 {tags.map((a, i) => (
-                  <span key={i} className="font-body text-[10px] px-1.5 py-0.5 rounded-full bg-gold-primary/15 text-brass">{a}</span>
+                  <span key={i} className="font-body text-[0.625rem] px-1.5 py-0.5 rounded-full bg-gold-primary/15 text-brass">{a}</span>
                 ))}
               </div>
             ) : null;
@@ -325,7 +325,7 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
                 <button
                   key={t.key}
                   onClick={() => setSynthTab(t.key)}
-                  className={`flex-1 py-2.5 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${
+                  className={`flex-1 py-2.5 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${
                     synthTab === t.key
                       ? 'border-gold-accent text-white font-semibold'
                       : 'border-transparent text-white/35 hover:text-white/60'
@@ -348,7 +348,7 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
                   {synthesis.best_areas?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {synthesis.best_areas.map((a, i) => (
-                        <span key={i} className="font-body text-[10px] px-2 py-0.5 rounded-full bg-gold-primary/15 border border-gold-primary/30 text-brass">{a}</span>
+                        <span key={i} className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-gold-primary/15 border border-gold-primary/30 text-brass">{a}</span>
                       ))}
                     </div>
                   )}
@@ -362,7 +362,7 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
                   {synthesis.collective_tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {synthesis.collective_tags.map((tag, i) => (
-                        <span key={i} className="font-body text-[10px] px-2 py-0.5 rounded-full bg-celestial-blue/15 border border-celestial-blue/30 text-celestial-blue">{tag}</span>
+                        <span key={i} className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-celestial-blue/15 border border-celestial-blue/30 text-celestial-blue">{tag}</span>
                       ))}
                     </div>
                   )}
@@ -377,12 +377,12 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
               <div className="flex items-center gap-3 pt-1 border-t border-gold-primary/15">
                 <button
                   onClick={() => { if (cacheKey) delete weekSynthesisCache[cacheKey]; hasGenerated.current = false; generateWeekSynthesis(); }}
-                  className="flex items-center gap-1 font-body text-[10px] text-brass/40 hover:text-brass transition-colors"
+                  className="flex items-center gap-1 font-body text-[0.625rem] text-brass/40 hover:text-brass transition-colors"
                 >
                   <RefreshCw size={10} /> Regenerate
                 </button>
                 <button onClick={() => downloadWeekSynthesisICS(days, synthesis)}
-                  className="flex items-center gap-1 font-body text-[10px] text-brass/40 hover:text-gold-accent transition-colors">
+                  className="flex items-center gap-1 font-body text-[0.625rem] text-brass/40 hover:text-gold-accent transition-colors">
                   <Download size={10} /> Add to Calendar
                 </button>
               </div>
@@ -400,7 +400,7 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
           <div className="flex items-center gap-2">
             <CalendarDays size={14} className="text-gold-accent" />
             <span className="font-display text-sm font-semibold text-white">This Week Day-by-Day</span>
-            <span className="font-body text-[10px] text-brass/40">{weekLabel}</span>
+            <span className="font-body text-[0.625rem] text-brass/40">{weekLabel}</span>
           </div>
           <ChevronDown size={14} className={`text-brass/50 transition-transform ${dayListOpen ? 'rotate-180' : ''}`} />
         </button>
@@ -439,9 +439,9 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
               className="w-full flex items-center justify-between px-4 py-3 hover:bg-gold-primary/5 transition-colors"
             >
               <div className="flex items-center gap-2">
-                <span className="font-body text-[14px] text-gold-accent" style={{ fontVariantEmoji: 'text' }}>☿</span>
+                <span className="font-body text-[0.875rem] text-gold-accent" style={{ fontVariantEmoji: 'text' }}>☿</span>
                 <span className="font-display text-sm font-semibold text-white">Planet Positions</span>
-                <span className="font-body text-[10px] text-brass/40">{weekLabel}</span>
+                <span className="font-body text-[0.625rem] text-brass/40">{weekLabel}</span>
               </div>
               <ChevronDown size={13} className={`text-brass/50 transition-transform ${planetsOpen ? 'rotate-180' : ''}`} />
             </button>

@@ -24,6 +24,7 @@ import SynastryView from '@/components/chart/SynastryView';
 import CompositeView from '@/components/chart/CompositeView';
 import SynastryTour from '@/components/shared/SynastryTour';
 import ChartPerspectiveSwitcher from '@/components/chart/ChartPerspectiveSwitcher';
+import { normalizeInterpretation } from '@/components/ui/InterpretationMarkdown';
 import SynastryPartnerSwitcher from '@/components/chart/SynastryPartnerSwitcher';
 import RelationshipBadge from '@/components/planner/RelationshipBadge';
 import { buildCompositeChartObject } from '@/lib/compositeSynthesis';
@@ -99,7 +100,7 @@ function InterpretBody({ item, chartContext }) {
     return (
       <div className="py-4 text-center space-y-2">
         <p className="font-body text-xs text-gold-accent/70 italic">{error}</p>
-        <button onClick={retry} className="inline-flex items-center gap-1.5 font-body text-[11px] text-gold-accent hover:text-gold-primary transition-colors">
+        <button onClick={retry} className="inline-flex items-center gap-1.5 font-body text-[0.6875rem] text-gold-accent hover:text-gold-primary transition-colors">
           <RefreshCw size={11} /> Try again
         </button>
       </div>
@@ -109,14 +110,14 @@ function InterpretBody({ item, chartContext }) {
     <div className="space-y-1">
       <div className="flex items-center gap-1.5 mb-2">
         <Sparkles size={10} className="text-gold-accent" />
-        <span className="font-body text-[10px] uppercase tracking-widest text-brass/50">Interpretation</span>
+        <span className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50">Interpretation</span>
       </div>
       <div className="font-body text-sm text-white/85 leading-relaxed prose prose-sm prose-invert max-w-none
         prose-headings:font-display prose-headings:text-gold-accent prose-headings:text-sm prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-1.5
         prose-strong:text-white prose-strong:font-semibold
         prose-ul:pl-4 prose-li:text-white/80 prose-li:text-xs prose-li:leading-relaxed
         prose-p:text-white/85 prose-p:text-sm">
-        <ReactMarkdown components={ASTRO_MD_COMPONENTS}>{text || ''}</ReactMarkdown>
+        <ReactMarkdown components={ASTRO_MD_COMPONENTS}>{normalizeInterpretation(text || '')}</ReactMarkdown>
       </div>
     </div>
   );
@@ -145,7 +146,7 @@ function InterpretCard({ item, chartContext, label, sublabel, glyph, glyphColor,
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-body text-sm font-semibold text-cream">{label}</span>
-            {badge && <span className="font-body text-[10px] text-brass/50 italic">{badge}</span>}
+            {badge && <span className="font-body text-[0.625rem] text-brass/50 italic">{badge}</span>}
           </div>
           {sublabel && <p className="font-body text-xs text-brass/60 mt-0.5 truncate">{sublabel}</p>}
         </div>
@@ -313,11 +314,12 @@ export default function MyChart() {
     );
   }
 
-  const showAsteroids = user?.show_asteroids !== false;
-  const showAngles = user?.show_angles !== false;
-  const showLots = user?.show_lots !== false;
-  const showNodes = user?.show_nodes !== false;
-  const showLilith = user?.show_lilith !== false;
+  // UX-02: chart display points are OFF unless the user turns them on.
+  const showAsteroids = user?.show_asteroids === true;
+  const showAngles = user?.show_angles === true;
+  const showLots = user?.show_lots === true;
+  const showNodes = user?.show_nodes === true;
+  const showLilith = user?.show_lilith === true;
   const raw = activeChart?.raw_data || {};
   const unknownTime = !composite && !!raw.unknown_time;
   const wheelData = unknownTime ? {
@@ -359,7 +361,7 @@ export default function MyChart() {
       <PageHeader>
         <div className="px-4 pt-10 pb-4 relative">
           <div className="text-center space-y-1 mb-4">
-            <p className="font-body text-[10px] text-brass uppercase tracking-widest">{composite ? 'Composite Chart' : 'Natal Chart'}</p>
+            <p className="font-body text-[0.625rem] text-brass uppercase tracking-widest">{composite ? 'Composite Chart' : 'Natal Chart'}</p>
             <h1 className="font-display text-2xl font-bold text-cream">
               {composite ? `${activeLabel} & ${selectedChart?.name || ''}` : (activeSavedChart ? activeSavedChart.name : (user?.display_name || user?.full_name || 'Your Chart'))}
             </h1>
@@ -376,7 +378,7 @@ export default function MyChart() {
             ].map(({ glyph, label, value }) => (
               <div key={label} className="text-center">
                 <div className="text-xl text-gold-accent font-display">{glyph}</div>
-                <div className="text-[10px] font-body uppercase tracking-widest text-brass">{label}</div>
+                <div className="text-[0.625rem] font-body uppercase tracking-widest text-brass">{label}</div>
                 <div className="text-sm font-display font-bold text-cream flex items-center gap-1 justify-center">
                   <SignName sign={value} />
                 </div>
@@ -412,9 +414,9 @@ export default function MyChart() {
               { label: 'IC', data: displayAngles.ic },
             ].map(({ label, data }) => data ? (
               <div key={label} className="text-center">
-                <div className="font-body text-[10px] uppercase tracking-widest text-brass/70">{label}</div>
+                <div className="font-body text-[0.625rem] uppercase tracking-widest text-brass/70">{label}</div>
                 <div className="font-display text-xs font-bold text-gold-accent">{data.degree?.toFixed(0)}°</div>
-                <div className="font-body text-[10px] text-cream"><SignName sign={data.sign} /></div>
+                <div className="font-body text-[0.625rem] text-cream"><SignName sign={data.sign} /></div>
               </div>
             ) : null)}
           </div>
@@ -462,7 +464,7 @@ export default function MyChart() {
         </div>
         {activeSavedChart && viewMode === 'natal' && (
           <div className="flex justify-center -mt-1 mb-1">
-            <span className="inline-flex items-center gap-1.5 font-body text-[10px] px-2.5 py-1 rounded-full bg-gold-accent/15 border border-gold-accent/40 text-gold-accent">
+            <span className="inline-flex items-center gap-1.5 font-body text-[0.625rem] px-2.5 py-1 rounded-full bg-gold-accent/15 border border-gold-accent/40 text-gold-accent">
               <Eye size={10} /> Viewing: {activeSavedChart.name}
             </span>
           </div>

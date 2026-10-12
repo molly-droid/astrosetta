@@ -109,7 +109,7 @@ function SupportingAspectChip({ aspect, onClick, active }) {
       <span style={GLYPH_STYLE} className="font-body text-xs text-brass">{getGlyph(aspect.person1_planet)}</span>
       <span style={{ ...GLYPH_STYLE, color: col }} className="font-body text-xs">{sym}</span>
       <span style={GLYPH_STYLE} className="font-body text-xs text-brass">{getGlyph(aspect.person2_planet)}</span>
-      <span className="font-body text-[9px] text-white/35 ml-0.5">{aspect.orb?.toFixed(0)}°</span>
+      <span className="font-body text-[0.5625rem] text-white/35 ml-0.5">{aspect.orb?.toFixed(0)}°</span>
     </button>
   );
 }
@@ -161,7 +161,7 @@ function AreaCard({ area, crossAspects, onAspectHighlight, natalPlanets, transit
           </div>
           {supporting.length > 0 && (
             <div className="mt-3">
-              <p className="font-body text-[10px] uppercase tracking-widest text-brass/50 mb-2">Supporting Aspects</p>
+              <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50 mb-2">Supporting Aspects</p>
               <div className="flex flex-wrap gap-1.5">
                 {supporting.map((a, i) => (
                   <SupportingAspectChip
@@ -340,7 +340,7 @@ ${overlaysP1inP2.map(p => `- your ${p.name} in ${p.sign} → ${partnerName}'s ${
       <div className="celestial-card p-4">
         <div className="flex items-center gap-1.5 mb-2">
           <Sparkles size={10} className="text-gold-accent" />
-          <span className="font-body text-[10px] uppercase tracking-widest text-brass/50">{isEvent ? 'Moment Overview' : 'Relationship Overview'}</span>
+          <span className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50">{isEvent ? 'Moment Overview' : 'Relationship Overview'}</span>
         </div>
         <p className="font-body text-sm text-white/85 leading-relaxed italic border-l-2 border-gold-accent/40 pl-3">
           {highlightSynthesisText(data.overview, onAspectHighlight, 'text-gold-primary')}
@@ -349,7 +349,7 @@ ${overlaysP1inP2.map(p => `- your ${p.name} in ${p.sign} → ${partnerName}'s ${
 
       {/* Key areas */}
       <div className="space-y-2">
-        <p className="font-body text-[10px] uppercase tracking-widest text-brass/50 px-1">
+        <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50 px-1">
           {isEvent
             ? (relationship && relationship !== 'Other' ? `What This ${relationship} Activates` : 'Key Themes of This Moment')
             : (relationship && relationship !== 'Other' ? `Navigating Your ${relationship} Dynamic` : 'Key Areas of Connection')}

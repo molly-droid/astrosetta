@@ -87,7 +87,7 @@ export default function PlanetaryHighlights({ stations, ingresses, lunation, cha
           )}
           {hasStations && (
             <div className="mt-3">
-              <p className="font-body text-[9px] uppercase tracking-widest text-gold-accent/70 mb-1.5">Stations</p>
+              <p className="font-body text-[0.5625rem] uppercase tracking-widest text-gold-accent/70 mb-1.5">Stations</p>
               <BannerSuspense>
                 <StationBanner stations={stations} chart={chart} stationAutoExpand={stationAutoExpand} />
               </BannerSuspense>
@@ -95,7 +95,7 @@ export default function PlanetaryHighlights({ stations, ingresses, lunation, cha
           )}
           {hasIngresses && (
             <div className="mt-3">
-              <p className="font-body text-[9px] uppercase tracking-widest text-gold-accent/70 mb-1.5">Ingresses</p>
+              <p className="font-body text-[0.5625rem] uppercase tracking-widest text-gold-accent/70 mb-1.5">Ingresses</p>
               <BannerSuspense>
                 <IngressBanner ingresses={ingresses} chart={chart} ingressAutoExpand={ingressAutoExpand} />
               </BannerSuspense>

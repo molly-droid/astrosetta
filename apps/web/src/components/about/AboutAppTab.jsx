@@ -52,7 +52,7 @@ export default function AboutAppTab() {
         </p>
       </div>
 
-      <p className="font-body text-[11px] text-white/30 text-center pt-2">
+      <p className="font-body text-[0.6875rem] text-white/30 text-center pt-2">
         Astrosetta · Built with care
       </p>
     </div>

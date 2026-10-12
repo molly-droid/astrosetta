@@ -39,9 +39,16 @@ function StarfieldBg() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // B-08: size the bitmap from the VISUAL viewport, not window.innerWidth —
+    // on iOS the two diverge (URL bar, keyboard, rotation, safe areas) and
+    // `resize` doesn't fire for visual-viewport-only changes, leaving the
+    // bitmap narrower than the stretched CSS box. The uncovered strip showed
+    // the parent's flat navy as a dark column down the right edge. The CSS box
+    // is pinned to 100% in the element style; the bitmap tracks the viewport.
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const vv = window.visualViewport;
+      canvas.width = Math.ceil(vv?.width || window.innerWidth);
+      canvas.height = Math.ceil(vv?.height || window.innerHeight);
     };
     resizeCanvas();
 
@@ -141,10 +148,12 @@ function StarfieldBg() {
 
     const handleResize = () => resizeCanvas();
     window.addEventListener('resize', handleResize);
+    window.visualViewport?.addEventListener('resize', handleResize);
 
     return () => {
       cancelAnimationFrame(frameId);
       window.removeEventListener('resize', handleResize);
+      window.visualViewport?.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', onMouseMove);
     };
   }, []);
@@ -153,7 +162,7 @@ function StarfieldBg() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none"
-      style={{ zIndex: 0, display: 'block' }}
+      style={{ zIndex: 0, display: 'block', width: '100%', height: '100%' }}
     />
   );
 }
@@ -342,7 +351,7 @@ export default function AppLayout() {
                   }}
                 />
                 <span
-                  className="text-[9px] font-semibold tracking-wide whitespace-nowrap"
+                  className="text-[0.5625rem] font-semibold tracking-wide whitespace-nowrap"
                   style={{
                     color: active ? '#d4af85' : 'rgba(255, 255, 255, 0.4)',
                     transition: 'color 0.2s',
@@ -375,7 +384,7 @@ export default function AppLayout() {
                 }}
               />
               <span
-                className="text-[9px] font-semibold tracking-wide whitespace-nowrap"
+                className="text-[0.5625rem] font-semibold tracking-wide whitespace-nowrap"
                 style={{
                   color: location.pathname.startsWith('/admin')
                     ? '#d4af85'

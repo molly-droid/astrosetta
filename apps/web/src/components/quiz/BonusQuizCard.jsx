@@ -8,7 +8,7 @@ import QuizQuestion from './QuizQuestion';
 import { awardXP } from '@/lib/xpUtils';
 
 export default function BonusQuizCard({ userProgress, onClose }) {
-  const { user } = useAuth();
+  const { user, reloadProgress } = useAuth();
   const [questions, setQuestions] = useState(null);
   const [loading, setLoading] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);
@@ -27,6 +27,8 @@ export default function BonusQuizCard({ userProgress, onClose }) {
     const newTotal = prevTotal + total;
     const newAccuracy = newTotal > 0 ? Math.round(((prevCorrect + correct) / newTotal) * 100) : 0;
     await base44.entities.UserProgress.update(prog.id, { total_answered: newTotal, accuracy_rate: newAccuracy });
+    // Refresh the shared record so the gauges reflect this round (B-05/B-06).
+    reloadProgress?.();
   };
 
   const startRound = async () => {

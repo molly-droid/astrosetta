@@ -263,7 +263,7 @@ export default function WeekSynthesis({ days, chart }) {
           <Sparkles size={14} className="text-gold-accent flex-shrink-0" />
           <span className="font-display text-sm font-semibold text-white">Week at a Glance</span>
           {synthesis?.best_areas?.map((area, i) => (
-            <span key={i} className="font-body text-[10px] px-1.5 py-0.5 rounded-full bg-gold-primary/15 text-brass">{area}</span>
+            <span key={i} className="font-body text-[0.625rem] px-1.5 py-0.5 rounded-full bg-gold-primary/15 text-brass">{area}</span>
           ))}
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -301,7 +301,7 @@ export default function WeekSynthesis({ days, chart }) {
                   return (
                     <div key={i} className={`flex gap-2 items-center rounded-lg px-2 py-1.5 ${isToday ? 'bg-gold-primary/10' : ''}`}>
                       <div className="flex flex-col items-center shrink-0 w-7">
-                        <span className={`font-body text-[10px] uppercase tracking-widest ${isToday ? 'text-gold-accent font-bold' : 'text-brass/50'}`}>
+                        <span className={`font-body text-[0.625rem] uppercase tracking-widest ${isToday ? 'text-gold-accent font-bold' : 'text-brass/50'}`}>
                           {DOW_SHORT[d.getDay()]}
                         </span>
                         {moonEmoji && (
@@ -328,7 +328,7 @@ export default function WeekSynthesis({ days, chart }) {
                   {explainLoading ? (
                     <div className="flex items-center gap-1.5">
                       <Loader2 size={11} className="animate-spin text-gold-primary" />
-                      <span className="font-body text-[10px] text-brass italic">Simplifying...</span>
+                      <span className="font-body text-[0.625rem] text-brass italic">Simplifying...</span>
                     </div>
                   ) : (
                     <p className="font-body text-xs text-white/85 leading-snug">{highlightOnWhite(explainText)}</p>
@@ -338,18 +338,18 @@ export default function WeekSynthesis({ days, chart }) {
 
               <div className="flex items-center justify-end gap-3 pt-1 border-t border-gold-primary/15">
                 <button onClick={handleExplain}
-                  className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-gold-accent transition-colors">
+                  className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-gold-accent transition-colors">
                   {explainLoading ? <Loader2 size={10} className="animate-spin" /> : <Lightbulb size={10} />} Explain it
                 </button>
                 <button
                   onClick={() => { if (cacheKey) delete weekSynthesisCache[cacheKey]; clearMemCache('week', dbKey, chart?.user_id); hasGenerated.current = false; generate(); }}
-                  className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-brass transition-colors"
+                  className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-brass transition-colors"
                 >
                   <RefreshCw size={10} /> Regenerate
                 </button>
                 {!chart?.raw_data?.unknown_time && (
                 <button onClick={handleShare}
-                  className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-gold-accent transition-colors">
+                  className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-gold-accent transition-colors">
                   {shareLoading ? <Loader2 size={10} className="animate-spin" /> : <Share2 size={10} />} Share
                 </button>
                 )}

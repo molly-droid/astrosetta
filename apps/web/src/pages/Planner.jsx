@@ -252,7 +252,7 @@ export default function Planner() {
         {/* Title row */}
         <div className="px-4 pt-10 pb-4 flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="font-body text-[10px] text-brass uppercase tracking-widest">Astro Planner</p>
+            <p className="font-body text-[0.625rem] text-brass uppercase tracking-widest">Astro Planner</p>
             <h1 className="font-display text-xl font-bold text-cream truncate">
               {partnerChart
                 ? `Cosmic Calendar · ${perspectiveChart ? `${perspectiveChart.name} & ${partnerChart.name}` : partnerChart.name}`
@@ -268,7 +268,7 @@ export default function Planner() {
               title="Sync to Calendar"
             >
               <CalendarDays size={14} className="text-gold-accent" />
-              <span className="font-body text-[10px] text-brass">Sync</span>
+              <span className="font-body text-[0.625rem] text-brass">Sync</span>
             </button>
           </div>
         </div>
@@ -281,14 +281,14 @@ export default function Planner() {
           <div className="text-center space-y-0.5">
             <p className="font-body text-sm font-semibold text-cream">{formatHeader()}</p>
             {dayMoon && (
-              <p className="font-body text-[10px] text-brass flex items-center justify-center gap-1 leading-tight">
-                <span className="text-[11px] leading-none">{dayMoon.icon}</span>
+              <p className="font-body text-[0.625rem] text-brass flex items-center justify-center gap-1 leading-tight">
+                <span className="text-[0.6875rem] leading-none">{dayMoon.icon}</span>
                 <span>Moon in {dayMoon.sign}</span>
               </p>
             )}
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="font-body text-[10px] text-gold-accent hover:text-gold-primary transition-colors underline underline-offset-2"
+              className="font-body text-[0.625rem] text-gold-accent hover:text-gold-primary transition-colors underline underline-offset-2"
             >
               Today
             </button>
@@ -302,15 +302,15 @@ export default function Planner() {
         <div className="flex justify-center gap-4 px-4 pb-3">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-celestial-blue"></div>
-            <span className="font-body text-[10px] text-brass">Natal transit</span>
+            <span className="font-body text-[0.625rem] text-brass">Natal transit</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-deep-blue/70"></div>
-            <span className="font-body text-[10px] text-brass">Sky</span>
+            <span className="font-body text-[0.625rem] text-brass">Sky</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-bronze/50"></div>
-            <span className="font-body text-[10px] text-brass">Lunar</span>
+            <span className="font-body text-[0.625rem] text-brass">Lunar</span>
           </div>
         </div>
 
@@ -349,7 +349,7 @@ export default function Planner() {
                   <button
                     key={m.key}
                     onClick={() => setChartMode(m.key)}
-                    className="font-body text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full transition-all"
+                    className="font-body text-[0.625rem] uppercase tracking-widest px-2.5 py-1 rounded-full transition-all"
                     style={{
                       background: chartMode === m.key ? m.activeBg : 'rgba(255,255,255,0.04)',
                       color: chartMode === m.key ? m.activeColor : 'rgba(255,255,255,0.25)',
@@ -360,7 +360,7 @@ export default function Planner() {
                   </button>
                 ))
               ) : relMode === 'composite' ? (
-                <span className="font-body text-[10px] uppercase tracking-widest text-celestial-pink/80 px-2.5 py-1">Composite · Today's transits</span>
+                <span className="font-body text-[0.625rem] uppercase tracking-widest text-celestial-pink/80 px-2.5 py-1">Composite · Today's transits</span>
               ) : (
                 [
                   { key: 'synastry', label: 'Synastry', activeColor: '#B8A5C8', activeBg: 'rgba(184,165,200,0.18)', activeBorder: 'rgba(184,165,200,0.4)' },
@@ -369,7 +369,7 @@ export default function Planner() {
                   <button
                     key={m.key}
                     onClick={() => setRelOverlay(m.key)}
-                    className="font-body text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full transition-all"
+                    className="font-body text-[0.625rem] uppercase tracking-widest px-2.5 py-1 rounded-full transition-all"
                     style={{
                       background: relOverlay === m.key ? m.activeBg : 'rgba(255,255,255,0.04)',
                       color: relOverlay === m.key ? m.activeColor : 'rgba(255,255,255,0.25)',
@@ -398,13 +398,13 @@ export default function Planner() {
             {partnerChart && relMode === 'composite' && compositeTransitsLoading && (
               <div className="flex items-center justify-center gap-1.5 pt-2">
                 <Loader2 size={12} className="animate-spin text-gold-accent" />
-                <span className="font-body text-[10px] text-brass">Loading composite transits…</span>
+                <span className="font-body text-[0.625rem] text-brass">Loading composite transits…</span>
               </div>
             )}
             {partnerChart && relMode === 'synastry' && relOverlay === 'now' && relTransitLoading && (
               <div className="flex items-center justify-center gap-1.5 pt-2">
                 <Loader2 size={12} className="animate-spin text-gold-accent" />
-                <span className="font-body text-[10px] text-brass">Loading transits…</span>
+                <span className="font-body text-[0.625rem] text-brass">Loading transits…</span>
               </div>
             )}
             <div className="flex justify-center pt-1 pb-2">
@@ -473,7 +473,7 @@ export default function Planner() {
             )}
 
             {view === 'Day' && (
-              <p className="font-body text-[11px] text-brass/70 text-center max-w-xs mx-auto leading-snug px-2">
+              <p className="font-body text-[0.6875rem] text-brass/70 text-center max-w-xs mx-auto leading-snug px-2">
                 {relMode === 'composite'
                   ? <>The composite chart ({perspectiveChart ? `${perspectiveChart.name} & ${partnerChart.name}` : 'your bond'} as one entity) with today's transits on the outer ring — how the moment activates the relationship itself.</>
                   : relOverlay === 'synastry'
@@ -492,7 +492,7 @@ export default function Planner() {
                   <button
                     key={m.key}
                     onClick={() => setRelMode(m.key)}
-                    className={`px-3 py-1 font-body text-[10px] uppercase tracking-widest transition-colors ${relMode === m.key ? 'bg-gold-primary/20 text-gold-accent' : 'text-white/40 hover:text-white/70'}`}
+                    className={`px-3 py-1 font-body text-[0.625rem] uppercase tracking-widest transition-colors ${relMode === m.key ? 'bg-gold-primary/20 text-gold-accent' : 'text-white/40 hover:text-white/70'}`}
                   >
                     {m.label}
                   </button>
@@ -517,7 +517,7 @@ export default function Planner() {
             {/* Cross-link to the chart page's relationship comparison — the
                 natal synastry + composite reads (the bond's longer-term themes). */}
             <div className="flex justify-center pt-1">
-              <Link to={`/chart?view=synastry&with=${partnerChart.id}${perspectiveChartId ? `&perspective=${perspectiveChartId}` : ''}`} className="inline-flex items-center gap-1.5 font-body text-[11px] text-gold-accent hover:text-gold-primary transition-colors text-center max-w-xs">
+              <Link to={`/chart?view=synastry&with=${partnerChart.id}${perspectiveChartId ? `&perspective=${perspectiveChartId}` : ''}`} className="inline-flex items-center gap-1.5 font-body text-[0.6875rem] text-gold-accent hover:text-gold-primary transition-colors text-center max-w-xs">
                 <Sparkles size={11} className="shrink-0" />
                 Want the longer-term themes of your synastry or composite chart?
               </Link>
@@ -526,7 +526,7 @@ export default function Planner() {
         ) : (
           // ── Personal mode ─────────────────────────────────────────────────
           <>
-            {view === 'Day'    && <PlannerDayView    date={currentDate} chart={baseChart} user={user} spotlightDynamics={spotlightDynamics} onSpotlightDismiss={() => setSpotlightDynamics(false)} onHighlightPattern={setHighlightPattern} onHighlightTransit={setHighlightKey} onTransitData={setDayTransitData} />}
+            {view === 'Day'    && <PlannerDayView    date={currentDate} chart={baseChart} user={user} spotlightDynamics={spotlightDynamics} onSpotlightDismiss={() => setSpotlightDynamics(false)} onHighlightPattern={setHighlightPattern} onHighlightTransit={setHighlightKey} onTransitData={setDayTransitData} onSelectDate={(k) => setCurrentDate(new Date(k + 'T12:00:00'))} />}
             {view === 'Week'   && <PlannerWeekView   date={currentDate} chart={baseChart} user={user} onSelectDay={(d) => { setCurrentDate(d); setView('Day'); }} relationshipSelector={
               <div className="flex items-center gap-2 flex-wrap justify-center">
                 <PlannerPerspectivePicker

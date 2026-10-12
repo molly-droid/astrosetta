@@ -136,7 +136,7 @@ export default function GlyphInfo({ glyph, children, className = '', style }) {
             <div className="flex items-center gap-2 mb-1">
               <span className="text-lg" style={{ fontVariantEmoji: 'text' }}>{glyph}</span>
               <span className="font-display text-sm font-semibold text-white capitalize">{def.name}</span>
-              <span className="font-body text-[9px] uppercase tracking-widest text-white/40 ml-auto">{def.type}</span>
+              <span className="font-body text-[0.5625rem] uppercase tracking-widest text-white/40 ml-auto">{def.type}</span>
             </div>
             <p className="font-body text-xs leading-relaxed text-white/80">{def.desc}</p>
           </div>

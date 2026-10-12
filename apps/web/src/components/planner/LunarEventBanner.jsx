@@ -29,11 +29,11 @@ export default function LunarEventBanner({ transits, onLinkToHighlights }) {
         <span className="text-xl leading-none shrink-0" style={{ fontVariantEmoji: 'text', filter: eclipseMeta ? `drop-shadow(0 0 5px ${eclipseMeta.glow})` : undefined }}>{glyph}</span>
         <div className="min-w-0">
           <p className="font-display text-sm font-semibold text-white truncate">{label} in <SignName sign={moonSign} /></p>
-          <p className="font-body text-[10px] text-brass/70">{sub} · tap for reading</p>
+          <p className="font-body text-[0.625rem] text-brass/70">{sub} · tap for reading</p>
         </div>
       </div>
       <div className="flex items-center gap-1 shrink-0">
-        <span className="font-body text-[10px] text-gold-accent hidden sm:inline">Highlights</span>
+        <span className="font-body text-[0.625rem] text-gold-accent hidden sm:inline">Highlights</span>
         <ChevronRight size={14} className="text-brass/50" />
       </div>
     </button>

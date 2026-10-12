@@ -118,10 +118,10 @@ export default function RelationshipDaySynthesis({ date, userChart, partnerChart
           {synthesis && (
             <>
               <div className="flex border-b border-white/[0.08]">
-                <button onClick={() => setActiveTab('personal')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${activeTab === 'personal' ? 'border-gold-accent text-white font-semibold' : 'border-transparent text-white/40 hover:text-white/70'}`}>
+                <button onClick={() => setActiveTab('personal')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${activeTab === 'personal' ? 'border-gold-accent text-white font-semibold' : 'border-transparent text-white/40 hover:text-white/70'}`}>
                   <Sparkles size={11} /> The Bond
                 </button>
-                <button onClick={() => setActiveTab('collective')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${activeTab === 'collective' ? 'border-gold-accent text-white font-semibold' : 'border-transparent text-white/40 hover:text-white/70'}`}>
+                <button onClick={() => setActiveTab('collective')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${activeTab === 'collective' ? 'border-gold-accent text-white font-semibold' : 'border-transparent text-white/40 hover:text-white/70'}`}>
                   <Globe size={11} /> Collective
                 </button>
               </div>
@@ -130,12 +130,12 @@ export default function RelationshipDaySynthesis({ date, userChart, partnerChart
                 {synthesis.key_themes?.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5">
                     {synthesis.power_planet && (
-                      <span className="font-body text-[9px] font-semibold px-2 py-0.5 rounded-full bg-gold-primary/15 text-gold-accent border border-gold-primary/30 flex items-center gap-1">
+                      <span className="font-body text-[0.5625rem] font-semibold px-2 py-0.5 rounded-full bg-gold-primary/15 text-gold-accent border border-gold-primary/30 flex items-center gap-1">
                         <span className="opacity-70">{PLANET_GLYPHS[synthesis.power_planet] || '✦'}</span>{synthesis.power_planet}
                       </span>
                     )}
                     {synthesis.key_themes.map((theme, i) => (
-                      <span key={i} className="font-body text-[9px] px-2 py-0.5 rounded-full bg-white/[0.06] text-brass border border-gold-primary/15">{theme}</span>
+                      <span key={i} className="font-body text-[0.5625rem] px-2 py-0.5 rounded-full bg-white/[0.06] text-brass border border-gold-primary/15">{theme}</span>
                     ))}
                   </div>
                 )}
@@ -151,7 +151,7 @@ export default function RelationshipDaySynthesis({ date, userChart, partnerChart
                     )}
                     {synthesis.relationship_focus && (
                       <div className="rounded-lg border border-celestial-pink/30 bg-celestial-pink/10 p-3">
-                        <p className="font-body text-[10px] uppercase tracking-widest font-semibold mb-1.5 text-celestial-pink">
+                        <p className="font-body text-[0.625rem] uppercase tracking-widest font-semibold mb-1.5 text-celestial-pink">
                           <Heart size={11} className="inline mr-1" /> Relationship Focus
                         </p>
                         <p className="font-body text-xs leading-snug text-white">{highlightOnWhite(synthesis.relationship_focus)}</p>
@@ -193,7 +193,7 @@ export default function RelationshipDaySynthesis({ date, userChart, partnerChart
                 )}
                 <div className="flex items-center justify-end gap-3 pt-1 border-t border-gold-primary/15">
                   <button onClick={() => { if (cacheKey) delete synthesisCache[cacheKey]; clearMemCache('day', dbKey, userId); hasGenerated.current = false; generate(); }}
-                    className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-brass transition-colors">
+                    className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-brass transition-colors">
                     <RefreshCw size={10} /> Regenerate
                   </button>
                 </div>

@@ -81,7 +81,7 @@ export default function CompositeView({ userChart, partnerChart, user, composite
         {big3.map(({ glyph, label, value }) => (
           <div key={label} className="text-center">
             <div className="text-xl text-gold-accent font-display">{glyph}</div>
-            <div className="text-[10px] font-body uppercase tracking-widest text-brass">{label}</div>
+            <div className="text-[0.625rem] font-body uppercase tracking-widest text-brass">{label}</div>
             <div className="text-sm font-display font-bold text-cream"><SignName sign={value} /></div>
           </div>
         ))}
@@ -111,7 +111,7 @@ export default function CompositeView({ userChart, partnerChart, user, composite
                 <p className="font-body text-sm text-white/85 leading-relaxed">{highlightSynthesisText(reading.essence, undefined, 'text-gold-accent')}</p>
                 {reading.strengths?.length > 0 && (
                   <div>
-                    <p className="font-body text-[10px] uppercase tracking-widest text-brass/50 mb-1">Gifts of the Bond</p>
+                    <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50 mb-1">Gifts of the Bond</p>
                     <ul className="space-y-1">
                       {reading.strengths.map((s, i) => (
                         <li key={i} className="font-body text-xs text-white/80 leading-relaxed">✦ {highlightSynthesisText(s, undefined, 'text-gold-accent')}</li>
@@ -121,7 +121,7 @@ export default function CompositeView({ userChart, partnerChart, user, composite
                 )}
                 {reading.tensions?.length > 0 && (
                   <div>
-                    <p className="font-body text-[10px] uppercase tracking-widest text-brass/50 mb-1">Friction to Navigate</p>
+                    <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50 mb-1">Friction to Navigate</p>
                     <ul className="space-y-1">
                       {reading.tensions.map((t, i) => (
                         <li key={i} className="font-body text-xs text-white/80 leading-relaxed">· {highlightSynthesisText(t, undefined, 'text-gold-accent')}</li>
@@ -162,7 +162,7 @@ export default function CompositeView({ userChart, partnerChart, user, composite
                     <span className="text-sm w-5 text-center" style={{ color }}>{sym}</span>
                     <span className="text-sm w-5 text-center" style={{ color: 'var(--gold-accent)' }}>{g2}</span>
                     <span className="font-body text-xs text-white/80 flex-1">{a.planet1} {a.aspect} {a.planet2}</span>
-                    <span className="font-body text-[10px] text-brass/50">{a.orb?.toFixed(1)}°</span>
+                    <span className="font-body text-[0.625rem] text-brass/50">{a.orb?.toFixed(1)}°</span>
                   </div>
                 );
               })}

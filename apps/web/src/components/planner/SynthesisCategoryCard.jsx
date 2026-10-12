@@ -32,7 +32,7 @@ export default function SynthesisCategoryCard({ category, value, highlightFn }) 
   const hl = highlightFn || ((t) => t);
   return (
     <div className={`rounded-lg border p-3 ${SYNTHESIS_CATEGORY_COLORS[category]}`}>
-      <p className={`font-body text-[10px] uppercase tracking-widest font-semibold mb-1.5 ${SYNTHESIS_LABEL_COLORS[category]}`}>
+      <p className={`font-body text-[0.625rem] uppercase tracking-widest font-semibold mb-1.5 ${SYNTHESIS_LABEL_COLORS[category]}`}>
         {meta.icon} {meta.label}
       </p>
       {items.length === 1 ? (

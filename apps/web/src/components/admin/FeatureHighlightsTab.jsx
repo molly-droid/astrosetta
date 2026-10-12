@@ -175,10 +175,10 @@ export default function FeatureHighlightsTab() {
         <div className="rounded-xl border p-3 flex items-center gap-3" style={{ background: 'rgba(168,200,168,0.08)', border: '1px solid rgba(168,200,168,0.3)' }}>
           <div className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: '#A8C8A8' }} />
           <div className="flex-1 min-w-0">
-            <p className="font-body text-[10px] uppercase tracking-widest text-[#A8C8A8] font-semibold">Currently Live</p>
-            <p className="font-display text-sm font-bold text-white truncate">{liveNow.title} <span className="font-body text-[11px] text-brass/60 font-normal">· {liveNow.spotlight_key}</span></p>
+            <p className="font-body text-[0.625rem] uppercase tracking-widest text-[#A8C8A8] font-semibold">Currently Live</p>
+            <p className="font-display text-sm font-bold text-white truncate">{liveNow.title} <span className="font-body text-[0.6875rem] text-brass/60 font-normal">· {liveNow.spotlight_key}</span></p>
           </div>
-          <span className="font-body text-[10px] text-brass/50 shrink-0">since {fmtDate(liveNow.go_live_date)}</span>
+          <span className="font-body text-[0.625rem] text-brass/50 shrink-0">since {fmtDate(liveNow.go_live_date)}</span>
         </div>
       )}
 
@@ -199,11 +199,11 @@ export default function FeatureHighlightsTab() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-body text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ background: st.bg, border: `1px solid ${st.border}`, color: st.color }}>{status}</span>
+                      <span className="font-body text-[0.625rem] font-semibold px-2 py-0.5 rounded-full" style={{ background: st.bg, border: `1px solid ${st.border}`, color: st.color }}>{status}</span>
                       <p className="font-display text-sm font-bold text-white truncate">{r.title}</p>
                     </div>
-                    <p className="font-body text-[11px] text-brass/50 mb-1.5">{r.spotlight_key}</p>
-                    <div className="flex items-center gap-3 flex-wrap font-body text-[10px] text-brass/60">
+                    <p className="font-body text-[0.6875rem] text-brass/50 mb-1.5">{r.spotlight_key}</p>
+                    <div className="flex items-center gap-3 flex-wrap font-body text-[0.625rem] text-brass/60">
                       <span>📅 {fmtDate(r.go_live_date) || 'no date'}{r.end_date ? ` → ${fmtDate(r.end_date)}` : ' → open'}</span>
                       {r.deep_link && <span>🔗 {r.deep_link}</span>}
                     </div>
@@ -215,7 +215,7 @@ export default function FeatureHighlightsTab() {
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
                     {status !== 'Live' && (
-                      <button onClick={() => launchNow(r)} className="font-body text-[10px] inline-flex items-center gap-1 px-2 py-1 rounded-full transition-all hover:opacity-90" style={{ background: 'linear-gradient(135deg,#D4AF85,#C9A961)', color: '#0f1a2e' }}>
+                      <button onClick={() => launchNow(r)} className="font-body text-[0.625rem] inline-flex items-center gap-1 px-2 py-1 rounded-full transition-all hover:opacity-90" style={{ background: 'linear-gradient(135deg,#D4AF85,#C9A961)', color: '#0f1a2e' }}>
                         <Rocket size={10} /> Launch now
                       </button>
                     )}
@@ -340,7 +340,7 @@ function ToggleRow({ label, checked, onChange }) {
 
 function ChannelChip({ on, icon: Icon, label }) {
   return (
-    <span className="inline-flex items-center gap-1 font-body text-[10px] px-1.5 py-0.5 rounded-full border" style={{
+    <span className="inline-flex items-center gap-1 font-body text-[0.625rem] px-1.5 py-0.5 rounded-full border" style={{
       color: on ? '#D4AF85' : 'rgba(255,255,255,0.25)',
       background: on ? 'rgba(212,175,133,0.1)' : 'transparent',
       borderColor: on ? 'rgba(212,175,133,0.3)' : 'rgba(255,255,255,0.08)',

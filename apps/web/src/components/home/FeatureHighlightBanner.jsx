@@ -60,7 +60,7 @@ export default function FeatureHighlightBanner() {
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent font-semibold mb-0.5">New Feature</p>
+            <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent font-semibold mb-0.5">New Feature</p>
             <p className="font-display text-sm font-bold text-white leading-tight">{highlight.title}</p>
           </div>
           <button onClick={close} className="p-1.5 -m-1.5 rounded-full hover:bg-white/10 transition-colors shrink-0" aria-label="Dismiss banner">
@@ -76,7 +76,7 @@ export default function FeatureHighlightBanner() {
         <div className="flex flex-wrap gap-2 mt-2.5">
           <button
             onClick={() => navigate(highlight.deep_link || '/home')}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-body text-[11px] font-semibold transition-all hover:opacity-90"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-body text-[0.6875rem] font-semibold transition-all hover:opacity-90"
             style={{ background: 'linear-gradient(135deg, #D4AF85, #C9A961)', color: '#0f1a2e' }}
           >
             Explore <ArrowRight size={11} />

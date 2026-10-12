@@ -23,22 +23,8 @@ const TIPS = {
       cta_link: '/profile',
     },
   ],
-  homescreen: [
-    {
-      badge: 'Quick Tip',
-      title: 'Save to Your Home Screen',
-      description:
-        "Install Astrosetta as a native-style app on your phone — it launches full-screen, no browser needed. It feels like a real app, and it's free.",
-      bullets: [
-        'iPhone: tap the Share icon → "Add to Home Screen"',
-        'Android: tap the browser menu → "Install app" or "Add to Home screen"',
-        'Desktop: click the install icon in the address bar',
-        'Launch it anytime from your home screen — full-screen, fast',
-      ],
-      cta_label: null,
-      cta_link: null,
-    },
-  ],
+  // UX-07: the "Save to Home Screen" tip was a web holdover — removed now
+  // that Astrosetta ships as a native app.
 };
 
 export function startQuickTip(tipKey) {
@@ -118,7 +104,7 @@ export default function QuickTipTour() {
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold-primary/15 border border-gold-accent/30">
               <Sparkles size={11} className="text-gold-accent" />
-              <span className="font-body text-[10px] uppercase tracking-widest text-gold-accent font-semibold">
+              <span className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent font-semibold">
                 {s.badge}
               </span>
             </div>
@@ -130,8 +116,8 @@ export default function QuickTipTour() {
             <div className="space-y-2">
               {s.bullets.map((b, i) => (
                 <div key={i} className="flex items-start gap-2">
-                  <span className="text-gold-accent text-[10px] mt-0.5">✦</span>
-                  <p className="font-body text-[11px] text-brass/80 leading-snug">{b}</p>
+                  <span className="text-gold-accent text-[0.625rem] mt-0.5">✦</span>
+                  <p className="font-body text-[0.6875rem] text-brass/80 leading-snug">{b}</p>
                 </div>
               ))}
             </div>

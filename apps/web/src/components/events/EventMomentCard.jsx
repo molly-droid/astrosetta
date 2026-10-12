@@ -84,7 +84,7 @@ export default function EventMomentCard({ order, event, showPrompt = true }) {
       </div>
 
       {showPrompt && (
-        <p className="text-center font-body text-[11px] text-brass/50">
+        <p className="text-center font-body text-[0.6875rem] text-brass/50">
           Screenshot this, or find it anytime under My Astrosetta Moment in your profile.
         </p>
       )}

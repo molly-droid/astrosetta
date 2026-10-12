@@ -61,7 +61,10 @@ async function syncCalendar(base44, user, body) {
   const includeRetrogrades = filters.retrogrades !== false;
   const daysAhead = Math.min(90, Math.max(1, Number(body.days_ahead) || 28));
 
-  const charts = await base44.asServiceRole.entities.Chart.filter({ user_id: user.id });
+  // Newest chart first (B-15): editing birth data CREATES a new chart row, so
+  // an unordered read could sync a pre-correction chart — wrong positions that
+  // look like somebody else's data. Matches the app's own '-created_date'.
+  const charts = await base44.asServiceRole.entities.Chart.filter({ user_id: user.id }, '-created_date');
   const chartRaw = charts[0]?.raw_data || {};
   let natalPlanets = [];
   if (includeTransits) {
@@ -112,6 +115,12 @@ async function syncCalendar(base44, user, body) {
     engineDays = await fetchCalendarDays(base44, natalParams, today, daysAhead + 1);
   }
 
+  // B-17: Google renders event descriptions as HTML — bare newlines collapse
+  // into one run-on blob. Emit a bold title line, the body, and the footer as
+  // separate <br>-joined lines so synced events read cleanly.
+  const gcalDesc = (title: string, body: string) =>
+    `<b>${title}</b><br><br>${body}<br><br><i>Added by Astrosetta</i>`;
+
   for (let i = 0; i <= daysAhead; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
@@ -123,10 +132,10 @@ async function syncCalendar(base44, user, body) {
       if (lunation) {
         const decimalHour = lunation.hour + lunation.minute / 60;
         if (lunation.type === 'new' && includeNewMoon) {
-          eventsToCreate.push({ dateTime: formatDateTime(dateStr, decimalHour), summary: `🌑 New Moon in ${lunation.sign}`, description: 'New Moon — set intentions, plant seeds, begin fresh.\n\nAdded by Astro Planner', colorId: '9' });
+          eventsToCreate.push({ dateTime: formatDateTime(dateStr, decimalHour), summary: `🌑 New Moon in ${lunation.sign}`, description: gcalDesc(`New Moon in ${lunation.sign}`, 'Set intentions, plant seeds, begin fresh.'), colorId: '9' });
         }
         if (lunation.type === 'full' && includeFullMoon) {
-          eventsToCreate.push({ dateTime: formatDateTime(dateStr, decimalHour), summary: `🌕 Full Moon in ${lunation.sign}`, description: 'Full Moon — culmination, release, illumination.\n\nAdded by Astro Planner', colorId: '5' });
+          eventsToCreate.push({ dateTime: formatDateTime(dateStr, decimalHour), summary: `🌕 Full Moon in ${lunation.sign}`, description: gcalDesc(`Full Moon in ${lunation.sign}`, 'Culmination, release, illumination.'), colorId: '5' });
         }
       }
     }
@@ -144,7 +153,7 @@ async function syncCalendar(base44, user, body) {
         const g = PLANET_GLYPHS[a.transit_planet] || '';
         const aspSym = ASPECT_EMOJIS[a.aspect] || a.aspect;
         const estHour = estimateTransitHour(a.orb, a.transit_planet);
-        eventsToCreate.push({ dateTime: formatDateTime(dateStr, estHour), summary: `${g} ${a.transit_planet} ${aspSym} natal ${a.natal_planet}`, description: `Major transit: ${a.transit_planet} ${a.aspect} your natal ${a.natal_planet} (orb ~${a.orb.toFixed(1)}°).\n\nAdded by Astro Planner`, colorId: '1' });
+        eventsToCreate.push({ dateTime: formatDateTime(dateStr, estHour), summary: `${g} ${a.transit_planet} ${aspSym} natal ${a.natal_planet}`, description: gcalDesc('Major transit', `${a.transit_planet} ${a.aspect} your natal ${a.natal_planet} (orb ~${a.orb.toFixed(1)}°).`), colorId: '1' });
       }
     }
 
@@ -152,7 +161,7 @@ async function syncCalendar(base44, user, body) {
       for (const st of day.stations) {
         const g = PLANET_GLYPHS[st.planet] || '';
         const isRx = st.type === 'retrograde';
-        eventsToCreate.push({ dateTime: formatDateTime(dateStr, 12), summary: `${g} ${st.planet} ${isRx ? 'Retrograde ℞ begins' : 'Direct ☌ resumes'}`, description: `${st.planet} stations ${isRx ? 'retrograde' : 'direct'} today.\n\nAdded by Astro Planner`, colorId: isRx ? '11' : '2' });
+        eventsToCreate.push({ dateTime: formatDateTime(dateStr, 12), summary: `${g} ${st.planet} ${isRx ? 'Retrograde ℞ begins' : 'Direct ☌ resumes'}`, description: gcalDesc(`${st.planet} stations ${isRx ? 'retrograde' : 'direct'}`, `${st.planet} stations ${isRx ? 'retrograde' : 'direct'} today in ${st.sign}.`), colorId: isRx ? '11' : '2' });
       }
     }
   }

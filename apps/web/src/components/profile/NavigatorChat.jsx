@@ -100,7 +100,7 @@ export default function NavigatorChat({ user, chart }) {
           <p className="font-display text-sm font-bold text-white flex-1">Conversations</p>
           <button
             onClick={startNewConversation}
-            className="flex items-center gap-1.5 text-[11px] font-body text-gold-accent hover:text-gold-primary transition-colors"
+            className="flex items-center gap-1.5 text-[0.6875rem] font-body text-gold-accent hover:text-gold-primary transition-colors"
           >
             <Plus size={13} /> New
           </button>
@@ -119,7 +119,7 @@ export default function NavigatorChat({ user, chart }) {
                 <MessageSquare size={13} className="text-gold-accent/60 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="font-body text-xs text-white/80 truncate">{label}</p>
-                  <p className="font-body text-[10px] text-brass/50">{date}</p>
+                  <p className="font-body text-[0.625rem] text-brass/50">{date}</p>
                 </div>
                 {isActive && <div className="w-1.5 h-1.5 rounded-full bg-gold-accent flex-shrink-0" />}
               </button>
@@ -136,7 +136,7 @@ export default function NavigatorChat({ user, chart }) {
       <div className="celestial-card px-4 py-3 mb-3 flex-shrink-0 flex items-center gap-2">
         <div className="flex-1">
           <p className="font-display text-sm font-bold text-white">✦ Chart Navigator</p>
-          <p className="font-body text-[10px] text-brass/60 mt-0.5">
+          <p className="font-body text-[0.625rem] text-brass/60 mt-0.5">
             Ask anything about your chart, placements, or patterns in your life.
           </p>
         </div>

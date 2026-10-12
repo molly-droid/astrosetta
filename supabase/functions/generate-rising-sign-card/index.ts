@@ -11,6 +11,17 @@ import { TONE_DIRECTIVE } from '../_shared/toneDirective.ts';
  * Payload: { sign, dateKey, dateStr, collectiveContext }
  * Returns:  { headline, bullets[], sign, dateStr }
  */
+/** Trim to a maximum length at a sentence end, else a word boundary. */
+function trimToLength(text: string, max: number): string {
+  const clean = String(text || '').trim().replace(/\s+/g, ' ');
+  if (clean.length <= max) return clean;
+  const cut = clean.slice(0, max);
+  const sentenceEnd = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '));
+  if (sentenceEnd > max * 0.5) return cut.slice(0, sentenceEnd + 1).trim();
+  const wordEnd = cut.lastIndexOf(' ');
+  return (wordEnd > 0 ? cut.slice(0, wordEnd) : cut).trim().replace(/[,;:]$/, '') + '.';
+}
+
 async function handler(req: Request): Promise<Response> {
   const opt = handleOptions(req);
   if (opt) return opt;
@@ -36,7 +47,9 @@ async function handler(req: Request): Promise<Response> {
       period_type: 'topic',
       period_key: periodKey,
     });
-    if (cached.length > 0 && cached[0].data?.bullets?.length) {
+    // Rows cached before AI-01 have no `summary`; regenerate those so the
+    // share image gets its short standalone line.
+    if (cached.length > 0 && cached[0].data?.bullets?.length && cached[0].data?.summary) {
       return json(cached[0].data);
     }
 
@@ -55,9 +68,12 @@ Rules:
 - No filler, no platitudes, no "the universe wants you to..." — concrete astrological mechanics.
 - Do not mention the app or marketing language.
 
+Also write a "summary": ONE sentence, at most 200 characters, that captures today for ${sign} Rising on its own. It is printed on a square share image where the bullets do not fit, so it has to stand alone. No hashtags, no ellipsis, no trailing fragment.
+
 Return JSON:
 {
   "headline": "What today means for ${sign} Rising",
+  "summary": "one sentence, max 200 characters",
   "bullets": ["...", "...", "..."]
 }`;
 
@@ -67,14 +83,19 @@ Return JSON:
         type: 'object',
         properties: {
           headline: { type: 'string' },
+          summary: { type: 'string' },
           bullets: { type: 'array', items: { type: 'string' } },
         },
-        required: ['headline', 'bullets'],
+        required: ['headline', 'summary', 'bullets'],
       },
     });
 
     const data = {
       headline: result.headline || `What today means for ${sign} Rising`,
+      // AI-01: a standalone ~200-char line for the share image, which has no
+      // room for the bullet list. Hard-trimmed at a sentence or word break so
+      // a long model answer can never overflow the card.
+      summary: trimToLength(result.summary || '', 200),
       bullets: Array.isArray(result.bullets) ? result.bullets.slice(0, 5) : [],
       sign,
       dateStr,

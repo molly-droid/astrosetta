@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
 import SignName from '@/components/ui/SignName';
-import { formatTransitLabel, HOUSE_THEMES, highlightSynthesisText, estimateTransitTime, formatTime } from '@/lib/transitUtils';
+import { formatTransitLabel, HOUSE_THEMES, estimateTransitTime, formatTime } from '@/lib/transitUtils';
 import { useAuth } from '@/lib/AuthContext';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
 import Eli5Button from '@/components/ui/Eli5Button';
 import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2, ChevronDown, ChevronRight, SlidersHorizontal, Lock, ArrowUpDown } from 'lucide-react';
 import PaywallModal from '@/components/paywall/PaywallModal';
+import InterpretationMarkdown from '@/components/ui/InterpretationMarkdown';
 
 function ordinal(n) {
   if (!n) return '';
@@ -251,9 +252,9 @@ function AspectRow({ a, chart, date, transitPlanets, natalPlanets, canViewInterp
         </span>
         <div className="flex items-center gap-1.5 ml-2 flex-shrink-0">
           {a.exact && (
-            <span className="font-body text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-gold-primary/20 text-gold-accent border border-gold-primary/30 leading-none">exact</span>
+            <span className="font-body text-[0.5625rem] font-semibold px-1.5 py-0.5 rounded-full bg-gold-primary/20 text-gold-accent border border-gold-primary/30 leading-none">exact</span>
           )}
-          <span className="font-body text-[10px] text-brass">{a.orb?.toFixed(1)}°</span>
+          <span className="font-body text-[0.625rem] text-brass">{a.orb?.toFixed(1)}°</span>
           {(() => {
             const tP = transitPlanets?.find(p => p.name === a.transit_planet);
             const nP = natalPlanets?.find(p => p.name === a.natal_planet);
@@ -263,7 +264,7 @@ function AspectRow({ a, chart, date, transitPlanets, natalPlanets, canViewInterp
             );
             if (!est) return null;
             return (
-              <span className={`font-body text-[10px] ml-1.5 ${est.withinDay ? 'text-white/50' : 'text-white/25'}`}>
+              <span className={`font-body text-[0.625rem] ml-1.5 ${est.withinDay ? 'text-white/50' : 'text-white/25'}`}>
                 {formatTime(est.time, timeFormat)}
               </span>
             );
@@ -281,11 +282,11 @@ function AspectRow({ a, chart, date, transitPlanets, natalPlanets, canViewInterp
           {loading ? (
             <div className="flex items-center gap-1.5 py-1">
               <Loader2 size={11} className="animate-spin text-gold-primary" />
-              <span className="font-body text-[11px] text-brass italic">Interpreting...</span>
+              <span className="font-body text-[0.6875rem] text-brass italic">Interpreting...</span>
             </div>
           ) : (
             <>
-              <p className="font-body text-xs text-white/90 leading-snug">{highlightSynthesisText(text, onHighlightTransit, 'text-gold-primary')}</p>
+              <InterpretationMarkdown text={text} onHighlightTransit={onHighlightTransit} highlightClass="text-gold-primary" className="font-body text-xs text-white/90 leading-snug" />
               <Eli5Button context={eli5Context} />
             </>
           )}
@@ -306,8 +307,8 @@ function StationPill({ station }) {
     <div className={`border-l-2 rounded-r-lg px-3 py-2.5 ${isRx ? 'border-l-gold-accent/80 bg-gold-accent/10' : 'border-l-green-soft/60 bg-green-soft/10'}`}>
       <span className={`font-body text-xs ${isRx ? 'text-gold-accent' : 'text-green-soft'}`}>
         <span className="opacity-60">{g}</span> <strong>{station.planet}</strong> stations {isRx ? 'retrograde ℞' : 'direct ↗'} in <SignName sign={station.sign} />
-        {isApproaching && expectedLabel && <span className="ml-1.5 text-[9px] text-brass/60">in {station.days_until}d · est. {expectedLabel}</span>}
-        {!isApproaching && <span className="ml-1.5 text-[9px] font-semibold text-gold-accent">today</span>}
+        {isApproaching && expectedLabel && <span className="ml-1.5 text-[0.5625rem] text-brass/60">in {station.days_until}d · est. {expectedLabel}</span>}
+        {!isApproaching && <span className="ml-1.5 text-[0.5625rem] font-semibold text-gold-accent">today</span>}
       </span>
     </div>
   );
@@ -320,7 +321,7 @@ function RetrogradePill({ tp, stations }) {
     <div className="border-l-2 border-l-celestial-purple/60 rounded-r-lg px-3 py-2 bg-celestial-purple/5">
       <span className="font-body text-xs text-celestial-purple">
         <span className="opacity-60">{g}</span> <strong>{tp.name}</strong> ℞ in <SignName sign={tp.sign} />
-        {station && <span className="ml-1.5 text-[9px] font-semibold text-gold-accent">stationing {station.type}</span>}
+        {station && <span className="ml-1.5 text-[0.5625rem] font-semibold text-gold-accent">stationing {station.type}</span>}
       </span>
     </div>
   );
@@ -349,7 +350,7 @@ function TransitSection({ items, sortMode, transitPlanets, natalPlanets, chart, 
           if (!groupItems?.length) return null;
           return (
             <div key={asp}>
-              <p className="font-body text-[10px] text-white/40 uppercase tracking-wide mb-1">{ASPECT_LABELS[asp]}</p>
+              <p className="font-body text-[0.625rem] text-white/40 uppercase tracking-wide mb-1">{ASPECT_LABELS[asp]}</p>
               <div className="space-y-1">
                 {groupItems.map((a, i) => (
                    <AspectRow key={`${asp}_${i}`} a={a} chart={chart} date={date} transitPlanets={transitPlanets} natalPlanets={natalPlanets} canViewInterpretations={canViewInterpretations} timeFormat={timeFormat} onHighlightTransit={onHighlightTransit} preloadedText={preloadedTexts?.get(a)} />
@@ -379,7 +380,7 @@ function FilterBar({ filters, setFilters, sortMode, setSortMode }) {
       <div className="flex items-center gap-3">
         <button
           onClick={() => setOpen(o => !o)}
-          className="flex items-center gap-1.5 font-body text-[10px] text-brass hover:text-white/60 transition-colors"
+          className="flex items-center gap-1.5 font-body text-[0.625rem] text-brass hover:text-white/60 transition-colors"
         >
           <SlidersHorizontal size={11} />
           <span>Filters</span>
@@ -387,13 +388,13 @@ function FilterBar({ filters, setFilters, sortMode, setSortMode }) {
         </button>
         <div className="flex items-center gap-1.5">
           <ArrowUpDown size={11} className="text-brass" />
-          <span className="font-body text-[10px] text-brass">Sort:</span>
+          <span className="font-body text-[0.625rem] text-brass">Sort:</span>
           <div className="flex bg-white/[0.04] rounded-full p-0.5">
             {SORT_OPTIONS.map(opt => (
               <button
                 key={opt.key}
                 onClick={() => setSortMode(opt.key)}
-                className={`px-2 py-0.5 rounded-full font-body text-[10px] transition-all ${
+                className={`px-2 py-0.5 rounded-full font-body text-[0.625rem] transition-all ${
                   sortMode === opt.key
                     ? 'bg-gold-primary/20 text-white'
                     : 'text-white/30 hover:text-white/50'
@@ -411,7 +412,7 @@ function FilterBar({ filters, setFilters, sortMode, setSortMode }) {
             <button
               key={opt.key}
               onClick={() => setFilters(f => ({ ...f, [opt.key]: !f[opt.key] }))}
-              className={`px-2.5 py-1 rounded-full border font-body text-[10px] transition-all ${
+              className={`px-2.5 py-1 rounded-full border font-body text-[0.625rem] transition-all ${
                 filters[opt.key]
                   ? 'border-gold-accent/60 bg-gold-primary/10 text-white'
                   : 'border-gold-primary/20 text-brass/40'
@@ -465,7 +466,7 @@ export default function TransitList({ data, chart, date, canViewInterpretations 
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex-1 py-2 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${
+            className={`flex-1 py-2 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${
               tab === t.key ? 'border-gold-accent text-white font-semibold' : 'border-transparent text-white/40 hover:text-white/70'
             }`}
           >
@@ -491,7 +492,7 @@ export default function TransitList({ data, chart, date, canViewInterpretations 
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2 h-2 rounded-full flex-shrink-0 bg-bronze/50"></div>
                 <p className="font-body text-xs text-brass uppercase tracking-widest">Moon Transits</p>
-                <span className="font-body text-[10px] text-brass bg-bronze/10 border border-bronze/20 rounded-full px-2 py-0.5 ml-1">
+                <span className="font-body text-[0.625rem] text-brass bg-bronze/10 border border-bronze/20 rounded-full px-2 py-0.5 ml-1">
                   ☽ <SignName sign={moonSign} />{moonHouse ? ` · ${ordinal(moonHouse)} House` : ''}
                   {isExactNewMoon ? ' · 🌑 New Moon' : isExactFullMoon ? ' · 🌕 Full Moon' : ''}
                 </span>
@@ -499,7 +500,7 @@ export default function TransitList({ data, chart, date, canViewInterpretations 
               {lunarAspects?.length > 0 ? (
                 <TransitSection items={lunarAspects} sortMode={sortMode} transitPlanets={transitPlanets} natalPlanets={natalPlanets} chart={chart} date={date} canViewInterpretations={canViewInterpretations} timeFormat={timeFormat} onHighlightTransit={onHighlightTransit} />
               ) : (
-                <p className="font-body text-[11px] text-brass italic pl-4">No exact lunar aspects today.</p>
+                <p className="font-body text-[0.6875rem] text-brass italic pl-4">No exact lunar aspects today.</p>
               )}
             </div>
           )}

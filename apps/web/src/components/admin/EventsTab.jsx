@@ -181,7 +181,7 @@ export default function EventsTab() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {EVENT_FIELDS.map((f) => (
               <div key={f.key}>
-                <label className="font-label text-[9px] font-semibold uppercase tracking-[0.05em] text-brass/60">
+                <label className="font-label text-[0.5625rem] font-semibold uppercase tracking-[0.05em] text-brass/60">
                   {f.label}
                 </label>
                 <input
@@ -237,7 +237,7 @@ export default function EventsTab() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-display text-sm font-bold text-cream">{ev.event_name}</p>
                   <span
-                    className={`font-body text-[9px] rounded-full px-2 py-0.5 border ${
+                    className={`font-body text-[0.5625rem] rounded-full px-2 py-0.5 border ${
                       ev.is_active
                         ? 'bg-green-400/10 text-green-300 border-green-400/25'
                         : 'bg-white/[0.04] text-brass/60 border-white/10'
@@ -246,15 +246,15 @@ export default function EventsTab() {
                     {ev.is_active ? 'Active' : 'Inactive'}
                   </span>
                 </div>
-                <p className="font-body text-[11px] text-brass/60 mt-0.5">
+                <p className="font-body text-[0.6875rem] text-brass/60 mt-0.5">
                   {ev.start_date} → {ev.end_date} · promo {ev.promo_code} (until {ev.promo_valid_until}) · src={ev.qr_src_param}
                 </p>
-                {ev.notify_email && <p className="font-body text-[11px] text-brass/40">notify: {ev.notify_email}</p>}
+                {ev.notify_email && <p className="font-body text-[0.6875rem] text-brass/40">notify: {ev.notify_email}</p>}
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   onClick={() => toggleActive(ev)}
-                  className="font-body text-[11px] text-gold-accent underline underline-offset-2"
+                  className="font-body text-[0.6875rem] text-gold-accent underline underline-offset-2"
                 >
                   {ev.is_active ? 'Deactivate' : 'Activate'}
                 </button>
@@ -274,7 +274,7 @@ export default function EventsTab() {
             </div>
 
             <div className="border-t border-white/[0.06] pt-3 space-y-2">
-              <p className="font-label text-[9px] font-semibold uppercase tracking-[0.05em] text-brass/60">
+              <p className="font-label text-[0.5625rem] font-semibold uppercase tracking-[0.05em] text-brass/60">
                 Incentive stock ({skus.length} SKUs)
               </p>
               {skus.map((sku) => {
@@ -285,7 +285,7 @@ export default function EventsTab() {
                       <p className="font-body text-xs text-cream truncate">
                         {sku.is_remote ? '★ Remote keepsake' : `${sku.tier} ${sku.billing_cycle}${sku.metal ? ' · ' + sku.metal : ''} · ${sku.item_type}`}
                       </p>
-                      <p className="font-body text-[10px] text-brass/40 truncate">{sku.sku_id}</p>
+                      <p className="font-body text-[0.625rem] text-brass/40 truncate">{sku.sku_id}</p>
                     </div>
                     {d ? (
                       <>
@@ -394,7 +394,7 @@ export default function EventsTab() {
                     placeholder="Qty"
                     className="w-16 px-2 py-1 rounded-lg bg-white/[0.05] border border-white/10 font-body text-xs text-cream outline-none"
                   />
-                  <label className="flex items-center gap-1 font-body text-[10px] text-brass/60">
+                  <label className="flex items-center gap-1 font-body text-[0.625rem] text-brass/60">
                     <input
                       type="checkbox"
                       checked={skuDraft.is_remote}
@@ -420,7 +420,7 @@ export default function EventsTab() {
               ) : (
                 <button
                   onClick={() => setSkuDraft({ eventId: ev.event_id, ...EMPTY_SKU })}
-                  className="flex items-center gap-1 font-body text-[11px] text-gold-accent/80 underline underline-offset-2"
+                  className="flex items-center gap-1 font-body text-[0.6875rem] text-gold-accent/80 underline underline-offset-2"
                 >
                   <Plus size={11} /> Add SKU
                 </button>

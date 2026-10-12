@@ -192,7 +192,7 @@ export default function MarketingCalendar() {
       <div className="px-5 py-4 flex items-center justify-between flex-wrap gap-3 border-b border-white/[0.06]">
         <div>
           <h2 className="font-display text-lg font-bold text-white">{phase.theme}</h2>
-          <p className="font-body text-[10px] uppercase tracking-widest text-white/40 mt-0.5">{phase.months}</p>
+          <p className="font-body text-[0.625rem] uppercase tracking-widest text-white/40 mt-0.5">{phase.months}</p>
         </div>
         {/* Month strip — highlights active phase's months in its color */}
         <div className="flex gap-1 flex-wrap">
@@ -201,7 +201,7 @@ export default function MarketingCalendar() {
             return (
               <div
                 key={m}
-                className="font-body text-[9px] uppercase tracking-wider px-2 py-1 rounded transition-all"
+                className="font-body text-[0.5625rem] uppercase tracking-wider px-2 py-1 rounded transition-all"
                 style={{
                   background: isHighlighted ? `${phase.color}22` : "rgba(255,255,255,0.03)",
                   color: isHighlighted ? phase.color : "rgba(255,255,255,0.25)",
@@ -216,7 +216,7 @@ export default function MarketingCalendar() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => setActiveTrack(null)}
-            className={`font-body text-[10px] px-3 py-1 rounded-full border transition-colors ${
+            className={`font-body text-[0.625rem] px-3 py-1 rounded-full border transition-colors ${
               activeTrack === null
                 ? "border-gold-accent bg-gold-primary/20 text-white"
                 : "border-white/20 text-white/50 hover:border-white/40 hover:text-white/70"
@@ -228,7 +228,7 @@ export default function MarketingCalendar() {
             <button
               key={t.name}
               onClick={() => setActiveTrack(activeTrack === t.name ? null : t.name)}
-              className={`font-body text-[10px] px-3 py-1 rounded-full border transition-colors ${
+              className={`font-body text-[0.625rem] px-3 py-1 rounded-full border transition-colors ${
                 activeTrack === t.name
                   ? "border-gold-accent bg-gold-primary/20 text-white"
                   : "border-white/20 text-white/50 hover:border-white/40 hover:text-white/70"
@@ -246,7 +246,7 @@ export default function MarketingCalendar() {
           .filter((t) => activeTrack === null || t.name === activeTrack)
           .map((track) => (
             <div key={track.name}>
-              <p className="font-body text-[10px] uppercase tracking-widest text-white/40 mb-3 pb-2 border-b border-white/[0.06]">
+              <p className="font-body text-[0.625rem] uppercase tracking-widest text-white/40 mb-3 pb-2 border-b border-white/[0.06]">
                 {track.name}
               </p>
               <div className="space-y-2">
@@ -260,7 +260,7 @@ export default function MarketingCalendar() {
                       style={{ borderLeft: `3px solid ${isDone ? "rgba(168,200,168,0.5)" : `${phase.color}40`}` }}
                     >
                       <span
-                        className="flex-shrink-0 font-body text-[9px] uppercase tracking-wider px-2 py-0.5 rounded mt-0.5"
+                        className="flex-shrink-0 font-body text-[0.5625rem] uppercase tracking-wider px-2 py-0.5 rounded mt-0.5"
                         style={{ background: tc.bg, color: tc.text, border: `1px solid ${tc.border}` }}
                       >
                         {isDone ? "✓ shipped" : item.tag}
@@ -278,12 +278,12 @@ export default function MarketingCalendar() {
 
       {/* Tag Legend */}
       <div className="mx-5 mb-6 celestial-card px-4 py-3">
-        <p className="font-body text-[9px] uppercase tracking-widest text-white/30 mb-2">Tag Legend</p>
+        <p className="font-body text-[0.5625rem] uppercase tracking-widest text-white/30 mb-2">Tag Legend</p>
         <div className="flex flex-wrap gap-1.5">
           {Object.entries(TAG_STYLES).map(([tag, tc]) => (
             <span
               key={tag}
-              className="font-body text-[9px] uppercase tracking-wider px-2 py-0.5 rounded"
+              className="font-body text-[0.5625rem] uppercase tracking-wider px-2 py-0.5 rounded"
               style={{ background: tc.bg, color: tc.text, border: `1px solid ${tc.border}` }}
             >
               {tag === "done" ? "✓ shipped" : tag}

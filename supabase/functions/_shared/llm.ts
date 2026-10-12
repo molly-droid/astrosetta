@@ -41,6 +41,27 @@ export function strictify(
   return out;
 }
 
+/**
+ * Replace em/en dashes with house-style punctuation (AI-04). A dash used as a
+ * parenthetical ("word — word") becomes a comma; one used as a range or a
+ * leading marker becomes a plain hyphen or is dropped.
+ */
+export function stripDashes<T>(value: T): T {
+  if (typeof value === "string") {
+    return value
+      .replace(/\s+[—–]\s+/g, ", ")   // parenthetical dash → comma
+      .replace(/(\d)\s*[—–]\s*(\d)/g, "$1-$2") // numeric range → hyphen
+      .replace(/[—–]/g, "-") as unknown as T;
+  }
+  if (Array.isArray(value)) return value.map((v) => stripDashes(v)) as unknown as T;
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = stripDashes(v);
+    return out as unknown as T;
+  }
+  return value;
+}
+
 export async function invokeLLM({
   prompt,
   response_json_schema,
@@ -107,7 +128,10 @@ export async function invokeLLM({
         `invokeLLM: output truncated at max_tokens (${text.length} chars)`,
       );
     }
-    if (response_json_schema) return JSON.parse(text);
-    return text;
+    // AI-04: models keep reaching for em/en dashes however firmly the prompt
+    // says not to, so strip them here — the one point every function's output
+    // passes through. Applied to string leaves of structured responses too.
+    if (response_json_schema) return stripDashes(JSON.parse(text));
+    return stripDashes(text);
   });
 }

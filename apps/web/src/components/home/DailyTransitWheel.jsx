@@ -89,9 +89,9 @@ export default function DailyTransitWheel({ transits, bare = false }) {
   if (!transits?.transitPlanets?.length) return null;
 
   const hiddenPoints = new Set([
-    ...(user?.show_asteroids === false ? [...ASTEROIDS] : []),
-    ...(user?.show_lilith === false ? ['Black Moon Lilith'] : []),
-    ...(user?.show_nodes === false ? ['North Node', 'South Node'] : []),
+    ...(user?.show_asteroids !== true ? [...ASTEROIDS] : []),
+    ...(user?.show_lilith !== true ? ['Black Moon Lilith'] : []),
+    ...(user?.show_nodes !== true ? ['North Node', 'South Node'] : []),
   ]);
   const planets = transits.transitPlanets.filter(p => !hiddenPoints.has(p.name));
   const placed = spreadPlanets(planets);
@@ -256,12 +256,12 @@ export default function DailyTransitWheel({ transits, bare = false }) {
               <div className="flex items-center gap-2">
                 <span className="font-display text-sm text-gold-accent">{PLANET_GLYPHS[p1?.name]}</span>
                 <span className="font-body text-xs text-white">{p1?.name}</span>
-                <span className="font-body text-[10px] text-white/50">{p1?.sign} {p1?.degree?.toFixed(0)}°</span>
+                <span className="font-body text-[0.625rem] text-white/50">{p1?.sign} {p1?.degree?.toFixed(0)}°</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-display text-sm text-gold-accent">{PLANET_GLYPHS[p2?.name]}</span>
                 <span className="font-body text-xs text-white">{p2?.name}</span>
-                <span className="font-body text-[10px] text-white/50">{p2?.sign} {p2?.degree?.toFixed(0)}°</span>
+                <span className="font-body text-[0.625rem] text-white/50">{p2?.sign} {p2?.degree?.toFixed(0)}°</span>
               </div>
             </div>
           );
@@ -276,7 +276,7 @@ export default function DailyTransitWheel({ transits, bare = false }) {
               <span className="font-display text-base text-gold-accent">{PLANET_GLYPHS[p.name]}</span>
               <span className="font-display text-sm font-bold text-white">{p.name}</span>
               <span className="font-body text-xs text-white/60">in {p.sign} {p.degree?.toFixed(1)}°</span>
-              {p.retrograde && <span className="text-[10px] font-body text-gold-accent italic px-1.5 py-0.5 bg-gold-primary/10 rounded-full">℞ Retrograde</span>}
+              {p.retrograde && <span className="text-[0.625rem] font-body text-gold-accent italic px-1.5 py-0.5 bg-gold-primary/10 rounded-full">℞ Retrograde</span>}
             </div>
             {aspForPlanet.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
@@ -284,7 +284,7 @@ export default function DailyTransitWheel({ transits, bare = false }) {
                   const other = a.p1 === selected ? a.p2 : a.p1;
                   const col = ASPECT_COLORS[a.asp] || '#8B7355';
                   return (
-                    <span key={i} className="font-body text-[10px] px-2 py-0.5 rounded-full"
+                    <span key={i} className="font-body text-[0.625rem] px-2 py-0.5 rounded-full"
                       style={{ background: `${col}18`, color: col, border: `1px solid ${col}33` }}>
                       {ASPECT_GLYPHS[a.asp]} {other}
                     </span>
@@ -300,7 +300,7 @@ export default function DailyTransitWheel({ transits, bare = false }) {
       {planets.filter(p => p.retrograde).length > 0 && (
         <div className="flex flex-wrap gap-1.5 pt-1">
           {planets.filter(p => p.retrograde).map(p => (
-            <span key={p.name} className="font-body text-[10px] text-gold-accent/70 px-2 py-0.5 bg-gold-primary/10 rounded-full">
+            <span key={p.name} className="font-body text-[0.625rem] text-gold-accent/70 px-2 py-0.5 bg-gold-primary/10 rounded-full">
               {PLANET_GLYPHS[p.name]} {p.name} ℞
             </span>
           ))}

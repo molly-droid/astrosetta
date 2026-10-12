@@ -24,8 +24,8 @@ export function ReadingDemo() {
 
       <p className="font-display text-base font-bold text-white">Saturn square Venus</p>
       <div className="flex gap-2">
-        <span className="px-2 py-0.5 rounded-full font-body text-[10px]" style={{ background: 'rgba(201,169,97,0.15)', color: GOLD }}>Applying</span>
-        <span className="px-2 py-0.5 rounded-full font-body text-[10px]" style={{ background: 'rgba(157,180,200,0.1)', color: '#9DB4C8' }}>Square</span>
+        <span className="px-2 py-0.5 rounded-full font-body text-[0.625rem]" style={{ background: 'rgba(201,169,97,0.15)', color: GOLD }}>Applying</span>
+        <span className="px-2 py-0.5 rounded-full font-body text-[0.625rem]" style={{ background: 'rgba(157,180,200,0.1)', color: '#9DB4C8' }}>Square</span>
       </div>
 
       {!expanded ? (
@@ -38,9 +38,9 @@ export function ReadingDemo() {
             Saturn pressing on Venus asks you to get real about relationships and what you value. There's friction here, but it's the kind that clarifies. Commitments get tested, and the ones that hold are the ones worth keeping.
           </p>
           <div className="flex flex-wrap gap-1.5 pt-1">
-            <span className="px-2 py-0.5 rounded-full font-body text-[10px]" style={{ background: 'rgba(201,169,97,0.1)', color: GOLD }}>Structure</span>
-            <span className="px-2 py-0.5 rounded-full font-body text-[10px]" style={{ background: 'rgba(216,180,194,0.1)', color: '#D8B4C2' }}>Relationships</span>
-            <span className="px-2 py-0.5 rounded-full font-body text-[10px]" style={{ background: 'rgba(168,200,168,0.1)', color: '#A8C8A8' }}>Values</span>
+            <span className="px-2 py-0.5 rounded-full font-body text-[0.625rem]" style={{ background: 'rgba(201,169,97,0.1)', color: GOLD }}>Structure</span>
+            <span className="px-2 py-0.5 rounded-full font-body text-[0.625rem]" style={{ background: 'rgba(216,180,194,0.1)', color: '#D8B4C2' }}>Relationships</span>
+            <span className="px-2 py-0.5 rounded-full font-body text-[0.625rem]" style={{ background: 'rgba(168,200,168,0.1)', color: '#A8C8A8' }}>Values</span>
           </div>
         </div>
       )}
@@ -94,7 +94,7 @@ export function QuizDemo() {
     >
       <div className="flex items-center justify-between">
         <span className="font-body text-xs tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.4)' }}>Daily Quiz</span>
-        <span className="font-body text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>Sample question</span>
+        <span className="font-body text-[0.625rem]" style={{ color: 'rgba(255,255,255,0.25)' }}>Sample question</span>
       </div>
 
       <div className="flex items-center gap-3">
@@ -202,7 +202,7 @@ export function ProgressDemo() {
                   {tier.glyph}
                 </span>
               </div>
-              <span className="font-body text-[9px] transition-colors duration-500" style={{ color: reached ? tier.color : 'rgba(255,255,255,0.2)' }}>
+              <span className="font-body text-[0.5625rem] transition-colors duration-500" style={{ color: reached ? tier.color : 'rgba(255,255,255,0.2)' }}>
                 {tier.name}
               </span>
             </div>
@@ -217,7 +217,7 @@ export function ProgressDemo() {
         />
       </div>
 
-      <p className="font-body text-[10px] text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
+      <p className="font-body text-[0.625rem] text-center" style={{ color: 'rgba(255,255,255,0.3)' }}>
         {active === 0 ? 'Start your journey' : active > TIERS.length ? 'Maestro achieved!' : `Now in ${TIERS[active - 1].name} tier`}
       </p>
     </div>

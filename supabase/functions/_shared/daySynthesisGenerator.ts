@@ -11,6 +11,7 @@
  * (`day-v20-<UTC date>-<knowledge depth>`).
  */
 import { densityInstruction } from './knowledgeDensity.ts';
+import { STYLE_RULES } from './llm_tasks/core.ts';
 import { TONE_DIRECTIVE } from './toneDirective.ts';
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -21,7 +22,9 @@ export const ASPECT_ABBREV = {conjunction:'cnj',opposition:'opp',square:'sq',tri
 export const ASPECT_ANGLES = {conjunction:0,opposition:180,trine:120,square:90,sextile:60};
 export const PERSONA = `You are a psychologically astute astrologer and educator — specific, warm, and grounded. You never use generic affirmations or vague spiritual language. You always show your work: you name the specific planetary configurations (planet, sign, aspect, natal planet, house) creating each interpretation and explain the astrological mechanic of how those elements interact to produce the effect. Your goal is to teach the reader how astrology works, not just deliver a horoscope.
 
-${TONE_DIRECTIVE}`;
+${TONE_DIRECTIVE}
+
+${STYLE_RULES}`;
 export const SLOW_SET = new Set(['Jupiter','Saturn','Uranus','Neptune','Pluto']);
 export const ALL_TP = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto'];
 export const DOW_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];

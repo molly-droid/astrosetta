@@ -17,19 +17,19 @@ function QueueCard({ order, onPickup }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-display text-sm font-bold text-cream truncate">{order.first_name}</p>
-          <p className="font-body text-[11px] text-brass/70">
+          <p className="font-body text-[0.6875rem] text-brass/70">
             {order.tier === 'premium' ? 'Premium' : 'Core'} {order.billing_cycle} · {item}
           </p>
-          <p className="font-body text-[11px] text-white/40">{big3}</p>
+          <p className="font-body text-[0.6875rem] text-white/40">{big3}</p>
           {order.sold_out && (
-            <p className="font-body text-[10px] text-red-300 mt-0.5">sold out — mail when restocked</p>
+            <p className="font-body text-[0.625rem] text-red-300 mt-0.5">sold out — mail when restocked</p>
           )}
         </div>
         <div className="text-right shrink-0 space-y-1.5">
-          <p className="font-body text-[10px] text-brass/50">{fmtTime(order.created_date)}</p>
+          <p className="font-body text-[0.625rem] text-brass/50">{fmtTime(order.created_date)}</p>
           <button
             onClick={() => onPickup(order)}
-            className="px-2.5 py-1 rounded-lg font-body text-[11px] font-semibold flex items-center gap-1 mx-auto"
+            className="px-2.5 py-1 rounded-lg font-body text-[0.6875rem] font-semibold flex items-center gap-1 mx-auto"
             style={{
               background: 'rgba(168,200,168,0.15)',
               color: '#A8C8A8',
@@ -52,17 +52,17 @@ function RemoteCard({ order }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-display text-sm font-bold text-cream truncate">{order.first_name}</p>
-          <p className="font-body text-[11px] text-brass/70">
+          <p className="font-body text-[0.6875rem] text-brass/70">
             {order.tier === 'premium' ? 'Premium' : 'Core'} {order.billing_cycle} · {item}
           </p>
-          <p className="font-body text-[11px] text-white/40 mt-0.5">
+          <p className="font-body text-[0.6875rem] text-white/40 mt-0.5">
             {[a.name, a.line1, a.line2, `${a.city || ''} ${a.state || ''} ${a.zip || ''}`.trim()]
               .filter(Boolean)
               .join(' · ')}
           </p>
         </div>
         <span
-          className="font-body text-[10px] rounded-full px-2 py-0.5 border shrink-0 bg-gold-primary/10 text-gold-accent border-gold-primary/30"
+          className="font-body text-[0.625rem] rounded-full px-2 py-0.5 border shrink-0 bg-gold-primary/10 text-gold-accent border-gold-primary/30"
         >
           MAIL
         </span>
@@ -156,7 +156,7 @@ export default function EventQueueTab() {
           {liveSkus.map((s) => (
             <span
               key={s.sku_id}
-              className={`font-body text-[10px] rounded-full px-2.5 py-1 border ${
+              className={`font-body text-[0.625rem] rounded-full px-2.5 py-1 border ${
                 s.stock_remaining > 0
                   ? 'bg-white/[0.04] text-brass/80 border-white/10'
                   : 'bg-red-400/10 text-red-300 border-red-400/25'
@@ -177,28 +177,28 @@ export default function EventQueueTab() {
           <div className="space-y-2">
             <div className="flex items-center gap-1.5">
               <Clock size={12} className="text-gold-accent" />
-              <p className="font-label text-[10px] font-semibold uppercase tracking-[0.05em] text-brass/60">
+              <p className="font-label text-[0.625rem] font-semibold uppercase tracking-[0.05em] text-brass/60">
                 Being made — Premium ({pending.length})
               </p>
             </div>
             {pending.length ? (
               pending.map((o) => <QueueCard key={o.id} order={o} onPickup={markPickedUp} />)
             ) : (
-              <p className="font-body text-[11px] text-brass/40 italic pl-4">None right now.</p>
+              <p className="font-body text-[0.6875rem] text-brass/40 italic pl-4">None right now.</p>
             )}
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center gap-1.5">
               <PackageCheck size={12} className="text-green-400/80" />
-              <p className="font-label text-[10px] font-semibold uppercase tracking-[0.05em] text-brass/60">
+              <p className="font-label text-[0.625rem] font-semibold uppercase tracking-[0.05em] text-brass/60">
                 Ready now — Core ({ready.length})
               </p>
             </div>
             {ready.length ? (
               ready.map((o) => <QueueCard key={o.id} order={o} onPickup={markPickedUp} />)
             ) : (
-              <p className="font-body text-[11px] text-brass/40 italic pl-4">None right now.</p>
+              <p className="font-body text-[0.6875rem] text-brass/40 italic pl-4">None right now.</p>
             )}
           </div>
 
@@ -206,7 +206,7 @@ export default function EventQueueTab() {
             <div className="space-y-2">
               <div className="flex items-center gap-1.5">
                 <Mail size={12} className="text-gold-accent" />
-                <p className="font-label text-[10px] font-semibold uppercase tracking-[0.05em] text-brass/60">
+                <p className="font-label text-[0.625rem] font-semibold uppercase tracking-[0.05em] text-brass/60">
                   Mail to buyer — promo code ({remote.length})
                 </p>
               </div>
@@ -217,7 +217,7 @@ export default function EventQueueTab() {
           )}
 
           {pickedUp.length > 0 && (
-            <p className="text-center font-body text-[11px] text-brass/40">
+            <p className="text-center font-body text-[0.6875rem] text-brass/40">
               {pickedUp.length} picked up ✓
             </p>
           )}

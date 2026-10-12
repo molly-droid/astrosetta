@@ -80,7 +80,7 @@ export default function SettingsTab() {
                       ? <Check size={13} className="text-gold-accent ml-auto" />
                       : null}
                 </div>
-                <span className="font-body text-[10px] text-white/45">{opt.hint}</span>
+                <span className="font-body text-[0.625rem] text-white/45">{opt.hint}</span>
               </button>
             );
           })}

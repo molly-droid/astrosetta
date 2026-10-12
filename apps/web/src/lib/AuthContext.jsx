@@ -137,6 +137,20 @@ export const AuthProvider = ({ children }) => {
     return currentUser;
   };
 
+  // Refetch the UserProgress record (B-05/B-06: it was loaded once at boot, so
+  // progress bars across Profile/Learn/Home went stale after quizzes and
+  // module completions until a full app restart).
+  const reloadProgress = async () => {
+    try {
+      const recs = await base44.entities.UserProgress.filter({});
+      const best = pickBestProgress(recs);
+      setProgressRecord(best);
+      return best;
+    } catch {
+      return null;
+    }
+  };
+
   const impersonate = (targetUser) => {
     if (realUser?.role !== 'admin') return;
     setImpersonatedUser(targetUser);
@@ -175,6 +189,7 @@ export const AuthProvider = ({ children }) => {
       authChecked,
       progressRecord,
       setProgressRecord,
+      reloadProgress,
       logout,
       navigateToLogin,
       checkUserAuth,

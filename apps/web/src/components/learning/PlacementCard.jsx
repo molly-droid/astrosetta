@@ -138,7 +138,7 @@ export default function PlacementCard({ placementKey, user, progress, onComplete
       <div className="text-center space-y-2">
         <div className="text-3xl text-gold-accent">{glyph}</div>
         <h2 className="font-display text-2xl font-bold text-deep-blue">{displayName}</h2>
-        <span className="inline-block text-[10px] font-body uppercase tracking-widest border border-gold-primary/50 text-brass px-3 py-0.5 rounded-full">
+        <span className="inline-block text-[0.625rem] font-body uppercase tracking-widest border border-gold-primary/50 text-brass px-3 py-0.5 rounded-full">
           {PLACEMENT_TYPE_LABELS[placementType] || placementType}
         </span>
       </div>
@@ -157,7 +157,7 @@ export default function PlacementCard({ placementKey, user, progress, onComplete
               <div className="flex items-center justify-between">
                 <ToneBadge tone={interp.tone} />
                 {interp.rating_score > 0 && (
-                  <span className="text-[10px] font-body text-brass">★ {interp.rating_score?.toFixed(1)}</span>
+                  <span className="text-[0.625rem] font-body text-brass">★ {interp.rating_score?.toFixed(1)}</span>
                 )}
               </div>
               <p className="font-body text-sm text-deep-blue leading-relaxed">{interp.text}</p>
@@ -177,7 +177,7 @@ export default function PlacementCard({ placementKey, user, progress, onComplete
       {/* Rating */}
       {!completed && (
         <div className="space-y-2">
-          <p className="text-[11px] font-body text-brass uppercase tracking-widest text-center">Did this resonate?</p>
+          <p className="text-[0.6875rem] font-body text-brass uppercase tracking-widest text-center">Did this resonate?</p>
           <div className="flex justify-center gap-3">
             {[
               { value: 'helpful', icon: ThumbsUp, label: 'Helpful' },
@@ -194,7 +194,7 @@ export default function PlacementCard({ placementKey, user, progress, onComplete
                 }`}
               >
                 <Icon size={16} strokeWidth={1.5} />
-                <span className="text-[10px] font-body">{label}</span>
+                <span className="text-[0.625rem] font-body">{label}</span>
               </button>
             ))}
           </div>

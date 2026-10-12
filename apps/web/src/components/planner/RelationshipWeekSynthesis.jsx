@@ -92,7 +92,7 @@ export default function RelationshipWeekSynthesis({ days, userChart, partnerChar
         <div className="flex items-center gap-2.5 flex-wrap">
           <Heart size={14} className="text-celestial-pink flex-shrink-0" />
           <span className="font-display text-sm font-semibold text-white">Week at a Glance · with {partnerName}</span>
-          <span className="font-body text-[10px] text-brass/40">{weekLabel}</span>
+          <span className="font-body text-[0.625rem] text-brass/40">{weekLabel}</span>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {loading && <Loader2 size={14} className="animate-spin text-gold-primary" />}
@@ -115,7 +115,7 @@ export default function RelationshipWeekSynthesis({ days, userChart, partnerChar
                   { key: 'personal', label: 'The Bond' },
                   { key: 'collective', label: 'Collective' },
                 ].map((t) => (
-                  <button key={t.key} onClick={() => setSynthTab(t.key)} className={`flex-1 py-2.5 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${synthTab === t.key ? 'border-gold-accent text-white font-semibold' : 'border-transparent text-white/35 hover:text-white/60'}`}>
+                  <button key={t.key} onClick={() => setSynthTab(t.key)} className={`flex-1 py-2.5 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${synthTab === t.key ? 'border-gold-accent text-white font-semibold' : 'border-transparent text-white/35 hover:text-white/60'}`}>
                     {t.label}
                   </button>
                 ))}
@@ -126,7 +126,7 @@ export default function RelationshipWeekSynthesis({ days, userChart, partnerChar
                   <p className="font-body text-sm text-white/90 leading-relaxed pt-2">{highlightOnWhite(synthesis.overview)}</p>
                   {synthesis.relationship_focus && (
                     <div className="rounded-lg border border-celestial-pink/30 bg-celestial-pink/10 p-3">
-                      <p className="font-body text-[10px] uppercase tracking-widest font-semibold mb-1.5 text-celestial-pink">
+                      <p className="font-body text-[0.625rem] uppercase tracking-widest font-semibold mb-1.5 text-celestial-pink">
                         <Heart size={11} className="inline mr-1" /> Relationship Focus
                       </p>
                       <p className="font-body text-xs leading-snug text-white">{highlightOnWhite(synthesis.relationship_focus)}</p>
@@ -140,7 +140,7 @@ export default function RelationshipWeekSynthesis({ days, userChart, partnerChar
                   {synthesis.best_areas?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
                       {synthesis.best_areas.map((a, i) => (
-                        <span key={i} className="font-body text-[10px] px-2 py-0.5 rounded-full bg-gold-primary/15 border border-gold-primary/30 text-brass">{a}</span>
+                        <span key={i} className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-gold-primary/15 border border-gold-primary/30 text-brass">{a}</span>
                       ))}
                     </div>
                   )}
@@ -154,7 +154,7 @@ export default function RelationshipWeekSynthesis({ days, userChart, partnerChar
                   {synthesis.collective_tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {synthesis.collective_tags.map((tag, i) => (
-                        <span key={i} className="font-body text-[10px] px-2 py-0.5 rounded-full bg-celestial-blue/15 border border-celestial-blue/30 text-celestial-blue">{tag}</span>
+                        <span key={i} className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-celestial-blue/15 border border-celestial-blue/30 text-celestial-blue">{tag}</span>
                       ))}
                     </div>
                   )}
@@ -173,7 +173,7 @@ export default function RelationshipWeekSynthesis({ days, userChart, partnerChar
                   return (
                     <div key={i} className={`flex gap-2 items-center rounded-lg px-2 py-1.5 ${isToday ? 'bg-gold-primary/10' : ''}`}>
                       <div className="flex flex-col items-center shrink-0 w-7">
-                        <span className={`font-body text-[10px] uppercase tracking-widest ${isToday ? 'text-gold-accent font-bold' : 'text-brass/50'}`}>{DOW_SHORT[d.getDay()]}</span>
+                        <span className={`font-body text-[0.625rem] uppercase tracking-widest ${isToday ? 'text-gold-accent font-bold' : 'text-brass/50'}`}>{DOW_SHORT[d.getDay()]}</span>
                         {moonEmoji && <span className="text-sm leading-none">{moonEmoji}</span>}
                       </div>
                       <p className="font-body text-xs text-white/80 leading-relaxed flex-1">{highlightOnWhite(sentence || '—')}</p>
@@ -184,7 +184,7 @@ export default function RelationshipWeekSynthesis({ days, userChart, partnerChar
 
               <div className="flex items-center justify-end gap-3 pt-1 border-t border-gold-primary/15">
                 <button onClick={() => { if (cacheKey) delete weekSynthesisCache[cacheKey]; clearMemCache('week', dbKey, userId); hasGenerated.current = false; generate(); }}
-                  className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-brass transition-colors">
+                  className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-brass transition-colors">
                   <RefreshCw size={10} /> Regenerate
                 </button>
               </div>

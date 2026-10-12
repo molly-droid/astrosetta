@@ -103,7 +103,7 @@ export default function EmailDigestSpotlight() {
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold-primary/15 border border-gold-accent/30">
               <Sparkles size={11} className="text-gold-accent" />
-              <span className="font-body text-[10px] uppercase tracking-widest text-gold-accent font-semibold">Daily Email Digest</span>
+              <span className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent font-semibold">Daily Email Digest</span>
             </div>
             <div className="w-12 h-12 rounded-full bg-gold-primary/10 border border-gold-primary/20 flex items-center justify-center">
               <Mail size={22} className="text-gold-accent" />
@@ -133,7 +133,7 @@ export default function EmailDigestSpotlight() {
           </div>
 
           <div className="rounded-xl border border-gold-primary/20 bg-gold-primary/5 px-4 py-3">
-            <p className="font-body text-[11px] text-brass/80 leading-relaxed">
+            <p className="font-body text-[0.6875rem] text-brass/80 leading-relaxed">
               <span className="text-gold-accent font-semibold">It's free.</span>{' '}
               You can turn it off anytime from <span className="text-cream">My Info → Details</span>.
             </p>
@@ -181,7 +181,7 @@ function FeatureRow({ title, desc }) {
       </div>
       <div>
         <p className="font-body text-xs font-semibold text-cream">{title}</p>
-        <p className="font-body text-[11px] text-brass/70 leading-snug">{desc}</p>
+        <p className="font-body text-[0.6875rem] text-brass/70 leading-snug">{desc}</p>
       </div>
     </div>
   );

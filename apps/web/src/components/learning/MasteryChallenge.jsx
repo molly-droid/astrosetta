@@ -187,7 +187,7 @@ export default function MasteryChallenge({ module: mod, progress, userId, onClos
             />
           </div>
         </div>
-        <span className="font-body text-[10px] text-brass">{blockIndex + 1} / {blocks.length}</span>
+        <span className="font-body text-[0.625rem] text-brass">{blockIndex + 1} / {blocks.length}</span>
       </div>
 
       {/* Content */}
@@ -197,7 +197,7 @@ export default function MasteryChallenge({ module: mod, progress, userId, onClos
           <div className="celestial-card p-3 mb-4 animate-fade-up" style={{ borderLeft: '3px solid #C9A961' }}>
             <div className="flex items-center gap-1.5 mb-1.5">
               <Sparkles size={12} className="text-gold-accent shrink-0" />
-              <p className="font-body text-[10px] text-gold-accent uppercase tracking-widest">What is the Practitioner's Lens?</p>
+              <p className="font-body text-[0.625rem] text-gold-accent uppercase tracking-widest">What is the Practitioner's Lens?</p>
             </div>
             <p className="font-body text-xs text-white/80 leading-relaxed">
               The Practitioner's Lens is a set of <strong>hypothetical case studies</strong> — like a friend saying, <em>"I've got Saturn in Pisces — what should I expect from my Saturn return?"</em> You'll apply this module's concepts the way a working astrologer would, and each case ends with a <strong>cheat-code</strong>: the practical tip astrologers reach for when reading that placement. These are practice scenarios, separate from the live transit readings on your planner.
@@ -210,7 +210,7 @@ export default function MasteryChallenge({ module: mod, progress, userId, onClos
           <div className="celestial-card p-4 mb-5 animate-fade-up" style={{ borderLeft: '3px solid #C9A961' }}>
             <div className="flex items-center gap-1.5 mb-2">
               <Users size={12} className="text-gold-accent shrink-0" />
-              <p className="font-body text-[10px] text-gold-accent uppercase tracking-widest">Case Study — hypothetical</p>
+              <p className="font-body text-[0.625rem] text-gold-accent uppercase tracking-widest">Case Study — hypothetical</p>
             </div>
             <p className="font-body text-sm text-white/90 leading-relaxed italic">{block.scenario}</p>
           </div>
@@ -269,7 +269,7 @@ export default function MasteryChallenge({ module: mod, progress, userId, onClos
                   <span className="absolute right-4 top-2 text-3xl opacity-10 font-display">✦</span>
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Lightbulb size={12} className="text-gold-accent shrink-0" />
-                    <p className="font-body text-[10px] text-gold-accent uppercase tracking-widest">Practitioner's Cheat-Code</p>
+                    <p className="font-body text-[0.625rem] text-gold-accent uppercase tracking-widest">Practitioner's Cheat-Code</p>
                   </div>
                   <p className="font-body text-xs text-white/90 leading-relaxed">{block.explanation}</p>
                 </div>

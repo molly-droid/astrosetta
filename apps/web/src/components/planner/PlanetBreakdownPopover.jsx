@@ -50,7 +50,7 @@ export default function PlanetBreakdownPopover({ planet, sign, rx, chart, onClos
         <div className="flex items-center justify-between">
           <p className="font-display text-sm font-semibold text-white">
             {glyph} {planet} in {sign}
-            {rx && <span className="ml-1.5 font-body text-[10px] text-celestial-purple">℞ Retrograde</span>}
+            {rx && <span className="ml-1.5 font-body text-[0.625rem] text-celestial-purple">℞ Retrograde</span>}
           </p>
           <button onClick={onClose} className="text-brass/50 hover:text-white"><X size={14} /></button>
         </div>
@@ -60,7 +60,7 @@ export default function PlanetBreakdownPopover({ planet, sign, rx, chart, onClos
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex-1 py-2 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${
+              className={`flex-1 py-2 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${
                 tab === t.key
                   ? 'border-gold-accent text-white font-semibold'
                   : 'border-transparent text-white/35 hover:text-white/60'

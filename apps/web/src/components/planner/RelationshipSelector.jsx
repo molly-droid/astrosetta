@@ -43,7 +43,7 @@ export default function RelationshipSelector({ selectedChart, savedCharts, canUs
 
   return (
     <>
-      <button onClick={handlePillClick} className="relative px-4 py-1.5 rounded-full font-body text-[11px] tracking-wide transition-all flex items-center gap-1 text-white/30 hover:text-white/60">
+      <button onClick={handlePillClick} className="relative px-4 py-1.5 rounded-full font-body text-[0.6875rem] tracking-wide transition-all flex items-center gap-1 text-white/30 hover:text-white/60">
         {!canUse && <Lock size={11} className="shrink-0 text-brass/50" />}
         <span>Relationship</span>
         <ChevronDown size={10} className={`transition-transform shrink-0 ${open ? 'rotate-180' : ''}`} />
@@ -72,7 +72,7 @@ function PartnerPicker({ selectedChart, savedCharts, onSelect, onAddChart, onClo
       <div className="w-full sm:max-w-sm bg-paper rounded-t-2xl sm:rounded-2xl border border-gold-primary/30 shadow-2xl overflow-hidden flex flex-col max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div>
-            <p className="font-body text-[10px] text-celestial-pink/80 uppercase tracking-widest">Relationship Mode</p>
+            <p className="font-body text-[0.625rem] text-celestial-pink/80 uppercase tracking-widest">Relationship Mode</p>
             <h2 className="font-display text-sm font-bold text-cream">Read the Sky With Someone</h2>
           </div>
           <button onClick={onClose} className="text-brass/50 hover:text-brass transition-colors">
@@ -111,10 +111,10 @@ function PartnerRow({ active, onClick, chart }) {
         <div className="flex items-center gap-1.5 flex-wrap">
           <Heart size={11} className="text-celestial-pink shrink-0" />
           <span className={`font-body text-sm truncate ${active ? 'text-cream font-semibold' : 'text-white/90'}`}>{chart.name}</span>
-          {sublabel && <span className="font-body text-[10px] text-brass/50 italic truncate">{sublabel}</span>}
+          {sublabel && <span className="font-body text-[0.625rem] text-brass/50 italic truncate">{sublabel}</span>}
         </div>
         {chart.sun_sign && (
-          <p className="font-body text-[10px] text-brass/50 truncate mt-0.5">
+          <p className="font-body text-[0.625rem] text-brass/50 truncate mt-0.5">
             ☉ {chart.sun_sign} · ☽ {chart.moon_sign} · AC {chart.ascendant_sign}
           </p>
         )}

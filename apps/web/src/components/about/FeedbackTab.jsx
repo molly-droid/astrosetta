@@ -95,7 +95,7 @@ export default function FeedbackTab() {
       <div className="celestial-card p-4 space-y-4">
         {/* Type selector */}
         <div className="space-y-2">
-          <p className="font-body text-[10px] uppercase tracking-widest text-brass">Type</p>
+          <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass">Type</p>
           <div className="grid grid-cols-3 gap-2">
             {TYPE_OPTIONS.map(opt => {
               const Icon = opt.icon;
@@ -111,7 +111,7 @@ export default function FeedbackTab() {
                   }`}
                 >
                   <Icon size={18} style={{ color: active ? opt.color : 'rgba(255,255,255,0.4)' }} />
-                  <span className="font-body text-[10px] text-center leading-tight" style={{ color: active ? '#fff' : 'rgba(255,255,255,0.4)' }}>
+                  <span className="font-body text-[0.625rem] text-center leading-tight" style={{ color: active ? '#fff' : 'rgba(255,255,255,0.4)' }}>
                     {opt.label}
                   </span>
                 </button>
@@ -122,7 +122,7 @@ export default function FeedbackTab() {
 
         {/* Subject */}
         <div className="space-y-1.5">
-          <p className="font-body text-[10px] uppercase tracking-widest text-brass">Subject</p>
+          <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass">Subject</p>
           <input
             type="text"
             value={subject}
@@ -135,7 +135,7 @@ export default function FeedbackTab() {
 
         {/* Description */}
         <div className="space-y-1.5">
-          <p className="font-body text-[10px] uppercase tracking-widest text-brass">Description</p>
+          <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass">Description</p>
           <textarea
             value={description}
             onChange={e => setDescription(e.target.value)}
@@ -148,7 +148,7 @@ export default function FeedbackTab() {
 
         {/* Screenshot upload */}
         <div className="space-y-1.5">
-          <p className="font-body text-[10px] uppercase tracking-widest text-brass">Screenshot (optional)</p>
+          <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass">Screenshot (optional)</p>
           {screenshotUrl ? (
             <div className="relative rounded-lg overflow-hidden border border-gold-primary/20">
               <img src={screenshotUrl} alt="Screenshot" className="w-full max-h-48 object-contain bg-black/30" />
@@ -160,7 +160,11 @@ export default function FeedbackTab() {
               </button>
             </div>
           ) : (
-            <label className="flex flex-col items-center justify-center gap-2 py-6 border-2 border-dashed border-white/[0.1] rounded-lg cursor-pointer hover:border-gold-primary/30 transition-colors">
+            // B-20: `relative` is load-bearing — without it the invisible
+            // absolute-positioned file input resolves against the page and
+            // covers the Subject/Description fields, so typing opened the
+            // photo picker.
+            <label className="relative flex flex-col items-center justify-center gap-2 py-6 border-2 border-dashed border-white/[0.1] rounded-lg cursor-pointer hover:border-gold-primary/30 transition-colors">
               {uploading ? (
                 <Loader2 size={20} className="animate-spin text-gold-primary" />
               ) : (

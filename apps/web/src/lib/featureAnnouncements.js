@@ -85,18 +85,6 @@ export const FEATURE_ANNOUNCEMENTS = [
     tip_key: 'sync_calendar',
   },
   {
-    spotlight_key: 'homescreen_tip',
-    title: 'Save to Home Screen',
-    subtitle: 'Install Astrosetta as an app',
-    description:
-      "Add Astrosetta to your phone's home screen for a native app experience — no app store needed.",
-    icon: 'Smartphone',
-    deep_link: '/home',
-    date: '2026-07-10a',
-    is_quick_tip: true,
-    tip_key: 'homescreen',
-  },
-  {
     spotlight_key: 'chart_interactivity_v1',
     title: 'Interactive Chart Wheel',
     subtitle: 'Click aspects & transits for instant meanings',

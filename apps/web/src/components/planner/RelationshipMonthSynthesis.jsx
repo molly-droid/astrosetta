@@ -108,7 +108,7 @@ export default function RelationshipMonthSynthesis({ date, userChart, partnerCha
         {headerTags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5 pl-5">
             {headerTags.map((tag, i) => (
-              <span key={i} className="font-body text-[10px] px-1.5 py-0.5 rounded-full bg-gold-primary/15 text-brass">{tag}</span>
+              <span key={i} className="font-body text-[0.625rem] px-1.5 py-0.5 rounded-full bg-gold-primary/15 text-brass">{tag}</span>
             ))}
           </div>
         )}
@@ -125,10 +125,10 @@ export default function RelationshipMonthSynthesis({ date, userChart, partnerCha
           {synthesis && (
             <>
               <div className="flex border-b border-white/[0.06]">
-                <button onClick={() => setActiveTab('personal')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${activeTab === 'personal' ? 'border-gold-accent text-white font-semibold' : 'border-transparent text-white/35 hover:text-white/60'}`}>
+                <button onClick={() => setActiveTab('personal')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${activeTab === 'personal' ? 'border-gold-accent text-white font-semibold' : 'border-transparent text-white/35 hover:text-white/60'}`}>
                   <Sparkles size={11} /> The Bond
                 </button>
-                <button onClick={() => setActiveTab('collective')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[11px] tracking-widest uppercase transition-colors border-b-2 ${activeTab === 'collective' ? 'border-gold-accent text-white font-semibold' : 'border-transparent text-white/35 hover:text-white/60'}`}>
+                <button onClick={() => setActiveTab('collective')} className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 font-body text-[0.6875rem] tracking-widest uppercase transition-colors border-b-2 ${activeTab === 'collective' ? 'border-gold-accent text-white font-semibold' : 'border-transparent text-white/35 hover:text-white/60'}`}>
                   <Globe size={11} /> Collective
                 </button>
               </div>
@@ -139,7 +139,7 @@ export default function RelationshipMonthSynthesis({ date, userChart, partnerCha
                     <p className="font-body text-sm text-white/90 leading-relaxed">{highlightOnWhite(synthesis.overview)}</p>
                     {synthesis.relationship_focus && (
                       <div className="rounded-lg border border-celestial-pink/30 bg-celestial-pink/10 p-3">
-                        <p className="font-body text-[10px] uppercase tracking-widest font-semibold mb-1.5 text-celestial-pink">
+                        <p className="font-body text-[0.625rem] uppercase tracking-widest font-semibold mb-1.5 text-celestial-pink">
                           <Heart size={11} className="inline mr-1" /> Relationship Focus
                         </p>
                         <p className="font-body text-xs leading-snug text-white">{highlightOnWhite(synthesis.relationship_focus)}</p>
@@ -153,7 +153,7 @@ export default function RelationshipMonthSynthesis({ date, userChart, partnerCha
                     {synthesis.best_areas?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {synthesis.best_areas.map((a, i) => (
-                          <span key={i} className="font-body text-[10px] px-2 py-0.5 rounded-full bg-gold-primary/15 border border-gold-primary/30 text-brass">{a}</span>
+                          <span key={i} className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-gold-primary/15 border border-gold-primary/30 text-brass">{a}</span>
                         ))}
                       </div>
                     )}
@@ -167,7 +167,7 @@ export default function RelationshipMonthSynthesis({ date, userChart, partnerCha
                     {synthesis.collective_tags?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mb-2">
                         {synthesis.collective_tags.map((tag, i) => (
-                          <span key={i} className="font-body text-[10px] px-2 py-0.5 rounded-full bg-celestial-blue/15 border border-celestial-blue/30 text-celestial-blue">{tag}</span>
+                          <span key={i} className="font-body text-[0.625rem] px-2 py-0.5 rounded-full bg-celestial-blue/15 border border-celestial-blue/30 text-celestial-blue">{tag}</span>
                         ))}
                       </div>
                     )}
@@ -178,7 +178,7 @@ export default function RelationshipMonthSynthesis({ date, userChart, partnerCha
                 )}
                 <div className="flex items-center justify-end gap-3 pt-1 border-t border-gold-primary/15">
                   <button onClick={() => { clearMemCache('month', periodKey, userId); hasGenerated.current = false; generate(); }}
-                    className="flex items-center gap-1 font-body text-[10px] text-brass hover:text-brass transition-colors">
+                    className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-brass transition-colors">
                     <RefreshCw size={10} /> Regenerate
                   </button>
                 </div>

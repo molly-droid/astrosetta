@@ -35,9 +35,9 @@ export default function NavigatorPrompts({ date, period = 'day' }) {
     <div className="celestial-card p-3.5 space-y-2.5">
       <div className="flex items-center gap-2">
         <Sparkles size={12} className="text-gold-accent" />
-        <p className="font-body text-[10px] text-brass uppercase tracking-widest">Ask the Navigator</p>
+        <p className="font-body text-[0.625rem] text-brass uppercase tracking-widest">Ask the Navigator</p>
       </div>
-      <p className="font-body text-[11px] text-white/60 leading-snug">
+      <p className="font-body text-[0.6875rem] text-white/60 leading-snug">
         Wondering if {label} is right for something? Tap a prompt to ask:
       </p>
       <div className="flex flex-wrap gap-1.5">
@@ -48,7 +48,7 @@ export default function NavigatorPrompts({ date, period = 'day' }) {
             className="text-left px-2.5 py-1.5 rounded-full transition-colors hover:bg-gold-primary/15"
             style={{ background: 'rgba(201,169,97,0.08)', border: '1px solid rgba(201,169,97,0.18)' }}
           >
-            <span className="font-body text-[11px] text-white/65 leading-snug">{q}</span>
+            <span className="font-body text-[0.6875rem] text-white/65 leading-snug">{q}</span>
           </button>
         ))}
       </div>

@@ -5,6 +5,7 @@ import {
 import { Loader2, Download, Copy, Check, Image as ImageIcon } from 'lucide-react';
 import ShareCard from './ShareCard';
 import { captureCardAsPng, copyShareText } from '@/lib/shareCard';
+import { isNativePlatform } from '@/lib/platform';
 
 const PREVIEW_SIZE = 300;
 const PREVIEW_SCALE = PREVIEW_SIZE / 1080;
@@ -19,14 +20,21 @@ export default function ShareSheet({ open, onOpenChange, card, filename = 'astro
   const captureRef = useRef(null);
   const [downloading, setDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  // Native opens the system share sheet (save to Photos, or send straight to
+  // another app); web downloads the file (B-03).
+  const nativeShare = isNativePlatform();
 
   const handleDownload = async () => {
     if (!captureRef.current || downloading) return;
     setDownloading(true);
+    setSaveError(null);
     try {
       await captureCardAsPng(captureRef.current, filename);
-    } catch {
-      /* non-critical */
+    } catch (err) {
+      // A cancelled native share sheet is a normal outcome, not a failure.
+      const msg = String(err?.message || '');
+      if (!/cancel/i.test(msg)) setSaveError("The image couldn't be saved. Please try again.");
     } finally {
       setDownloading(false);
     }
@@ -69,7 +77,7 @@ export default function ShareSheet({ open, onOpenChange, card, filename = 'astro
             <SheetTitle className="font-display text-base font-semibold text-gold-accent">
               Share Card
             </SheetTitle>
-            <SheetDescription className="font-body text-[11px] text-brass/60">
+            <SheetDescription className="font-body text-[0.6875rem] text-brass/60">
               Download a 1080×1080 image for Instagram &amp; Pinterest, or copy a text version for X.
             </SheetDescription>
           </SheetHeader>
@@ -99,7 +107,7 @@ export default function ShareSheet({ open, onOpenChange, card, filename = 'astro
               className="flex items-center justify-center gap-2 rounded-xl bg-gold-primary py-3 font-body text-xs font-semibold text-[#0f1a2e] transition hover:bg-gold-accent disabled:opacity-50"
             >
               {downloading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-              {downloading ? 'Rendering…' : 'Download Image'}
+              {downloading ? 'Rendering…' : nativeShare ? 'Save or Share' : 'Download Image'}
             </button>
             <button
               onClick={handleCopy}
@@ -108,9 +116,12 @@ export default function ShareSheet({ open, onOpenChange, card, filename = 'astro
               {copied ? <Check size={15} /> : <Copy size={15} />}
               {copied ? 'Copied!' : 'Copy Text'}
             </button>
+            {saveError && (
+              <p className="col-span-2 text-center font-body text-[0.6875rem] text-red-300">{saveError}</p>
+            )}
           </div>
 
-          <p className="mt-3 flex items-center justify-center gap-1.5 font-body text-[10px] text-brass/40 italic text-center">
+          <p className="mt-3 flex items-center justify-center gap-1.5 font-body text-[0.625rem] text-brass/40 italic text-center">
             <ImageIcon size={10} /> Watermarked with the Astrosetta logo — free to share.
           </p>
         </SheetContent>

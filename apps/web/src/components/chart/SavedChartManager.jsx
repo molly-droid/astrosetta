@@ -244,11 +244,11 @@ export default function SavedChartManager({ user, charts, onRefresh, onClose }) 
                     <div className="flex items-center gap-2 flex-wrap">
                       {c.chart_type === 'event' && <Calendar size={11} className="text-celestial-purple shrink-0" />}
                       <span className="font-body text-sm text-cream font-semibold">{c.name}</span>
-                      {c.relationship && <span className="font-body text-[10px] text-brass/50 italic">{c.chart_type === 'event' ? c.relationship : `Your ${c.relationship}`}</span>}
-                      {c.pronouns && <span className="font-body text-[9px] text-brass/40">{c.pronouns}</span>}
-                      {c.deceased && <span className="font-body text-[9px] text-purple-soft italic">✦ in memoriam</span>}
+                      {c.relationship && <span className="font-body text-[0.625rem] text-brass/50 italic">{c.chart_type === 'event' ? c.relationship : `Your ${c.relationship}`}</span>}
+                      {c.pronouns && <span className="font-body text-[0.5625rem] text-brass/40">{c.pronouns}</span>}
+                      {c.deceased && <span className="font-body text-[0.5625rem] text-purple-soft italic">✦ in memoriam</span>}
                     </div>
-                    <p className="font-body text-[10px] text-brass/50 truncate">
+                    <p className="font-body text-[0.625rem] text-brass/50 truncate">
                       {c.sun_sign ? `☉ ${c.sun_sign}` : ''} {c.moon_sign ? `· ☽ ${c.moon_sign}` : ''} {c.ascendant_sign ? `· AC ${c.ascendant_sign}` : ''}
                     </p>
                   </div>
@@ -271,11 +271,11 @@ export default function SavedChartManager({ user, charts, onRefresh, onClose }) 
               {/* Chart type toggle */}
               <div className="flex bg-white/[0.04] rounded-full p-0.5 border border-white/[0.06]">
                 <button type="button" onClick={() => setForm(f => ({ ...f, chart_type: 'person' }))}
-                  className={`flex-1 py-1.5 rounded-full font-body text-[11px] tracking-wide transition-all ${form.chart_type !== 'event' ? 'bg-gold-primary/20 text-white' : 'text-white/30 hover:text-white/60'}`}>
+                  className={`flex-1 py-1.5 rounded-full font-body text-[0.6875rem] tracking-wide transition-all ${form.chart_type !== 'event' ? 'bg-gold-primary/20 text-white' : 'text-white/30 hover:text-white/60'}`}>
                   Person
                 </button>
                 <button type="button" onClick={() => setForm(f => ({ ...f, chart_type: 'event', relationship: 'When We Met' }))}
-                  className={`flex-1 py-1.5 rounded-full font-body text-[11px] tracking-wide transition-all ${form.chart_type === 'event' ? 'bg-gold-primary/20 text-white' : 'text-white/30 hover:text-white/60'}`}>
+                  className={`flex-1 py-1.5 rounded-full font-body text-[0.6875rem] tracking-wide transition-all ${form.chart_type === 'event' ? 'bg-gold-primary/20 text-white' : 'text-white/30 hover:text-white/60'}`}>
                   Event
                 </button>
               </div>
@@ -328,13 +328,13 @@ export default function SavedChartManager({ user, charts, onRefresh, onClose }) 
 
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" name="unknown_time" checked={form.unknown_time} onChange={handleChange} className="accent-gold-primary" />
-                <span className="font-body text-[11px] text-brass/70">{isEvent ? 'Unknown time' : 'Unknown birth time'}</span>
+                <span className="font-body text-[0.6875rem] text-brass/70">{isEvent ? 'Unknown time' : 'Unknown birth time'}</span>
               </label>
 
               {!isEvent && (
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" name="deceased" checked={form.deceased} onChange={handleChange} className="accent-gold-primary" />
-                <span className="font-body text-[11px] text-brass/70">In memoriam — this person has passed</span>
+                <span className="font-body text-[0.6875rem] text-brass/70">In memoriam — this person has passed</span>
               </label>
               )}
 
@@ -356,7 +356,7 @@ export default function SavedChartManager({ user, charts, onRefresh, onClose }) 
                     {geoResults.map(loc => (
                       <button key={`${loc.id}-${loc.name}`} type="button" onClick={() => selectLocation(loc)}
                         className="w-full text-left rounded-md bg-white/[0.04] hover:bg-white/[0.08] px-2 py-1.5 transition-colors">
-                        <span className="font-body text-[11px] text-white/80 flex items-center gap-1.5">
+                        <span className="font-body text-[0.6875rem] text-white/80 flex items-center gap-1.5">
                           <MapPin size={10} className="text-gold-accent shrink-0" />
                           {loc.name}{loc.admin1 ? `, ${loc.admin1}` : ''}, {loc.country}
                         </span>
@@ -365,13 +365,13 @@ export default function SavedChartManager({ user, charts, onRefresh, onClose }) 
                   </div>
                 )}
                 {selectedLocation && (
-                  <p className="font-body text-[10px] text-green-400 flex items-center gap-1">
+                  <p className="font-body text-[0.625rem] text-green-400 flex items-center gap-1">
                     <MapPin size={10} /> {selectedLocation.name}, {selectedLocation.country}
                   </p>
                 )}
               </div>
 
-              {error && <p className="font-body text-[11px] text-red-400">{error}</p>}
+              {error && <p className="font-body text-[0.6875rem] text-red-400">{error}</p>}
 
               <div className="flex gap-2 pt-1">
                 <Button type="submit" disabled={loading}

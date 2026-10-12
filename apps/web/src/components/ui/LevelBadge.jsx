@@ -21,7 +21,7 @@ export default function LevelBadge({ xp, size = 'md' }) {
   const glyph = LEVEL_GLYPHS[level.name];
 
   const sizeClass = size === 'sm'
-    ? 'text-[10px] px-2 py-0.5'
+    ? 'text-[0.625rem] px-2 py-0.5'
     : size === 'lg'
     ? 'text-sm px-4 py-1.5'
     : 'text-xs px-3 py-1';

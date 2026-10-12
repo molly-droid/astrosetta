@@ -148,7 +148,7 @@ function SpotlightRow({ icon, title, desc }) {
       <div className="w-7 h-7 rounded-lg bg-white/[0.05] flex items-center justify-center shrink-0">{icon}</div>
       <div>
         <p className="font-display text-sm font-semibold text-white">{title}</p>
-        <p className="font-body text-[11px] text-brass/70 leading-snug">{desc}</p>
+        <p className="font-body text-[0.6875rem] text-brass/70 leading-snug">{desc}</p>
       </div>
     </div>
   );

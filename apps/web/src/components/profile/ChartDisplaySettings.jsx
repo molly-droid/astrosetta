@@ -16,11 +16,13 @@ export default function ChartDisplaySettings() {
   const { user, reloadUser } = useAuth();
   const { canViewLilith, canViewAsteroids } = usePermissions(user);
   const [paywall, setPaywall] = useState(null);
-  const showAngles = user?.show_angles !== false;
-  const showNodes = user?.show_nodes !== false;
+  // UX-02: all five default OFF — a new chart starts clean and the user
+  // adds the points they want.
+  const showAngles = user?.show_angles === true;
+  const showNodes = user?.show_nodes === true;
   const showLots = user?.show_lots === true;
   const showAsteroids = user?.show_asteroids === true;
-  const showLilith = user?.show_lilith !== false;
+  const showLilith = user?.show_lilith === true;
 
   const save = async (key, val) => {
     await base44.auth.updateMe({ [key]: val });
@@ -39,7 +41,7 @@ export default function ChartDisplaySettings() {
       {locked ? (
         <button
           onClick={onLockClick}
-          className="shrink-0 mt-0.5 text-[10px] font-body text-gold-accent border border-gold-primary/30 rounded-full px-2 py-1 hover:bg-gold-primary/10 transition-colors"
+          className="shrink-0 mt-0.5 text-[0.625rem] font-body text-gold-accent border border-gold-primary/30 rounded-full px-2 py-1 hover:bg-gold-primary/10 transition-colors"
         >
           Premium
         </button>

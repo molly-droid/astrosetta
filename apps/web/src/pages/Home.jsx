@@ -24,6 +24,7 @@ import LunarEventBanner from '@/components/planner/LunarEventBanner';
 import PlanetaryHighlights from '@/components/planner/PlanetaryHighlights';
 import TodayHighlightBanners from '@/components/home/TodayHighlightBanners';
 import FeatureHighlightBanner from '@/components/home/FeatureHighlightBanner';
+import { pendingOnboardingStep } from '@/pages/Onboarding';
 
 const IngressBanner = React.lazy(() => import('@/components/planner/IngressBanner'));
 
@@ -44,7 +45,7 @@ const PLANET_GLYPHS = {
 };
 
 export default function Home() {
-  const { user, reloadUser } = useAuth();
+  const { user, reloadUser, setProgressRecord, reloadProgress } = useAuth();
   const { progressRecord } = useUserPrefs();
   const navigate = useNavigate();
   const [chart, setChart] = useState(null);
@@ -55,6 +56,7 @@ export default function Home() {
   // 'natal' | 'overlay' | 'sky'
   const [chartMode, setChartMode] = useState('sky');
   const [highlightPattern, setHighlightPattern] = useState(null);
+  const [highlightKey, setHighlightKey] = useState(null);
   const [synthesis, setSynthesis] = useState(null);
   const [transitsOpen, setTransitsOpen] = useState(false);
   const highlightsRef = useRef(null);
@@ -103,6 +105,12 @@ export default function Home() {
   }, [progressRecord]);
 
   useEffect(() => {
+    // Progress may have changed while away (module completed, quiz on another
+    // surface) — refresh the shared record whenever Home comes back (B-05/06).
+    if (user?.id) reloadProgress();
+  }, [user?.id]);
+
+  useEffect(() => {
     if (user?.id) loadData();
   }, [user?.id]);
 
@@ -118,6 +126,13 @@ export default function Home() {
       base44.entities.XPEvent.filter({ user_id: uid }),
     ]);
     if (!charts.length) {
+      navigate('/onboarding');
+      return;
+    }
+    // A chart exists but onboarding was interrupted on this device (app
+    // closed before finishing the email/plan slides) — resume where it left
+    // off instead of silently skipping the rest (F-01).
+    if (pendingOnboardingStep(uid)) {
       navigate('/onboarding');
       return;
     }
@@ -151,7 +166,7 @@ export default function Home() {
       <PageHeader>
         {/* Centered brand header */}
         <div className="px-4 pt-5 pb-2 text-center space-y-2 relative">
-          <p className="font-body text-[10px] text-white/40 uppercase tracking-widest">Your celestial curriculum</p>
+          <p className="font-body text-[0.625rem] text-white/40 uppercase tracking-widest">Your celestial curriculum</p>
           <img
             src="/media/8a82dfec1_Asset24x.png"
             alt="Astrosetta"
@@ -206,7 +221,7 @@ export default function Home() {
                   <button
                     key={m.key}
                     onClick={() => setChartMode(m.key)}
-                    className="font-body text-[10px] uppercase tracking-widest px-2.5 py-1 rounded-full transition-all"
+                    className="font-body text-[0.625rem] uppercase tracking-widest px-2.5 py-1 rounded-full transition-all"
                     style={{
                       background: chartMode === m.key ? m.activeBg : 'rgba(255,255,255,0.04)',
                       color: chartMode === m.key ? m.activeColor : 'rgba(255,255,255,0.25)',
@@ -227,6 +242,7 @@ export default function Home() {
                   : null}
                 skyMode={chartMode === 'sky'}
                 highlightPattern={highlightPattern}
+                highlightKey={highlightKey}
               />
               <div className="flex justify-center pt-2">
                 <ManageChartViewLink />
@@ -318,7 +334,7 @@ export default function Home() {
                   <span className="text-lg text-gold-accent" style={{ fontVariantEmoji: 'text' }}>✦</span>
                   <div className="text-left">
                     <p className="font-display text-sm font-semibold text-white">Transits</p>
-                    <p className="font-body text-[10px] text-brass/70">Personal & collective transits today</p>
+                    <p className="font-body text-[0.625rem] text-brass/70">Personal & collective transits today</p>
                   </div>
                 </div>
                 {transitsOpen ? <ChevronDown size={14} className="text-brass/50 shrink-0" /> : <ChevronRight size={14} className="text-brass/50 shrink-0" />}
@@ -331,7 +347,7 @@ export default function Home() {
                       <p className="font-body text-xs text-brass italic">Calculating transits...</p>
                     </div>
                   ) : (
-                    <TransitList data={todayTransits} chart={chart} date={today} synthesis={synthesis} />
+                    <TransitList data={todayTransits} chart={chart} date={today} synthesis={synthesis} onHighlightTransit={setHighlightKey} />
                   )}
                 </div>
               )}
@@ -351,6 +367,9 @@ export default function Home() {
               userProgress={userProgress}
               onProgressUpdate={async (updater) => {
                 setUserProgress(updater);
+                // Push into the shared context so Profile/Learn gauges update
+                // live instead of waiting for the next app restart (B-05/06).
+                setProgressRecord(updater);
                 // Refresh XP from events after quiz completes
                 const freshUser = await reloadUser();
                 const uid = freshUser?.id || user?.id;

@@ -108,7 +108,7 @@ export default function NotificationsBell() {
             <div className="flex border-b border-white/[0.06]">
               <button
                 onClick={() => setActiveTab('whats_new')}
-                className="flex-1 py-2.5 font-body text-[11px] font-semibold transition-colors"
+                className="flex-1 py-2.5 font-body text-[0.6875rem] font-semibold transition-colors"
                 style={{
                   color: activeTab === 'whats_new' ? '#C9A961' : 'rgba(255,255,255,0.4)',
                   borderBottom: activeTab === 'whats_new' ? '2px solid #C9A961' : '2px solid transparent',
@@ -118,7 +118,7 @@ export default function NotificationsBell() {
               </button>
               <button
                 onClick={() => setActiveTab('sky_watch')}
-                className="flex-1 py-2.5 font-body text-[11px] font-semibold transition-colors"
+                className="flex-1 py-2.5 font-body text-[0.6875rem] font-semibold transition-colors"
                 style={{
                   color: activeTab === 'sky_watch' ? '#C9A961' : 'rgba(255,255,255,0.4)',
                   borderBottom: activeTab === 'sky_watch' ? '2px solid #C9A961' : '2px solid transparent',
@@ -141,9 +141,11 @@ export default function NotificationsBell() {
                   const Icon = ANNOUNCEMENT_ICONS[a.icon] || Sparkles;
                   const isSeen = a.is_tour || a.is_quick_tip || seenSpotlights.includes(a.spotlight_key);
                   return (
-                    <div
+                    <button
                       key={a.spotlight_key}
-                      className="px-4 py-3 border-b border-white/[0.06] last:border-b-0 hover:bg-gold-primary/5 transition-colors"
+                      type="button"
+                      onClick={() => handleTakeTour(a)}
+                      className="w-full text-left px-4 py-3 border-b border-white/[0.06] last:border-b-0 hover:bg-gold-primary/5 transition-colors"
                     >
                       <div className="flex items-start gap-2.5">
                         <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gold-primary/10 border border-gold-primary/20 flex items-center justify-center">
@@ -158,23 +160,20 @@ export default function NotificationsBell() {
                               <span className="w-1.5 h-1.5 rounded-full bg-gold-accent flex-shrink-0" />
                             )}
                           </div>
-                          <p className="font-body text-[11px] text-brass/70 leading-snug mt-0.5">
+                          <p className="font-body text-[0.6875rem] text-brass/70 leading-snug mt-0.5">
                             {a.description}
                           </p>
-                          <button
-                            onClick={() => handleTakeTour(a)}
-                            className="flex items-center gap-1 mt-2 font-body text-[10px] text-gold-accent hover:text-gold-primary transition-colors font-semibold"
-                          >
+                          <span className="flex items-center gap-1 mt-2 font-body text-[0.625rem] text-gold-accent font-semibold">
                             {a.is_tour
                               ? 'Start tour'
                               : a.is_quick_tip
                                 ? 'View tip'
                                 : (isSeen ? 'Take the tour again' : 'Take the tour')}
                             <ArrowRight size={10} />
-                          </button>
+                          </span>
                         </div>
                       </div>
-                    </div>
+                    </button>
                   );
                 })
               )}

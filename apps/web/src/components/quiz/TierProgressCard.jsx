@@ -8,7 +8,10 @@ export const REQUIREMENTS = {
     nextTier: 'adept',
     label: 'Path to Adept',
     criteria: [
-      { key: 'quiz_days', label: '10 quizzes completed', target: 10, getValue: p => p.apprentice_quiz_days_count || 0 },
+      // Counts quiz DAYS, not submissions — the label says so now, because
+      // "10 quizzes completed" read as a submission count and looked stuck
+      // when a second quiz the same day didn't move it (B-05/B-06).
+      { key: 'quiz_days', label: 'Daily quiz on 10 days', target: 10, getValue: p => p.apprentice_quiz_days_count || 0 },
       { key: 'accuracy', label: '70% accuracy', target: 70, getValue: p => {
         const t = p.apprentice_questions_total || 0;
         const c = p.apprentice_correct_total || 0;
@@ -21,7 +24,7 @@ export const REQUIREMENTS = {
     nextTier: 'maestro',
     label: 'Path to Maestro',
     criteria: [
-      { key: 'quiz_days', label: '20 quizzes completed', target: 20, getValue: p => p.adept_quiz_days_count || 0 },
+      { key: 'quiz_days', label: 'Daily quiz on 20 days', target: 20, getValue: p => p.adept_quiz_days_count || 0 },
       { key: 'accuracy', label: '75% accuracy', target: 75, getValue: p => {
         const t = p.adept_questions_total || 0;
         const c = p.adept_correct_total || 0;
@@ -75,7 +78,7 @@ export default function TierProgressCard({ userProgress }) {
                 }
                 <span className="font-body text-xs text-brass">{c.label}</span>
               </div>
-              <span className="font-body text-[10px] text-brass">
+              <span className="font-body text-[0.625rem] text-brass">
                 {c.key === 'accuracy' ? `${c.current}%` : `${c.current}/${c.target}`}
               </span>
             </div>
@@ -96,7 +99,7 @@ export default function TierProgressCard({ userProgress }) {
           <p className="font-display text-xs text-gold-accent font-bold">
             ✦ Ready to advance to {req.nextTier.charAt(0).toUpperCase() + req.nextTier.slice(1)}!
           </p>
-          <p className="font-body text-[10px] text-brass mt-0.5">Complete tomorrow's quiz to advance</p>
+          <p className="font-body text-[0.625rem] text-brass mt-0.5">Complete tomorrow's quiz to advance</p>
         </div>
       )}
     </motion.div>

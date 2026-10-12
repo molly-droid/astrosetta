@@ -43,7 +43,7 @@ export default class ChartWheelBoundary extends React.Component {
           </p>
           <button
             onClick={() => this.setState({ hasError: false })}
-            className="font-body text-[10px] text-gold-accent underline hover:text-gold-primary transition-colors"
+            className="font-body text-[0.625rem] text-gold-accent underline hover:text-gold-primary transition-colors"
           >
             Try again
           </button>

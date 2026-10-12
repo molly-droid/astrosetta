@@ -125,7 +125,7 @@ export default function TransitStudySuggestions({ transits, chartPlacementKeys, 
     <div className="space-y-2">
       <div className="flex items-center gap-1.5">
         <Sparkles size={12} className="text-gold-accent" />
-        <p className="font-body text-[10px] uppercase tracking-widest text-brass">Suggested by today's sky</p>
+        <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass">Suggested by today's sky</p>
       </div>
       <div className="space-y-1.5">
         {suggestions.map(([key, reason]) => (
@@ -137,7 +137,7 @@ export default function TransitStudySuggestions({ transits, chartPlacementKeys, 
             <span className="text-gold-accent/60 text-xs mt-0.5">✦</span>
             <div>
               <p className="font-body text-xs text-deep-blue font-semibold capitalize">{formatKey(key)}</p>
-              <p className="font-body text-[10px] text-brass/70 italic">{reason}</p>
+              <p className="font-body text-[0.625rem] text-brass/70 italic">{reason}</p>
             </div>
           </button>
         ))}

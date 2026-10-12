@@ -168,17 +168,19 @@ Deno.serve(async (req) => {
         accuracy_rate: newAccuracy,
       };
 
-      // Only count quiz day if new day
-      if (lastDate !== todayKey) {
-        if (quiz.tier === 'apprentice') {
-          updateData.apprentice_quiz_days_count = (progress.apprentice_quiz_days_count || 0) + 1;
-          updateData.apprentice_correct_total = (progress.apprentice_correct_total || 0) + correctCount;
-          updateData.apprentice_questions_total = (progress.apprentice_questions_total || 0) + quiz.questions.length;
-        } else if (quiz.tier === 'adept') {
-          updateData.adept_quiz_days_count = (progress.adept_quiz_days_count || 0) + 1;
-          updateData.adept_correct_total = (progress.adept_correct_total || 0) + correctCount;
-          updateData.adept_questions_total = (progress.adept_questions_total || 0) + quiz.questions.length;
-        }
+      // The quiz-DAY counter only advances once per day (that's the tier
+      // requirement), but accuracy counts EVERY answered question — gating the
+      // correct/questions totals on the day too meant a second quiz the same
+      // day moved nothing at all (B-05/B-06: "progress bars don't update").
+      const isNewDay = lastDate !== todayKey;
+      if (quiz.tier === 'apprentice') {
+        if (isNewDay) updateData.apprentice_quiz_days_count = (progress.apprentice_quiz_days_count || 0) + 1;
+        updateData.apprentice_correct_total = (progress.apprentice_correct_total || 0) + correctCount;
+        updateData.apprentice_questions_total = (progress.apprentice_questions_total || 0) + quiz.questions.length;
+      } else if (quiz.tier === 'adept') {
+        if (isNewDay) updateData.adept_quiz_days_count = (progress.adept_quiz_days_count || 0) + 1;
+        updateData.adept_correct_total = (progress.adept_correct_total || 0) + correctCount;
+        updateData.adept_questions_total = (progress.adept_questions_total || 0) + quiz.questions.length;
       }
 
       // Fetch completed curriculum modules for tier advancement check

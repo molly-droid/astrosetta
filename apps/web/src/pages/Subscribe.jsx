@@ -85,7 +85,7 @@ export default function Subscribe() {
           onRestored={() => navigate('/profile?success=true')}
         />
 
-        <p className="font-body text-[11px] text-brass/40 text-center pt-2">
+        <p className="font-body text-[0.6875rem] text-brass/40 text-center pt-2">
           {isNative
             ? `Payments processed securely ${storeLabel} · Cancel anytime`
             : 'Payments processed securely by Stripe · Cancel anytime'}
@@ -93,8 +93,8 @@ export default function Subscribe() {
 
         {/* Pre-purchase subscription disclosure (App Store required) */}
         <div className="rounded-xl border border-gold-primary/15 bg-gold-primary/[0.04] p-3.5 space-y-2">
-          <p className="font-label text-[10px] font-semibold uppercase tracking-[0.05em] text-brass/60">Subscription terms</p>
-          <p className="font-body text-[11px] text-white/60 leading-relaxed">
+          <p className="font-label text-[0.625rem] font-semibold uppercase tracking-[0.05em] text-brass/60">Subscription terms</p>
+          <p className="font-body text-[0.6875rem] text-white/60 leading-relaxed">
             Core and Premium are auto-renewing subscriptions at the price shown above and confirmed at checkout.
             Founding pricing applies where eligible. Confirm your price at checkout. Payment is charged to your
             payment method at confirmation of purchase, and each subscription automatically renews until cancelled
@@ -102,9 +102,9 @@ export default function Subscribe() {
             settings — cancelling stops future renewals and your access continues to the end of the paid period.
           </p>
           <div className="flex items-center flex-wrap gap-x-4 gap-y-1">
-            <Link to="/terms" className="font-body text-[11px] text-gold-accent underline hover:text-gold-primary">Terms of Service</Link>
-            <Link to="/privacy" className="font-body text-[11px] text-gold-accent underline hover:text-gold-primary">Privacy Policy</Link>
-            <Link to="/refund-policy" className="font-body text-[11px] text-gold-accent underline hover:text-gold-primary">Refund Policy</Link>
+            <Link to="/terms" className="font-body text-[0.6875rem] text-gold-accent underline hover:text-gold-primary">Terms of Service</Link>
+            <Link to="/privacy" className="font-body text-[0.6875rem] text-gold-accent underline hover:text-gold-primary">Privacy Policy</Link>
+            <Link to="/refund-policy" className="font-body text-[0.6875rem] text-gold-accent underline hover:text-gold-primary">Refund Policy</Link>
           </div>
         </div>
       </div>

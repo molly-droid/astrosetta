@@ -85,7 +85,7 @@ export default function RelationshipPlannerSpotlight() {
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-celestial-pink/15 border border-celestial-pink/30">
               <Sparkles size={11} className="text-celestial-pink" />
-              <span className="font-body text-[10px] uppercase tracking-widest text-celestial-pink font-semibold">New Feature</span>
+              <span className="font-body text-[0.625rem] uppercase tracking-widest text-celestial-pink font-semibold">New Feature</span>
             </div>
             <h2 className="font-display text-xl font-bold text-cream leading-tight">
               Read the Sky Through Your Bond
@@ -116,7 +116,7 @@ export default function RelationshipPlannerSpotlight() {
           </div>
 
           <div className="rounded-xl border border-gold-primary/20 bg-gold-primary/5 px-4 py-3">
-            <p className="font-body text-[11px] text-brass/80 leading-relaxed">
+            <p className="font-body text-[0.6875rem] text-brass/80 leading-relaxed">
               <span className="text-gold-accent font-semibold">Where to find it:</span>{' '}
               Open <span className="text-cream">Planner</span> and tap the{' '}
               <span className="text-cream">Relationship</span> pill below the chart.
@@ -153,7 +153,7 @@ function FeatureRow({ icon: Icon, title, desc }) {
       </div>
       <div>
         <p className="font-body text-xs font-semibold text-cream">{title}</p>
-        <p className="font-body text-[11px] text-brass/70 leading-snug">{desc}</p>
+        <p className="font-body text-[0.6875rem] text-brass/70 leading-snug">{desc}</p>
       </div>
     </div>
   );

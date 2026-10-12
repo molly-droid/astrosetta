@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { invokeLLMTask } from '@/api/llmTasks';
-import { highlightSynthesisText } from '@/lib/transitUtils';
 import { Loader2 } from 'lucide-react';
 import Eli5Button from '@/components/ui/Eli5Button';
+import InterpretationMarkdown from '@/components/ui/InterpretationMarkdown';
 
 const cache = {};
 
@@ -49,7 +49,7 @@ export default function MundaneAspectInterpretation({ item, transitPlanets = nul
     return (
       <div className="flex items-center gap-1.5 mt-1.5">
         <Loader2 size={11} className="animate-spin text-gold-primary" />
-        <span className="font-body text-[10px] text-brass italic">Interpreting...</span>
+        <span className="font-body text-[0.625rem] text-brass italic">Interpreting...</span>
       </div>
     );
   }
@@ -62,9 +62,7 @@ export default function MundaneAspectInterpretation({ item, transitPlanets = nul
 
   return (
     <div className="mt-1.5">
-      <p className="font-body text-[11px] text-white/80 leading-snug">
-        {highlightSynthesisText(text)}
-      </p>
+      <InterpretationMarkdown text={text} className="font-body text-[0.6875rem] text-white/80 leading-snug" />
       <Eli5Button context={eli5Context} />
     </div>
   );

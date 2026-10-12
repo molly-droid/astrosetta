@@ -67,7 +67,7 @@ function TierSimulator({ user }) {
     <div className="celestial-card p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-display text-sm font-bold text-deep-blue">Your Account Simulator</h3>
-        <span className={`font-body text-[10px] px-2 py-0.5 rounded-full border font-semibold ${TIER_BADGE[effectiveTier]}`}>
+        <span className={`font-body text-[0.625rem] px-2 py-0.5 rounded-full border font-semibold ${TIER_BADGE[effectiveTier]}`}>
           {TIER_LABELS[effectiveTier]?.split(' ·')[0]}
           {perms.isExpired ? ' (expired)' : ''}
         </span>
@@ -96,7 +96,7 @@ function TierSimulator({ user }) {
 
       {/* Permission matrix */}
       <div className="rounded-lg bg-muted/40 p-3 space-y-1.5">
-        <p className="font-body text-[10px] uppercase tracking-widest text-brass/50 mb-2">Current Effective Permissions</p>
+        <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50 mb-2">Current Effective Permissions</p>
         <PermCheck ok={perms.canViewTransits} label="View transit list" />
         <PermCheck ok={perms.canViewNatalInterpretations} label="View natal interpretations" />
         <PermCheck ok={perms.canViewTransitInterpretations} label="View transit interpretations ($9+)" />
@@ -142,7 +142,7 @@ function ChecklistSection({ title, items }) {
       <button onClick={() => setOpen(o => !o)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-gold-primary/5 transition-colors">
         <div className="flex items-center gap-2">
           <span className="font-display text-sm font-semibold text-deep-blue">{title}</span>
-          <span className="font-body text-[10px] text-brass/60">{done}/{items.length}</span>
+          <span className="font-body text-[0.625rem] text-brass/60">{done}/{items.length}</span>
         </div>
         {open ? <ChevronUp size={14} className="text-brass/50" /> : <ChevronDown size={14} className="text-brass/50" />}
       </button>
@@ -156,7 +156,7 @@ function ChecklistSection({ title, items }) {
                   checked[i] ? 'bg-gold-primary border-gold-primary' : 'border-gold-primary/30'
                 }`}
               >
-                {checked[i] && <span className="text-deep-blue text-[9px] font-bold">✓</span>}
+                {checked[i] && <span className="text-deep-blue text-[0.5625rem] font-bold">✓</span>}
               </div>
               <span className={`font-body text-xs leading-snug transition-colors ${checked[i] ? 'text-brass/40 line-through' : 'text-deep-blue/80 group-hover:text-deep-blue'}`}>
                 {item}
@@ -272,33 +272,33 @@ function InviteTestUsers({ allUsers, setUserTier }) {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <span className={`font-body text-[9px] px-1.5 py-0.5 rounded-full border font-semibold flex-shrink-0 ${TIER_BADGE[acc.tier]}`}>
+                    <span className={`font-body text-[0.5625rem] px-1.5 py-0.5 rounded-full border font-semibold flex-shrink-0 ${TIER_BADGE[acc.tier]}`}>
                       {acc.tier}{acc.expires ? ' expired' : ''}
                     </span>
                     <p className="font-body text-xs font-semibold text-deep-blue">{acc.label}</p>
                   </div>
-                  <p className="font-body text-[10px] text-brass/50 truncate mt-0.5">{acc.email}</p>
-                  <p className="font-body text-[10px] text-brass/40 italic">{acc.note}</p>
+                  <p className="font-body text-[0.625rem] text-brass/50 truncate mt-0.5">{acc.email}</p>
+                  <p className="font-body text-[0.625rem] text-brass/40 italic">{acc.note}</p>
                 </div>
                 <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
                   {!joined ? (
                     <button
                       onClick={() => invite(acc)}
                       disabled={status === 'inviting'}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gold-primary/40 font-body text-[10px] text-deep-blue/70 hover:bg-gold-primary/10 transition-all disabled:opacity-50"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-gold-primary/40 font-body text-[0.625rem] text-deep-blue/70 hover:bg-gold-primary/10 transition-all disabled:opacity-50"
                     >
                       <Mail size={10} />
                       {status === 'inviting' ? 'Sending...' : status === 'invited' ? '✓ Sent' : 'Invite'}
                     </button>
                   ) : tierMatch ? (
-                    <span className="font-body text-[10px] text-green-600 flex items-center gap-1">
+                    <span className="font-body text-[0.625rem] text-green-600 flex items-center gap-1">
                       <CheckCircle2 size={11} /> Ready
                     </span>
                   ) : (
                     <button
                       onClick={() => applyTier(acc)}
                       disabled={status === 'setting'}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-celestial-blue/40 font-body text-[10px] text-deep-blue/70 hover:bg-celestial-blue/10 transition-all disabled:opacity-50"
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-celestial-blue/40 font-body text-[0.625rem] text-deep-blue/70 hover:bg-celestial-blue/10 transition-all disabled:opacity-50"
                     >
                       {status === 'setting' ? <RefreshCw size={10} className="animate-spin" /> : null}
                       {status === 'done' ? '✓ Set' : status === 'setting' ? 'Setting...' : 'Set Tier'}
@@ -344,7 +344,7 @@ function UserRow({ u, effective, perms, realUser, impersonatedUser, onSetTier, o
                 className="font-body text-xs text-deep-blue bg-paper border border-gold-primary/30 rounded px-1.5 py-0.5 outline-none w-32"
               />
               <button onClick={saveDisplayName} disabled={savingName} className="text-green-600 disabled:opacity-50"><Check size={12} /></button>
-              <button onClick={() => setEditingName(false)} className="text-brass/50"><span className="text-[10px]">✕</span></button>
+              <button onClick={() => setEditingName(false)} className="text-brass/50"><span className="text-[0.625rem]">✕</span></button>
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
@@ -354,10 +354,10 @@ function UserRow({ u, effective, perms, realUser, impersonatedUser, onSetTier, o
               </button>
             </div>
           )}
-          <p className="font-body text-[10px] text-brass/50 truncate">{u.email}</p>
+          <p className="font-body text-[0.625rem] text-brass/50 truncate">{u.email}</p>
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
-          <span className={`font-body text-[9px] px-1.5 py-0.5 rounded-full border font-semibold ${TIER_BADGE[effective]}`}>
+          <span className={`font-body text-[0.5625rem] px-1.5 py-0.5 rounded-full border font-semibold ${TIER_BADGE[effective]}`}>
             {effective}{perms.isExpired ? ' ↓' : ''}
           </span>
         </div>
@@ -366,7 +366,7 @@ function UserRow({ u, effective, perms, realUser, impersonatedUser, onSetTier, o
         {['free', 'interpret', 'calendar'].map(tier => (
           <button key={tier}
             onClick={() => onSetTier(u.id, tier, tier === 'free' ? null : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString())}
-            className={`px-2 py-0.5 rounded border font-body text-[9px] transition-all ${
+            className={`px-2 py-0.5 rounded border font-body text-[0.5625rem] transition-all ${
               effective === tier && !perms.isExpired
                 ? 'bg-gold-primary/20 border-gold-accent text-deep-blue font-semibold'
                 : 'border-gold-primary/20 text-brass/60 hover:border-gold-primary/50'
@@ -376,18 +376,18 @@ function UserRow({ u, effective, perms, realUser, impersonatedUser, onSetTier, o
         ))}
         <button
           onClick={() => onSetTier(u.id, 'calendar', '2024-01-01T00:00:00Z')}
-          className="px-2 py-0.5 rounded border font-body text-[9px] border-red-300/40 text-red-400/70 hover:border-red-300/70 transition-all">
+          className="px-2 py-0.5 rounded border font-body text-[0.5625rem] border-red-300/40 text-red-400/70 hover:border-red-300/70 transition-all">
           expired
         </button>
         {u.id !== realUser?.id && (
           impersonatedUser?.id === u.id ? (
             <button onClick={onStopImpersonate}
-              className="flex items-center gap-1 px-2 py-0.5 rounded border font-body text-[9px] border-celestial-blue/50 bg-celestial-blue/10 text-deep-blue transition-all ml-auto">
+              className="flex items-center gap-1 px-2 py-0.5 rounded border font-body text-[0.5625rem] border-celestial-blue/50 bg-celestial-blue/10 text-deep-blue transition-all ml-auto">
               <EyeOff size={9} /> Exit
             </button>
           ) : (
             <button onClick={onImpersonate}
-              className="flex items-center gap-1 px-2 py-0.5 rounded border font-body text-[9px] border-gold-primary/30 text-brass/70 hover:border-gold-primary/60 hover:bg-gold-primary/10 transition-all ml-auto">
+              className="flex items-center gap-1 px-2 py-0.5 rounded border font-body text-[0.5625rem] border-gold-primary/30 text-brass/70 hover:border-gold-primary/60 hover:bg-gold-primary/10 transition-all ml-auto">
               <Eye size={9} /> View as
             </button>
           )

@@ -7,8 +7,8 @@ import React from 'react';
 export default function GiftOptionPills({ label, hint, options, value, onChange }) {
   return (
     <div>
-      <p className="font-label text-[10px] font-semibold uppercase tracking-[0.05em] text-brass/60">{label}</p>
-      {hint && <p className="font-body text-[10px] text-brass/40 mb-1.5">{hint}</p>}
+      <p className="font-label text-[0.625rem] font-semibold uppercase tracking-[0.05em] text-brass/60">{label}</p>
+      {hint && <p className="font-body text-[0.625rem] text-brass/40 mb-1.5">{hint}</p>}
       <div className="flex flex-wrap gap-1.5 mt-1.5">
         {options.map((o) => {
           const soldOut = o.stock <= 0;
@@ -26,7 +26,7 @@ export default function GiftOptionPills({ label, hint, options, value, onChange 
               } ${soldOut ? 'opacity-40' : ''}`}
             >
               <span className={soldOut ? 'line-through' : ''}>{o.label}</span>
-              <span className={`ml-1.5 text-[9px] ${soldOut ? 'text-red-300' : 'text-gold-accent'}`}>
+              <span className={`ml-1.5 text-[0.5625rem] ${soldOut ? 'text-red-300' : 'text-gold-accent'}`}>
                 {soldOut ? 'sold out' : `${o.stock} left`}
               </span>
             </button>

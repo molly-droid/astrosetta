@@ -317,7 +317,7 @@ export default function Landing() {
                 {chartData && <ChartWheel chartData={chartData} skyMode className="p-2" />}
               </div>
               <p className="font-body text-xs mt-3 text-center" style={{ color: 'rgba(255,255,255,0.4)' }}>Tap any planet or aspect line for its meaning.</p>
-              <button onClick={() => setExample(FEATURE_EXAMPLES.goWheel)} className="mt-3 mx-auto flex items-center gap-1 font-body text-[11px]" style={{ color: '#C9A961' }}>See an example <ArrowRight size={11} /></button>
+              <button onClick={() => setExample(FEATURE_EXAMPLES.goWheel)} className="mt-3 mx-auto flex items-center gap-1 font-body text-[0.6875rem]" style={{ color: '#C9A961' }}>See an example <ArrowRight size={11} /></button>
             </div>
             <div className="rounded-2xl p-6 flex flex-col" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(201,169,97,0.15)' }}>
               <p className="font-body text-xs uppercase tracking-widest mb-2" style={{ color: '#C9A961' }}>Chart Navigator</p>
@@ -331,7 +331,7 @@ export default function Landing() {
                 </div>
               </div>
               <p className="font-body text-xs mt-3 text-center" style={{ color: 'rgba(255,255,255,0.4)' }}>Your own astrologer on call — minus the wait.</p>
-              <button onClick={() => setExample(FEATURE_EXAMPLES.goNavigator)} className="mt-3 mx-auto flex items-center gap-1 font-body text-[11px]" style={{ color: '#C9A961' }}>See an example <ArrowRight size={11} /></button>
+              <button onClick={() => setExample(FEATURE_EXAMPLES.goNavigator)} className="mt-3 mx-auto flex items-center gap-1 font-body text-[0.6875rem]" style={{ color: '#C9A961' }}>See an example <ArrowRight size={11} /></button>
             </div>
           </div>
         </section>
@@ -359,7 +359,7 @@ export default function Landing() {
                 <div className="text-left flex-1">
                   <p className="font-display font-bold text-white text-sm">{title}</p>
                   <p className="font-body text-xs leading-relaxed mt-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>{desc}</p>
-                  <p className="font-body text-[11px] mt-2.5 inline-flex items-center gap-1" style={{ color: '#C9A961' }}>See an example <ArrowRight size={11} /></p>
+                  <p className="font-body text-[0.6875rem] mt-2.5 inline-flex items-center gap-1" style={{ color: '#C9A961' }}>See an example <ArrowRight size={11} /></p>
                 </div>
               </button>
               ))}
@@ -435,7 +435,7 @@ export default function Landing() {
 
             {/* Seeker */}
             <div className="rounded-2xl p-6 flex flex-col relative" style={{ background: 'rgba(201,169,97,0.08)', border: '2px solid rgba(201,169,97,0.4)' }}>
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full font-body text-[10px] font-semibold tracking-wide" style={{ background: '#C9A961', color: '#0f1a2e' }}>
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full font-body text-[0.625rem] font-semibold tracking-wide" style={{ background: '#C9A961', color: '#0f1a2e' }}>
                 MOST POPULAR
               </div>
               <p className="font-body text-xs uppercase tracking-widest mb-1" style={{ color: '#C9A961' }}>Core</p>
@@ -445,7 +445,7 @@ export default function Landing() {
               </div>
               <div className="flex items-center gap-1.5 mb-5">
                 <Lock size={10} style={{ color: '#C9A961' }} />
-                <p className="font-body text-[10px]" style={{ color: 'rgba(201,169,97,0.7)' }}>Founding rate · locked in forever · or $55/yr — 2 months free</p>
+                <p className="font-body text-[0.625rem]" style={{ color: 'rgba(201,169,97,0.7)' }}>Founding rate · locked in forever · or $55/yr — 2 months free</p>
               </div>
               <ul className="space-y-2.5 flex-1 mb-6">
                 {['Everything in Free', 'Interactive chart wheel', 'Full natal chart interpretations (all planets)', 'Transit interpretations on demand', 'Personalized daily quiz', 'Synastry & event charts', 'House system choice (Placidus + more)', 'Switch your chart\'s tradition — Modern, Hellenistic, or Vedic', 'Planner (month, week, day views)', 'Calendar sync (ICS + Google Calendar)', 'Chart Navigator chatbot', 'Streak bonus content (7-day streak)'].map(f => (
@@ -468,7 +468,7 @@ export default function Landing() {
               </div>
               <div className="flex items-center gap-1.5 mb-5">
                 <Lock size={10} style={{ color: '#B8A5C8' }} />
-                <p className="font-body text-[10px]" style={{ color: 'rgba(184,165,200,0.6)' }}>Founding rate · locked in forever · or $77/yr — 2 months free</p>
+                <p className="font-body text-[0.625rem]" style={{ color: 'rgba(184,165,200,0.6)' }}>Founding rate · locked in forever · or $77/yr — 2 months free</p>
               </div>
               <ul className="space-y-2.5 flex-1 mb-6">
                 {['Everything in Core', 'Black Moon Lilith (placements, transits & interpretations)', 'Asteroid pack — Juno, Pallas, Vesta & Tyche (placements, transits & interpretations)', 'Early access to new features', 'Private community (Discord/Subreddit) — coming soon', 'Founding patron recognition in-app'].map(f => (

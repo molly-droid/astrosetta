@@ -222,7 +222,7 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
             }`}
           >
             {b === 'monthly' ? 'Monthly' : 'Yearly'}
-            {b === 'yearly' && <span className="text-[9px] text-green-400">2 months free</span>}
+            {b === 'yearly' && <span className="text-[0.5625rem] text-green-400">2 months free</span>}
           </button>
         ))}
       </div>
@@ -233,7 +233,7 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
           <div className="flex items-center gap-2">
             <h2 className="font-display text-lg font-bold text-cream">Free</h2>
             {!isOnboarding && realTier === 'free' && (
-              <span className="font-body text-[10px] text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-2 py-0.5">Current</span>
+              <span className="font-body text-[0.625rem] text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-2 py-0.5">Current</span>
             )}
           </div>
           <span className="font-display text-2xl font-bold text-cream">$0</span>
@@ -282,10 +282,10 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
                 {plan.icon}
                 <h2 className="font-display text-lg font-bold text-cream">{plan.label}</h2>
                 {isCurrent && (
-                  <span className="font-body text-[10px] text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-2 py-0.5">Current</span>
+                  <span className="font-body text-[0.625rem] text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-2 py-0.5">Current</span>
                 )}
                 {plan.badge && !isCurrent && (
-                  <span className="font-body text-[10px] text-gold-accent bg-gold-primary/10 border border-gold-primary/30 rounded-full px-2 py-0.5">{plan.badge}</span>
+                  <span className="font-body text-[0.625rem] text-gold-accent bg-gold-primary/10 border border-gold-primary/30 rounded-full px-2 py-0.5">{plan.badge}</span>
                 )}
               </div>
               <div className="text-right shrink-0">
@@ -294,7 +294,7 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
                   <span className="font-body text-xs text-brass/60">{displayPeriod}</span>
                 </div>
                 {billing === 'yearly' && (
-                  <p className="font-body text-[10px] text-green-400/80">2 months free</p>
+                  <p className="font-body text-[0.625rem] text-green-400/80">2 months free</p>
                 )}
               </div>
             </div>
@@ -307,7 +307,7 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
             {isFoundingMember && !isNative && (
               <div className="flex items-center gap-1 mb-3">
                 <Lock size={9} className="text-gold-accent" />
-                <p className="font-body text-[10px] text-gold-accent/70">Your founding rate · locked in forever</p>
+                <p className="font-body text-[0.625rem] text-gold-accent/70">Your founding rate · locked in forever</p>
               </div>
             )}
 
@@ -332,7 +332,7 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
                     className="mt-0.5 w-4 h-4 rounded border-white/20 bg-transparent text-gold-primary focus:ring-gold-accent shrink-0"
                     checked={ageConfirmed}
                     onChange={(e) => setAgeConfirmed(e.target.checked)} />
-                  <span className="font-body text-[11px] text-brass/50 leading-relaxed">
+                  <span className="font-body text-[0.6875rem] text-brass/50 leading-relaxed">
                     I confirm I am at least <strong className="text-white/70">18 years old</strong> and authorized to make this purchase.
                   </span>
                 </label>
@@ -376,7 +376,7 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
       )}
 
       {/* Fine print (F-01 copy) */}
-      <p className="font-body text-[11px] text-brass/40 text-center leading-relaxed">
+      <p className="font-body text-[0.6875rem] text-brass/40 text-center leading-relaxed">
         Subscriptions renew automatically at the price shown until canceled. Cancel anytime in {cancelLine}.
         {' · '}
         {isNative && (

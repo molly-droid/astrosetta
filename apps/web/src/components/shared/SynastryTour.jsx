@@ -93,7 +93,7 @@ export default function SynastryTour({ steps, onComplete }) {
         <div className="rounded-xl border border-gold-primary/40 shadow-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #1a2847, #0f1a2e)' }}>
           <div className="px-5 py-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-body text-[10px] text-gold-accent font-semibold uppercase tracking-widest">
+              <span className="font-body text-[0.625rem] text-gold-accent font-semibold uppercase tracking-widest">
                 {stepIndex + 1} of {steps.length}
               </span>
               <button onClick={handleSkip} className="p-1 rounded-full hover:bg-white/10 transition-colors">

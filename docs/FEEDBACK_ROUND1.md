@@ -82,6 +82,11 @@ Root causes and fixes (all verified against live output):
   "Tropical only at launch" predates knowing the engine does sidereal).
 - **B-19 ✅** plan page shows the real paid tier, editable (earlier batch) —
   and now opens the same PlanSelection flow as onboarding (F-01).
+- **F-01 follow-up (2026-10-12, post-build-4)**: killing the app mid-onboarding
+  used to skip everything after chart creation (incl. the plan slide) because
+  Home routes by chart-existence. Onboarding now writes a per-user resume
+  marker (localStorage) for the email/plan/confirmation steps; Home routes
+  back into onboarding while it's set. Ships in build 5.
 - **F-01 ✅** plan selection inside onboarding: new shared
   `components/plans/PlanSelection.jsx` (Molly's final copy: billing toggle,
   Free/Core/Premium cards, fine print, restore link) used by a new onboarding
@@ -101,7 +106,65 @@ Root causes and fixes (all verified against live output):
   classic 10 placements + 12 houses per chart. Key parity client↔server
   verified 8/8; all existing charts back-filled manually.
 
-## E. P1 batch — bugs
+## E. P1 batch — bugs — ✅ DONE 2026-10-12 (client uncommitted; server deployed)
+
+Root causes, several different from what the report assumed:
+
+- **B-20 ✅** one missing CSS class: the screenshot dropzone `<label>` had no
+  `relative`, so its invisible `absolute inset-0` file input stretched over the
+  whole form — tapping Subject actually hit the file input. Added `relative`.
+- **B-03 + P-01 ✅** the save button called `<a download>` with a data: URL,
+  which WKWebView ignores — it could never have worked in the app. Native now
+  writes the PNG to the app cache and opens the system share sheet (Save Image
+  → Photos, or send straight to Messages/Instagram); web keeps the download.
+  Added `@capacitor/share` + `@capacitor/filesystem` and
+  `NSPhotoLibraryAddUsageDescription` to Info.plist. Button reads "Save or
+  Share" on native; a cancelled sheet is not treated as an error.
+- **B-05/B-06 ✅** two real causes: (1) SERVER — `apprentice_correct_total`
+  and `_questions_total` were gated behind "is this a new day", so a second
+  quiz the same day moved nothing (Molly's row proves it: `total_answered` 10
+  but `apprentice_questions_total` 5). Accuracy now counts every answered
+  question; only the quiz-DAY counter stays daily. (2) CLIENT — the
+  UserProgress record was fetched once at boot and never refreshed; added
+  `reloadProgress()` to AuthContext, pushed quiz results into the shared
+  record, and refresh on Home. Labels now say "quiz days", not "quizzes",
+  which is what the counter actually measures.
+- **B-07 ✅** the curriculum summary read only `raw.ascendant_sign` and
+  silently degraded to "your rising sign"; now falls back through
+  `chart.ascendant_sign` / `angles.ascendant.sign` (and shows none when the
+  birth time is unknown).
+- **B-08 ✅** the starfield canvas sized its bitmap from `window.innerWidth`,
+  which diverges from the visual viewport on iOS and doesn't fire `resize` —
+  the uncovered strip showed the parent's flat navy as a dark column. Now
+  sized from `visualViewport` with a matching listener, CSS box pinned 100%.
+- **B-11 ✅** `--app-font-scale` only rescales the root rem, but the app is
+  written in px-literal Tailwind classes (`text-[10px]` ×416, etc.) which
+  ignore it. Converted every px text/leading literal to rem across 132 files,
+  so the text-size setting now reaches interpretation cards and planner text.
+- **B-12 ✅** most interpretation surfaces rendered LLM markdown as one plain
+  `<p>`, so "### 🔍 Themes to Explore" showed as body text. New shared
+  `InterpretationMarkdown` (markdown + gold astro-term highlighting) now used
+  by the chart/transit/mundane/synastry/planner surfaces; it also promotes a
+  header the model emitted without its `###` prefix.
+- **B-15 ✅** not a partner-chart leak — `SavedChart` never reaches the
+  calendar functions. Both read `Chart.filter(...)` and took `charts[0]` with
+  no ordering, so a user with more than one chart row could sync a stale one.
+  Both now order `-created_date`, matching what the app displays.
+- **B-17 ✅** Google renders descriptions as HTML and collapses bare newlines
+  (one run-on blob); events now get a bold title line, body, and footer joined
+  with `<br>`. ICS was structured already but emitted unfolded lines — added
+  RFC 5545 75-octet folding that never splits a multi-byte glyph. Verified
+  live: 265 events, 1571 folded continuations, all lines valid UTF-8.
+- **B-04 ✅** the bonus round is NOT LLM-generated (no prompt to fix) — it's a
+  deterministic template. The aspect question labelled every option with its
+  own aspect name ("Trine — flowing harmony…") so the answer announced itself;
+  options are now meanings only, plus a `leaksSubject()` guard that drops any
+  question whose choices contain the term being asked about.
+- **B-13** — still unresolved: the planner transit card renders full-width in
+  code and Molly's doc has no screenshot for it. Need her repro (which card,
+  portrait/landscape, device) — added to the follow-up ask list.
+
+## E-old. (superseded by the DONE block above)
 
 - B-03 share-card download does nothing + **P-01** photo-library permission
   (add NSPhotoLibraryAddUsageDescription + save flow).
@@ -119,7 +182,35 @@ Root causes and fixes (all verified against live output):
 - B-17 synced event descriptions unformatted.
 - B-20 feedback form: Subject field forces photo upload.
 
-## F. P1 batch — UX polish
+## F. P1 batch — UX polish — ✅ DONE 2026-10-12
+
+- **UX-02 ✅** chart display points now default OFF. The DB had all five
+  `show_*` columns `default true` and the client was split (asteroids/lots
+  already off-by-default, angles/nodes/Lilith on), so the settings screen and
+  the wheels disagreed. Migration flips the column defaults; client reads are
+  normalized to `=== true`. Also fixed a latent bug: Profile's wheel checked
+  `show_pof`, which is not a column, so Part of Fortune ignored the Lots
+  toggle there. **Existing rows are deliberately NOT reset** — see the
+  migration for the one-liner if Molly wants beta accounts flipped too.
+- **UX-03 ✅** the full tour's Profile stop now calls out the three things
+  people were missing: Plan, Zodiac & Houses, and the chart display toggles.
+  Note: the anchored first-visit tooltip tour only works on /home, so these
+  went into the page-by-page tour rather than as anchored bubbles.
+- **UX-04 ✅** the highlight helpers defaulted to `text-white`, so every
+  surface that didn't pass a colour rendered tappable terms as plain body
+  text (hence "Moon" gold but Part of Fortune/Aries/square/Cancer not — the
+  gold one came from a different code path). Gold is now the default, and
+  Home's transit list gets the same tap handler the Planner's already had.
+- **UX-05 ✅** Regenerate, thumbs up/down and Save removed from the Daily
+  Synthesis; "Explain it" and "Share" stay. The SynthesisRating writes went
+  with them (nothing read them back).
+- **UX-06 ✅** "I don't know — learn this" now carries a return address, so
+  Back from the curriculum goes straight back to the quiz instead of walking
+  through the module's earlier slides.
+- **UX-07 ✅** the "Save to Home Screen" tip and its body are gone.
+- **UX-08 ✅** the whole notification tip card is the tap target now.
+
+## F-old. (superseded by the DONE block above)
 
 - UX-02 chart toggles default off · UX-03 tooltip tour should point at plan,
   Houses setting, display toggles · UX-04 tappable terms highlighted gold
@@ -127,7 +218,37 @@ Root causes and fixes (all verified against live output):
   UX-06 quiz "learn this" Back returns to quiz · UX-07 remove "Save to home
   screen" tip (web holdover) · UX-08 whole tip cards tappable.
 
-## G. P1/P2 — AI + content + email
+## G. P1/P2 — AI + content + email — ✅ DONE 2026-10-12 (AI-02 n/a)
+
+- **AI-04 ✅** Molly's five style rules are now a `STYLE_RULES` block inside
+  the shared PERSONA, so all 31 registry tasks inherit them, plus the two
+  local PERSONA copies (daySynthesisGenerator, generate-calendar-synthesis).
+  Em/en dashes are also stripped centrally in `_shared/llm.ts` — every
+  function's output passes through `invokeLLM`, including structured JSON
+  (string leaves are scrubbed recursively), because models reach for dashes
+  however firmly the prompt says not to. Verified live: a fresh generation
+  came back with zero dashes.
+- **AI-01 ✅** the share card now gets its own ≤200-char `summary` field from
+  the LLM, hard-trimmed server-side at a sentence/word break, and the image
+  renders that instead of the overflowing bullet list (the copied text keeps
+  the bullets). Pre-AI-01 cache rows regenerate because the cache gate now
+  requires a summary. Verified live: 187 chars.
+- **AI-03 / F-02 ✅** the daily quiz now asks about real transits to YOUR
+  chart. The function never computed transit-to-natal aspects at all — its
+  `mundaneAspects` is transit×transit despite the field names — so no
+  generator could reference one. Added that computation plus three
+  generators (aspect meaning, natal planet theme, natal house area), offered
+  ahead of the generic sign/element trivia.
+- **AI-02 — not applicable**: see B-04 in §E. The bonus round is a
+  deterministic template, not an LLM prompt; fixed as a code change.
+- **E-01 ✅** the welcome email gained a "Your twelve houses" section using
+  Molly's copy deck: one line per house plus a personalized line from the
+  user's own chart (their house system, their planets), skipped entirely for
+  unknown birth times.
+- **F-03 ✅** new Journal history panel in the Planner day view: every past
+  entry by date, expandable in place, with a link to open that day.
+
+## G-old. (superseded by the DONE block above)
 
 - AI-01 share-card: generate a separate ~200-char summary.
 - AI-02 bonus-round: definitions only + reject choices containing the term.

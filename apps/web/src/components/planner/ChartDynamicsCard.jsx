@@ -5,6 +5,7 @@ import { PLANET_GLYPHS, SIGN_GLYPHS, highlightSynthesisText } from '@/lib/transi
 import { getHouseShort, ordinal } from '@/lib/houseUtils';
 import { useDynamicsInterpretation } from './useDynamicsInterpretation';
 import SpotlightCallout from '@/components/shared/SpotlightCallout';
+import InterpretationMarkdown from '@/components/ui/InterpretationMarkdown';
 
 const ELEMENT_ICONS = { Fire: Flame, Earth: Mountain, Air: Wind, Water: Droplet };
 const ELEMENT_COLORS = { Fire: 'text-orange-400', Earth: 'text-green-400', Air: 'text-blue-400', Water: 'text-cyan-400' };
@@ -48,7 +49,7 @@ function InterpretBlock({ reading, loading }) {
       {entries.map(([key, val]) => (
         <div key={key} className="space-y-1">
           {typeof val === 'string' ? (
-            <p className="font-body text-xs text-white/90 leading-snug">{highlightSynthesisText(val, null, 'text-gold-accent')}</p>
+            <InterpretationMarkdown text={val} className="font-body text-xs text-white/90 leading-snug" />
             ) : Array.isArray(val) ? (
              <ul className="space-y-1">
                {val.map((item, i) => (
@@ -83,7 +84,7 @@ ${rulerPlanet ? `Ruler's sign: ${rulerPlanet.sign} (${SIGN_ELEMENTS[rulerPlanet.
   return (
     <div>
       <button onClick={() => { const willOpen = !expanded; setExpanded(willOpen); onHighlight?.(willOpen && chartRuler ? { key: `planet_${chartRuler.planet}` } : null); }} className="w-full flex items-center justify-between mb-1.5">
-        <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/70">Chart Ruler</p>
+        <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/70">Chart Ruler</p>
         {expanded ? <ChevronDown size={12} className="text-brass/50" /> : <ChevronRight size={12} className="text-brass/50" />}
       </button>
       <p className="font-body text-xs text-white/90 leading-snug">
@@ -129,7 +130,7 @@ ${stellium.type === 'sign' ? `Element: ${SIGN_ELEMENTS[stellium.sign]}, Modality
       </button>
       <div className="flex flex-wrap gap-1.5 mt-1.5">
         {stellium.planets.map(p => (
-          <span key={p} className="font-body text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/80">
+          <span key={p} className="font-body text-[0.625rem] px-1.5 py-0.5 rounded bg-white/5 text-white/80">
             {PLANET_GLYPHS[p]} {p}
           </span>
         ))}
@@ -161,7 +162,7 @@ ${house.tradRuler ? `Traditional ruler: ${house.tradRuler}` : ''}`;
   return (
     <div className="rounded-lg border border-white/[0.06] overflow-hidden">
       <button onClick={() => { const willOpen = !expanded; setExpanded(willOpen); onHighlight?.(willOpen ? { key: `planet_${house.ruler}` } : null); }} className="w-full flex items-start gap-2 px-2.5 py-2 hover:bg-white/[0.03] transition-colors text-left">
-        <span className="font-body text-[11px] text-gold-accent/80 w-14 flex-shrink-0 mt-0.5">{ordinal(house.house)} H</span>
+        <span className="font-body text-[0.6875rem] text-gold-accent/80 w-14 flex-shrink-0 mt-0.5">{ordinal(house.house)} H</span>
         <div className="flex-1 min-w-0">
           <p className="font-body text-xs text-white/90 leading-snug">
             <span className="text-brass/60">{SIGN_GLYPHS[house.cuspSign]}</span>{' '}
@@ -170,7 +171,7 @@ ${house.tradRuler ? `Traditional ruler: ${house.tradRuler}` : ''}`;
               <span className="text-white/60"> → {house.rulerPlacement.replace(/^[^ ]+ in /, '')}</span>
             )}
           </p>
-          <p className="font-body text-[10px] text-brass/50 mt-0.5">{theme}</p>
+          <p className="font-body text-[0.625rem] text-brass/50 mt-0.5">{theme}</p>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0 mt-0.5">
           {loading && <Loader2 size={10} className="animate-spin text-gold-primary" />}
@@ -200,10 +201,10 @@ ${houses.map(h => `- ${ordinal(h.house)} House: cusp in ${h.cuspSign} ${SIGN_GLY
   if (!emptyHouses.length) return null;
   return (
     <div>
-      <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/70 mb-1.5">
+      <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/70 mb-1.5">
         Empty Houses <span className="text-brass/50 normal-case tracking-normal">({emptyHouses.length})</span>
       </p>
-      <p className="font-body text-[11px] text-brass/70 mb-2 leading-snug italic">
+      <p className="font-body text-[0.6875rem] text-brass/70 mb-2 leading-snug italic">
         Empty houses aren't inactive — they're ruled by the planet that governs their cusp sign. Tap any house to see how it shows up for you.
       </p>
       <div className="space-y-1.5">
@@ -213,7 +214,7 @@ ${houses.map(h => `- ${ordinal(h.house)} House: cusp in ${h.cuspSign} ${SIGN_GLY
       </div>
       {/* Overview interpretation */}
       <button onClick={() => setOverviewExpanded(!overviewExpanded)} className="w-full flex items-center justify-between mt-2 pt-2 border-t border-gold-primary/15">
-        <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/70">Overall Pattern</p>
+        <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/70">Overall Pattern</p>
         <div className="flex items-center gap-1">
           {loading && <Loader2 size={11} className="animate-spin text-gold-primary" />}
           {overviewExpanded ? <ChevronDown size={11} className="text-brass/50" /> : <ChevronRight size={11} className="text-brass/50" />}
@@ -254,7 +255,7 @@ Weakest element: ${weakest.element}`;
   return (
     <div>
       <button onClick={() => setExpanded(!expanded)} className="w-full flex items-center justify-between mb-1.5">
-        <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/70">Element Balance</p>
+        <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/70">Element Balance</p>
         <div className="flex items-center gap-1">
           {loading && <Loader2 size={11} className="animate-spin text-gold-primary" />}
           {expanded ? <ChevronDown size={11} className="text-brass/50" /> : <ChevronRight size={11} className="text-brass/50" />}
@@ -282,12 +283,12 @@ Weakest element: ${weakest.element}`;
                 <div className="flex-1 h-1.5 rounded-full bg-white/5 overflow-hidden">
                   <div className="h-full rounded-full" style={{ width: `${el.percentage}%`, background: ELEMENT_BAR[el.element] }} />
                 </div>
-                <span className="font-body text-[10px] text-brass/60 w-6 text-right">{el.count}</span>
+                <span className="font-body text-[0.625rem] text-brass/60 w-6 text-right">{el.count}</span>
               </div>
               {el.count > 0 && desc && (
                 <div className="px-2.5 pb-2 pt-0.5">
-                  <p className="font-body text-[9px] text-brass/50 uppercase tracking-wide mb-0.5">{desc.keywords}</p>
-                  <p className="font-body text-[10px] text-white/60 leading-snug">{desc.description}</p>
+                  <p className="font-body text-[0.5625rem] text-brass/50 uppercase tracking-wide mb-0.5">{desc.keywords}</p>
+                  <p className="font-body text-[0.625rem] text-white/60 leading-snug">{desc.description}</p>
                 </div>
               )}
             </div>
@@ -310,13 +311,13 @@ Weakest element: ${weakest.element}`;
                 }}
                 className={`flex items-center justify-between px-2 py-1.5 cursor-pointer hover:bg-white/[0.03] transition-colors ${activeMod === mod.modality ? 'bg-white/[0.05]' : ''}`}
               >
-                <span className="font-body text-[10px] text-white/70">{mod.modality}</span>
+                <span className="font-body text-[0.625rem] text-white/70">{mod.modality}</span>
                 <span className="font-display text-sm text-white font-semibold">{mod.count}</span>
               </div>
               {mod.count > 0 && desc && (
                 <div className="px-2.5 pb-2 pt-0.5">
-                  <p className="font-body text-[9px] text-brass/50 uppercase tracking-wide mb-0.5">{desc.keywords}</p>
-                  <p className="font-body text-[10px] text-white/60 leading-snug">{desc.description}</p>
+                  <p className="font-body text-[0.5625rem] text-brass/50 uppercase tracking-wide mb-0.5">{desc.keywords}</p>
+                  <p className="font-body text-[0.625rem] text-white/60 leading-snug">{desc.description}</p>
                 </div>
               )}
             </div>
@@ -359,13 +360,13 @@ ${pattern.element ? `Elemental theme: ${pattern.element}` : ''}`;
       </button>
       <div className="flex flex-wrap gap-1.5 mt-1.5">
         {pattern.planets.map(pl => (
-          <span key={pl} className="font-body text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/80">
+          <span key={pl} className="font-body text-[0.625rem] px-1.5 py-0.5 rounded bg-white/5 text-white/80">
             {PLANET_GLYPHS[pl]} {pl}
           </span>
         ))}
       </div>
-      {pattern.apex && <p className="font-body text-[11px] text-brass/70 mt-1">Apex: {pattern.apex}</p>}
-      {pattern.element && <p className="font-body text-[11px] text-brass/70 mt-1">Element: {pattern.element}</p>}
+      {pattern.apex && <p className="font-body text-[0.6875rem] text-brass/70 mt-1">Apex: {pattern.apex}</p>}
+      {pattern.element && <p className="font-body text-[0.6875rem] text-brass/70 mt-1">Element: {pattern.element}</p>}
       {expanded && (
         <div className="mt-2 pt-2 border-t border-celestial-purple/15 space-y-1.5">
           {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} />}
@@ -399,11 +400,11 @@ function StelliumOppositionSection({ chart, opposition, onHighlight }) {
       </button>
       <div className="flex flex-wrap gap-1.5 mt-1.5 items-center">
         {opposition.planets1.map(p => (
-          <span key={p} className="font-body text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/80">{PLANET_GLYPHS[p]} {p}</span>
+          <span key={p} className="font-body text-[0.625rem] px-1.5 py-0.5 rounded bg-white/5 text-white/80">{PLANET_GLYPHS[p]} {p}</span>
         ))}
-        <span className="font-body text-[10px] text-brass/50 px-1">↔</span>
+        <span className="font-body text-[0.625rem] text-brass/50 px-1">↔</span>
         {opposition.planets2.map(p => (
-          <span key={p} className="font-body text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/80">{PLANET_GLYPHS[p]} {p}</span>
+          <span key={p} className="font-body text-[0.625rem] px-1.5 py-0.5 rounded bg-white/5 text-white/80">{PLANET_GLYPHS[p]} {p}</span>
         ))}
       </div>
       {expanded && (
@@ -461,7 +462,7 @@ export default function ChartDynamicsCard({ chart, autoExpand = false, spotlight
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5 pl-5">
             {tags.map((tag, i) => (
-              <span key={i} className="font-body text-[10px] px-1.5 py-0.5 rounded-full bg-gold-primary/15 text-brass">{tag}</span>
+              <span key={i} className="font-body text-[0.625rem] px-1.5 py-0.5 rounded-full bg-gold-primary/15 text-brass">{tag}</span>
             ))}
           </div>
         )}
@@ -471,8 +472,8 @@ export default function ChartDynamicsCard({ chart, autoExpand = false, spotlight
         <div className="border-t border-gold-primary/20 px-4 pb-4 pt-3 space-y-4">
           {spotlightMode && activeCallouts.size > 0 && (
             <div className="flex items-center justify-between rounded-lg border border-gold-accent/30 bg-gold-primary/10 px-3 py-2">
-              <p className="font-body text-[10px] text-gold-accent font-semibold uppercase tracking-widest">✦ Spotlight Tour</p>
-              <button onClick={endTour} className="font-body text-[10px] text-brass hover:text-gold-accent underline underline-offset-2">
+              <p className="font-body text-[0.625rem] text-gold-accent font-semibold uppercase tracking-widest">✦ Spotlight Tour</p>
+              <button onClick={endTour} className="font-body text-[0.625rem] text-brass hover:text-gold-accent underline underline-offset-2">
                 End tour
               </button>
             </div>
@@ -493,7 +494,7 @@ export default function ChartDynamicsCard({ chart, autoExpand = false, spotlight
 
           {stelliums.length > 0 && (
             <div>
-              <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/70 mb-1.5">Stelliums</p>
+              <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/70 mb-1.5">Stelliums</p>
               {spotlightMode && activeCallouts.has('stelliums') && (
                 <SpotlightCallout
                   text="Stelliums are clusters of 3+ planets in one sign or house — they amplify and concentrate that area of life. Expand each to see how they interact."
@@ -508,7 +509,7 @@ export default function ChartDynamicsCard({ chart, autoExpand = false, spotlight
 
           {stelliumOppositions.length > 0 && (
             <div>
-              <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/70 mb-1.5">Stellium Oppositions</p>
+              <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/70 mb-1.5">Stellium Oppositions</p>
               <div className="space-y-2">
                 {stelliumOppositions.map((opp, i) => <StelliumOppositionSection key={i} chart={chart} opposition={opp} onHighlight={onHighlight} />)}
               </div>
@@ -533,7 +534,7 @@ export default function ChartDynamicsCard({ chart, autoExpand = false, spotlight
 
           {aspectPatterns.length > 0 && (
             <div>
-              <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/70 mb-1.5">Aspect Patterns</p>
+              <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/70 mb-1.5">Aspect Patterns</p>
               {spotlightMode && activeCallouts.has('patterns') && (
                 <SpotlightCallout
                   text="Aspect patterns are multi-planet geometric shapes (Grand Trines, T-Squares) that reveal natural talents and core tensions in your chart."

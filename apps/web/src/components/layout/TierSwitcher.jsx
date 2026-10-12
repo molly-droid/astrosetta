@@ -83,7 +83,7 @@ export default function TierSwitcher({ onTierChange }) {
       <button
         ref={btnRef}
         onClick={() => setOpen(o => !o)}
-        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border font-body text-[10px] font-semibold transition-all shadow-sm ${styleClass}`}
+        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border font-body text-[0.625rem] font-semibold transition-all shadow-sm ${styleClass}`}
       >
         <FlaskConical size={11} />
         <span>{activeLabel}</span>
@@ -98,7 +98,7 @@ export default function TierSwitcher({ onTierChange }) {
           ref={dropdownRef}
           className="absolute bottom-full mb-2 left-0 z-[9999] bg-paper border border-gold-primary/30 rounded-xl shadow-xl overflow-hidden min-w-[176px]"
         >
-          <p className="font-body text-[9px] uppercase tracking-widest text-brass/40 px-3 pt-2.5 pb-1">
+          <p className="font-body text-[0.5625rem] uppercase tracking-widest text-brass/40 px-3 pt-2.5 pb-1">
             {impersonatedUser ? `Testing as ${impersonatedUser.full_name?.split(' ')[0] || 'user'}` : 'Test as tier'}
           </p>
           {TIERS.map(t => (
@@ -110,10 +110,10 @@ export default function TierSwitcher({ onTierChange }) {
               }`}
             >
               <span>{t.label}</span>
-              {activeId === t.id && <span className="text-[9px] text-gold-accent">✓</span>}
+              {activeId === t.id && <span className="text-[0.5625rem] text-gold-accent">✓</span>}
             </button>
           ))}
-          <p className="font-body text-[8px] text-brass/30 px-3 pb-2 pt-1">
+          <p className="font-body text-[0.5rem] text-brass/30 px-3 pb-2 pt-1">
             {impersonatedUser ? 'Updates this user\'s tier instantly' : 'Page reloads after switching'}
           </p>
         </div>

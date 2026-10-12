@@ -326,6 +326,89 @@ async function getCurriculumQuestions(base44, count) {
 }
 
 // ── Apprentice quiz builder — diverse pool, randomly selected ─────────────────
+// ── Transit-to-natal generators (AI-03 / F-02) ───────────────────────────────
+// Each question references a real contact between today's sky and this user's
+// natal chart, so the quiz teaches what is actually happening to them.
+
+function qNatalContactAspect(natalHits) {
+  if (!natalHits?.length) return null;
+  const hit = natalHits[Math.floor(Math.random() * Math.min(5, natalHits.length))];
+  const meaning = ASPECT_MEANINGS[hit.aspect];
+  if (!meaning) return null;
+  const others = shuffle(Object.entries(ASPECT_MEANINGS).filter(([a]) => a !== hit.aspect)).slice(0, 3).map(([, m]) => m);
+  const options = shuffle([meaning, ...others]);
+  return {
+    type: 'transit_natal_aspect',
+    question: `Today transiting ${hit.transit_planet} is ${hit.aspect} your natal ${hit.natal_planet}. What kind of energy does a ${hit.aspect} describe?`,
+    options,
+    correct_index: options.indexOf(meaning),
+    explanation: `A ${hit.aspect} is about ${meaning}. With ${hit.transit_planet} contacting your natal ${hit.natal_planet}, that plays out through ${PLANET_KEYWORDS[hit.natal_planet] || 'that part of your chart'}.`,
+  };
+}
+
+function qNatalContactPlanet(natalHits) {
+  if (!natalHits?.length) return null;
+  const hit = natalHits[Math.floor(Math.random() * Math.min(5, natalHits.length))];
+  const keyword = (PLANET_KEYWORDS[hit.natal_planet] || '').split(',')[0];
+  if (!keyword) return null;
+  const others = shuffle(Object.entries(PLANET_KEYWORDS).filter(([n]) => n !== hit.natal_planet)).slice(0, 3).map(([, k]) => k.split(',')[0]);
+  const options = shuffle([keyword, ...others]);
+  return {
+    type: 'transit_natal_planet',
+    question: `Transiting ${hit.transit_planet} is ${hit.aspect} your natal ${hit.natal_planet} today. Which theme does your natal ${hit.natal_planet} carry?`,
+    options,
+    correct_index: options.indexOf(keyword),
+    explanation: `${hit.natal_planet} governs ${PLANET_KEYWORDS[hit.natal_planet]}, so this transit activates that area for you.`,
+  };
+}
+
+function qNatalContactHouse(natalHits, natalPlanets) {
+  if (!natalHits?.length) return null;
+  const withHouse = natalHits
+    .map((h) => ({ hit: h, planet: (natalPlanets || []).find((p) => p.name === h.natal_planet) }))
+    .filter((x) => x.planet?.house && HOUSE_THEMES[x.planet.house]);
+  if (!withHouse.length) return null;
+  const { hit, planet } = withHouse[Math.floor(Math.random() * withHouse.length)];
+  const theme = HOUSE_THEMES[planet.house];
+  const others = shuffle(Object.entries(HOUSE_THEMES).filter(([h]) => Number(h) !== planet.house)).slice(0, 3).map(([, t]) => t);
+  const options = shuffle([theme, ...others]);
+  return {
+    type: 'transit_natal_house',
+    question: `Your natal ${hit.natal_planet} sits in your ${planet.house}${ordinalSuffix(planet.house)} house, and transiting ${hit.transit_planet} is ${hit.aspect} it today. Which area of life is that house about?`,
+    options,
+    correct_index: options.indexOf(theme),
+    explanation: `The ${planet.house}${ordinalSuffix(planet.house)} house covers ${theme}. That is where today's ${hit.transit_planet} contact lands for you.`,
+  };
+}
+
+function ordinalSuffix(n) {
+  const v = n % 100;
+  if (v >= 11 && v <= 13) return 'th';
+  return ['th', 'st', 'nd', 'rd'][n % 10] || 'th';
+}
+
+/** Transit-to-natal aspects for today, tightest orb first. */
+function computeNatalHits(transitPlanets, natalPlanets) {
+  const ORBS = { conjunction: 6, opposition: 6, trine: 5, square: 5, sextile: 3 };
+  const hits = [];
+  for (const tp of transitPlanets || []) {
+    if (tp.longitude == null) continue;
+    for (const np of natalPlanets || []) {
+      if (np.longitude == null) continue;
+      let diff = Math.abs(Number(tp.longitude) - Number(np.longitude));
+      if (diff > 180) diff = 360 - diff;
+      for (const [aspect, target] of [['conjunction', 0], ['opposition', 180], ['trine', 120], ['square', 90], ['sextile', 60]]) {
+        const orb = Math.abs(diff - target);
+        if (orb <= (ORBS[aspect] || 5)) {
+          hits.push({ transit_planet: tp.name, natal_planet: np.name, aspect, orb });
+          break;
+        }
+      }
+    }
+  }
+  return hits.sort((a, b) => a.orb - b.orb);
+}
+
 function buildApprenticeQuestions(transitPlanets, mundaneAspects, natalPlanets, ascendantSign) {
   const usedPlanets = new Set();
   const pool = [];
@@ -347,8 +430,17 @@ function buildApprenticeQuestions(transitPlanets, mundaneAspects, natalPlanets, 
   const n4 = qChartRuler(ascendantSign);                              if (n4) pool.push(n4);
   const n5 = qNatalPlanetSignId(natalPlanets);                        if (n5) pool.push(n5);
 
-  // Shuffle pool and pick 5 — ensures different mix each day
-  const selected = shuffle(pool).slice(0, 5);
+  // Today's actual contacts to this user's chart (AI-03 / F-02). These are
+  // offered first: a question about a real transit to your natal chart beats
+  // generic trivia about whichever sign a planet happens to be in.
+  const natalHits = computeNatalHits(transitPlanets, natalPlanets);
+  const contactPool = [
+    qNatalContactAspect(natalHits),
+    qNatalContactPlanet(natalHits),
+    qNatalContactHouse(natalHits, natalPlanets),
+  ].filter(Boolean);
+
+  const selected = [...shuffle(contactPool), ...shuffle(pool)].slice(0, 5);
   return selected.map((q, i) => ({ id: i + 1, ...q }));
 }
 

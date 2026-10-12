@@ -71,7 +71,7 @@ export default function ContextualSuggestions({ messages, sending, onSelect }) {
           className="text-left px-2.5 py-1.5 rounded-full hover:bg-gold-primary/15 transition-colors"
           style={{ background: 'rgba(201,169,97,0.08)', border: '1px solid rgba(201,169,97,0.18)' }}
         >
-          <span className="font-body text-[11px] text-white/65 leading-snug flex items-center gap-1">
+          <span className="font-body text-[0.6875rem] text-white/65 leading-snug flex items-center gap-1">
             <Sparkles size={9} className="text-gold-accent/50 shrink-0" />
             {q}
           </span>

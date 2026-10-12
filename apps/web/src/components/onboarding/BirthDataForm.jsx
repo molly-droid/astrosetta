@@ -172,7 +172,7 @@ export default function BirthDataForm({ user, onComplete }) {
           onChange={handleChange}
           className="w-full bg-white/5 border-gold-primary/50 focus:border-gold-accent font-body text-white"
         />
-        <p className="text-[11px] font-body text-brass/60 italic">This is how your chart and app will address you.</p>
+        <p className="text-[0.6875rem] font-body text-brass/60 italic">This is how your chart and app will address you.</p>
       </div>
 
       <div className="space-y-2">
@@ -253,7 +253,7 @@ export default function BirthDataForm({ user, onComplete }) {
         )}
 
         {selectedLocation && (
-          <p className="text-[11px] font-body text-brass/70 italic">
+          <p className="text-[0.6875rem] font-body text-brass/70 italic">
             📍 {selectedLocation.latitude.toFixed(4)}°, {selectedLocation.longitude.toFixed(4)}° · {selectedLocation.timezone}
           </p>
         )}

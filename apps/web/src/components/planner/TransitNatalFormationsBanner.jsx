@@ -82,7 +82,7 @@ function FormationReading({ reading }) {
     <div className="space-y-1.5">
       {READING_ORDER.map(([k, label]) => reading[k] ? (
         <div key={k} className="space-y-0.5">
-          <p className="font-body text-[9px] uppercase tracking-widest text-gold-accent/70">{label}</p>
+          <p className="font-body text-[0.5625rem] uppercase tracking-widest text-gold-accent/70">{label}</p>
           <p className="font-body text-xs text-white/85 leading-relaxed">{highlightSynthesisText(reading[k], null, 'text-gold-accent')}</p>
         </div>
       ) : null)}
@@ -99,11 +99,11 @@ function FormationInterpretation({ chart, dateKey, formation, expanded }) {
     <div className="mt-2 pt-2 border-t border-white/10 space-y-1.5">
       <div className="flex items-center gap-1.5">
         <Sparkles size={10} className="text-gold-accent" />
-        <span className="font-body text-[9px] uppercase tracking-widest text-brass/50">Interpretation</span>
+        <span className="font-body text-[0.5625rem] uppercase tracking-widest text-brass/50">Interpretation</span>
         {loading && <Loader2 size={10} className="animate-spin text-gold-primary ml-1" />}
       </div>
       {loading && !reading ? (
-        <p className="font-body text-[10px] text-brass/50 italic">Reading the pattern…</p>
+        <p className="font-body text-[0.625rem] text-brass/50 italic">Reading the pattern…</p>
       ) : reading ? (
         <FormationReading reading={sanitizeReading(reading, formation)} />
       ) : null}
@@ -145,11 +145,11 @@ export default function TransitNatalFormationsBanner({ transits, chart, dateKey 
           <div className="flex items-center gap-4 mb-1">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ background: SOURCE_STYLE.transit.color }} />
-              <span className="font-body text-[9px] text-brass/60 uppercase tracking-wide">Transiting</span>
+              <span className="font-body text-[0.5625rem] text-brass/60 uppercase tracking-wide">Transiting</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ background: SOURCE_STYLE.natal.color }} />
-              <span className="font-body text-[9px] text-brass/60 uppercase tracking-wide">Natal</span>
+              <span className="font-body text-[0.5625rem] text-brass/60 uppercase tracking-wide">Natal</span>
             </div>
           </div>
 
@@ -172,7 +172,7 @@ export default function TransitNatalFormationsBanner({ transits, chart, dateKey 
                     <span className="text-base" style={{ fontVariantEmoji: 'text', fontVariant: 'normal', color: cardColor }}>{'△\uFE0E'}</span>
                     <div className="text-left">
                       <p className="font-body text-xs font-semibold text-white">{p.type}</p>
-                      <p className="font-body text-[10px] text-brass/60">
+                      <p className="font-body text-[0.625rem] text-brass/60">
                         {p.planets.join(' · ')}
                         {p.apex && <span className="text-brass/40"> · apex {p.apex}</span>}
                       </p>
@@ -192,7 +192,7 @@ export default function TransitNatalFormationsBanner({ transits, chart, dateKey 
                         return (
                           <span
                             key={j}
-                            className="font-body text-[10px] px-2 py-0.5 rounded-full border"
+                            className="font-body text-[0.625rem] px-2 py-0.5 rounded-full border"
                             style={{ background: `${st.color}14`, borderColor: `${st.color}59`, color: st.color }}
                             title={st.label}
                           >
@@ -207,17 +207,17 @@ export default function TransitNatalFormationsBanner({ transits, chart, dateKey 
                     {/* Aspect web */}
                     {p.aspects && p.aspects.length > 0 && (
                       <div className="space-y-1">
-                        <p className="font-body text-[9px] uppercase tracking-widest text-brass/40">Aspect Web</p>
+                        <p className="font-body text-[0.5625rem] uppercase tracking-widest text-brass/40">Aspect Web</p>
                         {p.aspects.map((a, j) => {
                           const legColor = a.transitInvolved ? '#7dd49a' : 'rgba(212,175,133,0.7)';
                           return (
-                            <div key={j} className="font-body text-[10px] text-brass/70 flex items-center gap-1.5">
+                            <div key={j} className="font-body text-[0.625rem] text-brass/70 flex items-center gap-1.5">
                               <span style={{ fontVariantEmoji: 'text', fontFamily: 'serif' }}>{PLANET_GLYPHS[a.planet1] || '✦'}</span>
                               <span className="text-white/60">{a.planet1}</span>
                               <span style={{ fontVariantEmoji: 'text', color: legColor }}>{ASPECT_SYMBOLS[a.aspect] || a.aspect}</span>
                               <span style={{ fontVariantEmoji: 'text', fontFamily: 'serif' }}>{PLANET_GLYPHS[a.planet2] || '✦'}</span>
                               <span className="text-white/60">{a.planet2}</span>
-                              <span className="text-brass/40 text-[9px]">{a.orb?.toFixed(1)}°{a.transitInvolved ? ' ●' : ''}</span>
+                              <span className="text-brass/40 text-[0.5625rem]">{a.orb?.toFixed(1)}°{a.transitInvolved ? ' ●' : ''}</span>
                             </div>
                           );
                         })}
@@ -225,7 +225,7 @@ export default function TransitNatalFormationsBanner({ transits, chart, dateKey 
                     )}
 
                     {(p.element) && (
-                      <div className="flex flex-wrap gap-3 text-[10px] font-body text-brass/50">
+                      <div className="flex flex-wrap gap-3 text-[0.625rem] font-body text-brass/50">
                         {p.element && <span>{p.element} trine</span>}
                       </div>
                     )}

@@ -130,7 +130,7 @@ export default function HowToUseTab() {
             <p className="font-body text-xs text-white/60"><strong className="text-white/80">Outlook / other:</strong> Copy the URL and add it as an internet calendar subscription.</p>
           </div>
         </div>
-        <p className="font-body text-[10px] text-brass/50 italic pt-1">
+        <p className="font-body text-[0.625rem] text-brass/50 italic pt-1">
           The feed includes all transits, lunar events, retrograde stations, and weekly synthesis readings. No account connection needed.
         </p>
       </div>

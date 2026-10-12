@@ -86,13 +86,13 @@ export default function ChangelogTab() {
           <div className="flex items-center gap-3">
             <div>
               <p className="font-display text-sm font-bold text-white">{release.version}</p>
-              <span className="font-body text-[10px] uppercase tracking-widest text-gold-accent">{release.label}</span>
+              <span className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent">{release.label}</span>
             </div>
           </div>
           <div className="space-y-2">
             {release.entries.map((entry, i) => (
               <div key={i} className="flex items-start gap-2.5 celestial-card p-2.5">
-                <span className={`font-body text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded border shrink-0 mt-0.5 ${TYPE_STYLES[entry.type]?.style}`}>
+                <span className={`font-body text-[0.5625rem] uppercase tracking-widest px-1.5 py-0.5 rounded border shrink-0 mt-0.5 ${TYPE_STYLES[entry.type]?.style}`}>
                   {TYPE_STYLES[entry.type]?.label}
                 </span>
                 <p className="font-body text-xs text-white/70 leading-relaxed">{entry.text}</p>
@@ -102,7 +102,7 @@ export default function ChangelogTab() {
         </div>
       ))}
 
-      <p className="font-body text-[11px] text-white/30 text-center pt-2">
+      <p className="font-body text-[0.6875rem] text-white/30 text-center pt-2">
         More updates coming soon ✦
       </p>
     </div>

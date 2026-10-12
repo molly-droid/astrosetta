@@ -88,7 +88,7 @@ function SignInterpPopover({ planet, sign, rx, onClose }) {
         <div className="flex items-center justify-between">
           <p className="font-display text-sm font-semibold text-white">
             {PLANET_GLYPHS[planet] || planet} {planet} in {sign}
-            {rx && <span className="ml-1.5 font-body text-[10px] text-celestial-purple">℞ Retrograde</span>}
+            {rx && <span className="ml-1.5 font-body text-[0.625rem] text-celestial-purple">℞ Retrograde</span>}
           </p>
           <button onClick={onClose} className="text-brass/50 hover:text-white"><X size={14} /></button>
         </div>
@@ -147,7 +147,7 @@ export default function PlanetTracker({ dates, chart }) {
   return (
     <>
       <div className="p-3 space-y-1.5">
-        <p className="font-body text-[10px] uppercase tracking-widest text-brass/50 mb-2">Planet Positions</p>
+        <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50 mb-2">Planet Positions</p>
         {planetData.map(({ name, segments }) => {
           const glyph = PLANET_GLYPHS[name] || name[0];
           return (
@@ -212,10 +212,10 @@ export default function PlanetTracker({ dates, chart }) {
         })}
         {/* Legend */}
         <div className="flex gap-3 mt-2 ml-7 flex-wrap">
-          <span className="font-body text-[8px] text-brass/40 flex items-center gap-1">
+          <span className="font-body text-[0.5rem] text-brass/40 flex items-center gap-1">
             <span style={{display:'inline-block',width:8,height:8,background:'#B8A5C822',border:'1px solid #B8A5C855',borderRadius:2}}/>℞ retrograde
           </span>
-          <span className="font-body text-[8px] text-brass/40 flex items-center gap-1">
+          <span className="font-body text-[0.5rem] text-brass/40 flex items-center gap-1">
             <span style={{display:'inline-block',width:8,height:8,background:'#D4AF8522',borderLeft:'2px solid #D4AF85bb',borderRadius:2}}/>→ ingress (sign change)
           </span>
         </div>
@@ -233,7 +233,7 @@ export default function PlanetTracker({ dates, chart }) {
               >
                 <div className="w-px h-1.5 bg-brass/20" />
                 {showLabel && (
-                  <span className="font-body text-[7px] text-brass/35 leading-none mt-0.5 whitespace-nowrap">
+                  <span className="font-body text-[0.4375rem] text-brass/35 leading-none mt-0.5 whitespace-nowrap">
                     {dayNum === 1 ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : dayNum}
                   </span>
                 )}

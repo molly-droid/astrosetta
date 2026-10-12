@@ -61,7 +61,7 @@ export default function StreakBonusCard({ userProgress }) {
         <Lightbulb size={18} className="text-gold-accent shrink-0" />
         <div>
           <p className="font-display text-sm font-bold text-white">Practitioner's Lens</p>
-          <p className="font-body text-[10px] text-brass italic">Cheat-code for today's sky</p>
+          <p className="font-body text-[0.625rem] text-brass italic">Cheat-code for today's sky</p>
         </div>
       </div>
 
@@ -72,12 +72,12 @@ export default function StreakBonusCard({ userProgress }) {
       ) : error ? (
         <div className="text-center space-y-2">
           <p className="font-body text-xs text-brass italic">{error}</p>
-          <button onClick={fetchBonus} className="font-body text-[10px] text-gold-accent underline">Try again</button>
+          <button onClick={fetchBonus} className="font-body text-[0.625rem] text-gold-accent underline">Try again</button>
         </div>
       ) : (
         <>
           {content?.transit_subject && (
-            <p className="text-[10px] font-body text-brass uppercase tracking-widest">{content.transit_subject}</p>
+            <p className="text-[0.625rem] font-body text-brass uppercase tracking-widest">{content.transit_subject}</p>
           )}
           <p className="font-display text-base font-bold text-white leading-snug">{content?.headline}</p>
           {content?.scenario && (
@@ -86,11 +86,11 @@ export default function StreakBonusCard({ userProgress }) {
             </p>
           )}
           <div className="space-y-1.5">
-            <p className="font-body text-[10px] text-gold-accent uppercase tracking-widest">✦ The cheat-code</p>
+            <p className="font-body text-[0.625rem] text-gold-accent uppercase tracking-widest">✦ The cheat-code</p>
             <p className="font-body text-sm text-white/80 leading-relaxed">{content?.content}</p>
           </div>
           {content?.transit_context && (
-            <p className="font-body text-[10px] text-white/40 leading-relaxed pt-1 border-t border-white/[0.06]">
+            <p className="font-body text-[0.625rem] text-white/40 leading-relaxed pt-1 border-t border-white/[0.06]">
               <span className="text-white/30">Today's sky:</span> {content.transit_context}
             </p>
           )}

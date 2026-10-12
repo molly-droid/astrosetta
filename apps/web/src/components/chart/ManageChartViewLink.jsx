@@ -12,7 +12,7 @@ export default function ManageChartViewLink({ className = '', label = 'Manage wh
       to="/profile?tab=chart"
       title="Choose which points appear on your charts"
       style={{ marginTop: 15 }}
-      className={`inline-flex items-center gap-1.5 font-body text-[10px] text-brass/55 hover:text-gold-accent transition-colors ${className}`}
+      className={`inline-flex items-center gap-1.5 font-body text-[0.625rem] text-brass/55 hover:text-gold-accent transition-colors ${className}`}
     >
       <SlidersHorizontal size={11} />
       <span>{label}</span>

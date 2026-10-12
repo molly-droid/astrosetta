@@ -191,7 +191,7 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
               {config.icon}
             </div>
             <div>
-              <p className="font-body text-[10px] text-gold-primary/70 uppercase tracking-widest">{config.tierName}</p>
+              <p className="font-body text-[0.625rem] text-gold-primary/70 uppercase tracking-widest">{config.tierName}</p>
               <h2 className="font-display text-base font-bold text-cream leading-tight">{config.title}</h2>
             </div>
           </div>
@@ -209,7 +209,7 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
           {/* If free tier, also show the Navigator option */}
           {!isCalendarUpgrade && (
             <div className="rounded-lg border border-gold-primary/20 p-3 bg-gold-primary/5 space-y-2">
-              <p className="font-body text-[10px] uppercase tracking-widest text-brass/50">Also available</p>
+              <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50">Also available</p>
               <p className="font-body text-xs text-white/80">
                 <strong className="text-gold-accent">Premium — {premiumPrice}/mo</strong><br/>
                 Everything in Core + Black Moon Lilith, the asteroid pack, early access to new features, and founding patron recognition.
@@ -221,25 +221,25 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
           {isNative && (
             <div className="rounded-lg border border-gold-hairline bg-velvet-card p-3 space-y-1.5">
               <div className="flex items-center gap-1.5">
-                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gold-foil text-[8px] text-velvet font-bold">✦</span>
+                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gold-foil text-[0.5rem] text-velvet font-bold">✦</span>
                 <p className="font-label text-xs font-medium uppercase tracking-[0.05em] text-starlight-muted">Subscription disclosure</p>
               </div>
-              <p className="font-body text-[13px] leading-snug text-starlight">
+              <p className="font-body text-[0.8125rem] leading-snug text-starlight">
                 {config.tierName} — {isCalendarUpgrade ? premiumPrice : corePrice} per month. Payment is charged to your {storeLabel} account and automatically renews until cancelled. Cancel anytime in your {storeLabel} subscription settings at least 24 hours before the period ends.
               </p>
               <div className="flex items-center gap-4 pt-0.5">
-                <Link to="/terms" onClick={onClose} className="font-body text-[13px] text-gold-foil underline">Terms of Service</Link>
-                <Link to="/privacy" onClick={onClose} className="font-body text-[13px] text-gold-foil underline">Privacy Policy</Link>
+                <Link to="/terms" onClick={onClose} className="font-body text-[0.8125rem] text-gold-foil underline">Terms of Service</Link>
+                <Link to="/privacy" onClick={onClose} className="font-body text-[0.8125rem] text-gold-foil underline">Privacy Policy</Link>
               </div>
             </div>
           )}
 
           {restoreMsg && (
-            <p className="font-body text-[13px] text-starlight-muted text-center">{restoreMsg}</p>
+            <p className="font-body text-[0.8125rem] text-starlight-muted text-center">{restoreMsg}</p>
           )}
 
           {purchaseError && (
-            <p className="font-body text-[13px] text-red-300 text-center">{purchaseError}</p>
+            <p className="font-body text-[0.8125rem] text-red-300 text-center">{purchaseError}</p>
           )}
 
           {/* CTAs */}

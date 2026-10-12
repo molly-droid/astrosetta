@@ -7,7 +7,7 @@ export default function ToneBadge({ tone }) {
 
   return (
     <span
-      className="inline-block text-[10px] font-display italic px-2 py-0.5 rounded-full border"
+      className="inline-block text-[0.625rem] font-display italic px-2 py-0.5 rounded-full border"
       style={{ backgroundColor: `${color}20`, borderColor: `${color}60`, color: '#2C3E50' }}
     >
       {label}

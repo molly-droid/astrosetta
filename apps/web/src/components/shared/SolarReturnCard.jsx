@@ -35,12 +35,12 @@ export default function SolarReturnCard({ chart, date = new Date(), transits = n
             {isBirthday ? (
               <>
                 <p className="font-display text-sm font-semibold text-white">Happy Solar Return!</p>
-                <p className="font-body text-[10px] text-brass/70">The Sun returns to its natal position — your personal new year begins.</p>
+                <p className="font-body text-[0.625rem] text-brass/70">The Sun returns to its natal position — your personal new year begins.</p>
               </>
             ) : (
               <>
                 <p className="font-display text-sm font-semibold text-white">Profection Year</p>
-                <p className="font-body text-[10px] text-brass/70">
+                <p className="font-body text-[0.625rem] text-brass/70">
                   {ordinal(profInfo.profectedHouse)} house · Lord{' '}
                   <span style={{ fontVariantEmoji: 'text' }}>{profInfo.yearLordGlyph}</span>{' '}
                   {profInfo.yearLord}
@@ -86,7 +86,7 @@ export default function SolarReturnCard({ chart, date = new Date(), transits = n
 function ProfectionExplainer({ age, profectedHouse }) {
   return (
     <div className="pt-3 space-y-2">
-      <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/70">How Profections Work</p>
+      <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/70">How Profections Work</p>
       <p className="font-body text-xs text-white/75 leading-relaxed">
         Annual profections are a traditional timing technique that advances one house per year, starting from your Ascendant at birth. Each year of your life is "ruled" by the house that is activated and the planet that rules the sign on its cusp.
       </p>
@@ -100,36 +100,36 @@ function ProfectionExplainer({ age, profectedHouse }) {
 function ActivatedHouseSection({ profInfo, houseData }) {
   return (
     <div className="space-y-2">
-      <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/70">Your Activated House</p>
+      <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/70">Your Activated House</p>
       <div className="flex items-baseline gap-2 flex-wrap">
         <span className="font-display text-sm font-semibold text-gold-primary">{ordinal(profInfo.profectedHouse)} House</span>
         <span className="font-body text-xs text-gold-accent">{profInfo.profectedSign}</span>
-        <span className="font-body text-[11px] text-brass/60">· {houseData.title}</span>
+        <span className="font-body text-[0.6875rem] text-brass/60">· {houseData.title}</span>
       </div>
       <p className="font-body text-xs text-white/80 leading-relaxed">{profInfo.theme}</p>
       {houseData.whatActivates && (
         <div>
-          <p className="font-body text-[10px] text-gold-accent/60 uppercase tracking-wide mt-1">What activates</p>
+          <p className="font-body text-[0.625rem] text-gold-accent/60 uppercase tracking-wide mt-1">What activates</p>
           <p className="font-body text-xs text-brass/75 leading-relaxed">{houseData.whatActivates}</p>
         </div>
       )}
       {houseData.whatToExpect && (
         <div>
-          <p className="font-body text-[10px] text-gold-accent/60 uppercase tracking-wide mt-1">What to expect</p>
+          <p className="font-body text-[0.625rem] text-gold-accent/60 uppercase tracking-wide mt-1">What to expect</p>
           <p className="font-body text-xs text-brass/75 leading-relaxed">{houseData.whatToExpect}</p>
         </div>
       )}
       <div className="grid grid-cols-1 gap-2 mt-1">
         {houseData.focusAreas && (
           <div className="rounded-lg px-3 py-2" style={{ background: 'rgba(168,200,168,0.06)', border: '1px solid rgba(168,200,168,0.15)' }}>
-            <p className="font-body text-[10px] text-celestial-green/80 uppercase tracking-wide mb-0.5">✦ Focus this year</p>
-            <p className="font-body text-[11px] text-white/75 leading-relaxed">{houseData.focusAreas}</p>
+            <p className="font-body text-[0.625rem] text-celestial-green/80 uppercase tracking-wide mb-0.5">✦ Focus this year</p>
+            <p className="font-body text-[0.6875rem] text-white/75 leading-relaxed">{houseData.focusAreas}</p>
           </div>
         )}
         {houseData.watchOuts && (
           <div className="rounded-lg px-3 py-2" style={{ background: 'rgba(216,180,194,0.06)', border: '1px solid rgba(216,180,194,0.15)' }}>
-            <p className="font-body text-[10px] text-celestial-pink/80 uppercase tracking-wide mb-0.5">⚠ Watch for</p>
-            <p className="font-body text-[11px] text-white/75 leading-relaxed">{houseData.watchOuts}</p>
+            <p className="font-body text-[0.625rem] text-celestial-pink/80 uppercase tracking-wide mb-0.5">⚠ Watch for</p>
+            <p className="font-body text-[0.6875rem] text-white/75 leading-relaxed">{houseData.watchOuts}</p>
           </div>
         )}
       </div>
@@ -140,11 +140,11 @@ function ActivatedHouseSection({ profInfo, houseData }) {
 function YearLordSection({ profInfo, lordData }) {
   return (
     <div className="space-y-2">
-      <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/70">Your Year Lord</p>
+      <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/70">Your Year Lord</p>
       <div className="flex items-baseline gap-2 flex-wrap">
         <span className="text-gold-primary text-lg" style={{ fontVariantEmoji: 'text' }}>{profInfo.yearLordGlyph}</span>
         <span className="font-display text-sm font-semibold text-gold-accent">{profInfo.yearLord}</span>
-        <span className="font-body text-[11px] text-brass/60">· {lordData.title}</span>
+        <span className="font-body text-[0.6875rem] text-brass/60">· {lordData.title}</span>
       </div>
       <p className="font-body text-xs text-white/80 leading-relaxed">{lordData.archetype}</p>
       <p className="font-body text-xs text-brass/75 leading-relaxed">{lordData.asLord}</p>
@@ -152,18 +152,18 @@ function YearLordSection({ profInfo, lordData }) {
       {/* Natal placement */}
       {profInfo.yearLordSign && (
         <div className="rounded-lg px-3 py-2 mt-1" style={{ background: 'rgba(212,175,133,0.06)', border: '1px solid rgba(212,175,133,0.15)' }}>
-          <p className="font-body text-[10px] text-gold-accent/70 uppercase tracking-wide mb-1">Natal Placement</p>
+          <p className="font-body text-[0.625rem] text-gold-accent/70 uppercase tracking-wide mb-1">Natal Placement</p>
           <p className="font-body text-xs text-white/85 leading-relaxed">
             Your year lord <span className="text-gold-accent font-semibold">{profInfo.yearLord}</span> is in{' '}
             <span className="text-gold-accent">{profInfo.yearLordSign}</span>
             {profInfo.yearLordHouse ? <> in your <span className="text-gold-accent">{ordinal(profInfo.yearLordHouse)} house</span></> : null}
             {' '}in your birth chart.
           </p>
-          <p className="font-body text-[11px] text-brass/65 leading-relaxed mt-1 italic">{lordData.natalPlacementMeans}</p>
+          <p className="font-body text-[0.6875rem] text-brass/65 leading-relaxed mt-1 italic">{lordData.natalPlacementMeans}</p>
         </div>
       )}
       {lordData.watchOuts && (
-        <p className="font-body text-[11px] text-celestial-pink/70 leading-relaxed">
+        <p className="font-body text-[0.6875rem] text-celestial-pink/70 leading-relaxed">
           <span className="text-celestial-pink/80">⚠ Watch out: </span>{lordData.watchOuts}
         </p>
       )}
@@ -177,7 +177,7 @@ function YearLordTransitSection({ transitInfo }) {
     : null;
   return (
     <div className="space-y-2">
-      <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/70">Where Your Year Lord Is Now</p>
+      <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/70">Where Your Year Lord Is Now</p>
       <p className="font-body text-xs text-white/80 leading-relaxed">
         <span className="text-gold-primary" style={{ fontVariantEmoji: 'text' }}>{transitInfo.glyph}</span>{' '}
         <span className="text-gold-accent font-semibold">{transitInfo.name}</span> is currently transiting through{' '}
@@ -200,7 +200,7 @@ function YearLordTransitSection({ transitInfo }) {
 function YearAheadSynthesis({ srInfo, profInfo, lordData, houseData, transitInfo }) {
   return (
     <div className="rounded-lg px-3 py-3 space-y-2" style={{ background: 'rgba(212,175,133,0.08)', border: '1px solid rgba(212,175,133,0.2)' }}>
-      <p className="font-body text-[10px] uppercase tracking-widest text-gold-accent/80">Your Year Ahead</p>
+      <p className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent/80">Your Year Ahead</p>
       <p className="font-body text-xs text-white/85 leading-relaxed">
         Your {srInfo.age}th year activates your <span className="text-gold-accent font-semibold">{ordinal(profInfo.profectedHouse)} house</span> — {houseData.title}. This sets the overall theme: {profInfo.theme.split('.')[0].toLowerCase()}.
       </p>

@@ -198,7 +198,7 @@ const GLYPH_PATTERN = /([☉☽☿♀♂♃♄♅♆♇☊☋☌☍△□⚹⚻�
  * OPPOSITE color of the surrounding body copy (gold body → white highlights,
  * white body → gold highlights). Defaults to white for backward compat.
  */
-export function highlightGlyphs(text, highlightClassName = 'text-white') {
+export function highlightGlyphs(text, highlightClassName = 'text-gold-accent') {
   if (!text) return text;
   const parts = [];
   let lastIndex = 0;
@@ -336,7 +336,7 @@ const ALL_LABELS_PATTERN = new RegExp(
  * Renders glyph + word for planets, signs, aspects, and full transit patterns.
  * Transit patterns get all three glyphs plus a parenthetical label.
  */
-export function highlightAllLabels(text, onTransitClick, highlightClassName = 'text-white') {
+export function highlightAllLabels(text, onTransitClick, highlightClassName = 'text-gold-accent') {
   if (!text) return text;
   ALL_LABELS_PATTERN.lastIndex = 0;
   const parts = [];
@@ -437,7 +437,7 @@ export function highlightAllLabels(text, onTransitClick, highlightClassName = 't
  * each with its glyph symbol alongside the word for educational reinforcement.
  * Use this for all synthesis content blocks.
  */
-export function highlightSynthesisText(text, onTransitClick, highlightClassName = 'text-white') {
+export function highlightSynthesisText(text, onTransitClick, highlightClassName = 'text-gold-accent') {
   if (!text) return text;
   const cleaned = stripApplyingSeparating(text);
   const glyphHighlighted = highlightGlyphs(cleaned, highlightClassName);

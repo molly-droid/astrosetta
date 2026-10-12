@@ -63,7 +63,7 @@ export default function PeriodTransitChart({ startDate, endDate, chart, periodLa
       <div className="flex items-center justify-center gap-3 flex-wrap">
         <div className="flex items-center gap-1.5">
           <span className="inline-block w-3 h-0.5 rounded-full" style={{ background: '#7dd49a' }} />
-          <span className="font-body text-[10px] text-brass/70">{startLabel} → {endLabel}</span>
+          <span className="font-body text-[0.625rem] text-brass/70">{startLabel} → {endLabel}</span>
         </div>
       </div>
     </div>

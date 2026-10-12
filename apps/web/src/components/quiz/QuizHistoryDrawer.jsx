@@ -61,7 +61,7 @@ export default function QuizHistoryDrawer({ userProgress }) {
           ].map(s => (
             <div key={s.label} className="text-center">
               <p className="font-display text-xl font-bold text-deep-blue">{s.value}</p>
-              <p className="font-body text-[10px] text-brass uppercase tracking-wider">{s.label}</p>
+              <p className="font-body text-[0.625rem] text-brass uppercase tracking-wider">{s.label}</p>
             </div>
           ))}
         </div>
@@ -86,7 +86,7 @@ export default function QuizHistoryDrawer({ userProgress }) {
                   <ScoreBar score={q.score ?? 0} />
                 </div>
                 <div className="text-right shrink-0">
-                  <p className="font-body text-[10px] text-brass">
+                  <p className="font-body text-[0.625rem] text-brass">
                     {(q.user_answers || []).filter(a => a.is_correct).length}/{q.questions?.length || 0} correct
                   </p>
                 </div>

@@ -89,7 +89,7 @@ export default function TraditionSpotlight() {
           <div className="flex flex-col items-center text-center space-y-3">
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-gold-primary/15 border border-gold-accent/30">
               <Sparkles size={11} className="text-gold-accent" />
-              <span className="font-body text-[10px] uppercase tracking-widest text-gold-accent font-semibold">New Feature</span>
+              <span className="font-body text-[0.625rem] uppercase tracking-widest text-gold-accent font-semibold">New Feature</span>
             </div>
             <h2 className="font-display text-xl font-bold text-cream leading-tight">
               Three Traditions, One Chart
@@ -120,13 +120,13 @@ export default function TraditionSpotlight() {
           </div>
 
           <div className="rounded-xl border border-gold-primary/20 bg-gold-primary/5 px-4 py-3 space-y-1">
-            <p className="font-body text-[11px] text-brass/80 leading-relaxed">
+            <p className="font-body text-[0.6875rem] text-brass/80 leading-relaxed">
               <span className="text-gold-accent font-semibold">How to unlock:</span>
             </p>
-            <p className="font-body text-[11px] text-brass/80 leading-relaxed">
+            <p className="font-body text-[0.6875rem] text-brass/80 leading-relaxed">
               <span className="text-cream font-semibold">Free</span> — explore the full Traditions curriculum in Learn.
             </p>
-            <p className="font-body text-[11px] text-brass/80 leading-relaxed">
+            <p className="font-body text-[0.6875rem] text-brass/80 leading-relaxed">
               <span className="text-cream font-semibold">Core &amp; Premium</span> — switch your live chart's tradition in Profile, with the canonical house system and zodiac applied automatically.
             </p>
           </div>
@@ -169,7 +169,7 @@ function FeatureRow({ icon: Icon, title, desc }) {
       </div>
       <div>
         <p className="font-body text-xs font-semibold text-cream">{title}</p>
-        <p className="font-body text-[11px] text-brass/70 leading-snug">{desc}</p>
+        <p className="font-body text-[0.6875rem] text-brass/70 leading-snug">{desc}</p>
       </div>
     </div>
   );

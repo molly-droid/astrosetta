@@ -10,7 +10,7 @@ import { Heart, X } from 'lucide-react';
  */
 export default function RelationshipBadge({ name, onClear, phrase = 'Reading the sky through your bond with' }) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-body text-[11px] tracking-wide bg-[#2d344b] text-white border border-gold-accent/60 max-w-full">
+    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-body text-[0.6875rem] tracking-wide bg-[#2d344b] text-white border border-gold-accent/60 max-w-full">
       <Heart size={11} className="shrink-0 text-gold-accent" />
       <span className="leading-snug whitespace-nowrap">
         {phrase}{' '}

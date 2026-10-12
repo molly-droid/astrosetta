@@ -49,7 +49,7 @@ export default function SynastryPartnerSwitcher({
     <>
       <button
         onClick={handlePillClick}
-        className={`relative px-4 py-1.5 rounded-full font-body text-[11px] tracking-wide transition-all flex items-center gap-1 ${
+        className={`relative px-4 py-1.5 rounded-full font-body text-[0.6875rem] tracking-wide transition-all flex items-center gap-1 ${
           isActive ? 'bg-gold-primary/20 text-white' : 'text-white/30 hover:text-white/60'
         }`}
       >
@@ -83,7 +83,7 @@ function PartnerPicker({ selectedChart, savedCharts, onSelect, onAddChart, onClo
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
           <div>
-            <p className="font-body text-[10px] text-gold-primary/70 uppercase tracking-widest">Relationship</p>
+            <p className="font-body text-[0.625rem] text-gold-primary/70 uppercase tracking-widest">Relationship</p>
             <h2 className="font-display text-sm font-bold text-cream">Choose a Chart to Compare</h2>
           </div>
           <button onClick={onClose} className="text-brass/50 hover:text-brass transition-colors">
@@ -144,11 +144,11 @@ function PartnerRow({ active, onClick, label, sublabel, big3, isEvent }) {
             {label}
           </span>
           {sublabel && (
-            <span className="font-body text-[10px] text-brass/50 italic truncate">{sublabel}</span>
+            <span className="font-body text-[0.625rem] text-brass/50 italic truncate">{sublabel}</span>
           )}
         </div>
         {big3?.sun_sign && (
-          <p className="font-body text-[10px] text-brass/50 truncate mt-0.5">
+          <p className="font-body text-[0.625rem] text-brass/50 truncate mt-0.5">
             ☉ {big3.sun_sign} · ☽ {big3.moon_sign} · AC {big3.ascendant_sign}
           </p>
         )}

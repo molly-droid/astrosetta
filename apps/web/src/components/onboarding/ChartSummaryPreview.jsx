@@ -41,14 +41,14 @@ export default function ChartSummaryPreview({ chartData, sunSign, moonSign, ascS
           ].map(({ glyph, label, value }) => (
             <div key={label} className="space-y-1">
               <div className="text-2xl text-gold-accent font-display">{glyph}</div>
-              <div className="text-[10px] font-body uppercase tracking-widest text-brass">{label}</div>
+              <div className="text-[0.625rem] font-body uppercase tracking-widest text-brass">{label}</div>
               <div className="text-sm font-display font-bold text-white">{value || '—'}</div>
             </div>
           ))}
         </div>
         {rulingPlanet && (
           <div className="flex items-center justify-center gap-2 pt-1 border-t border-gold-primary/15">
-            <span className="font-body text-[10px] text-brass uppercase tracking-widest">Chart Ruler</span>
+            <span className="font-body text-[0.625rem] text-brass uppercase tracking-widest">Chart Ruler</span>
             <span className="font-display text-sm font-bold text-gold-accent">{rulingPlanet}</span>
           </div>
         )}

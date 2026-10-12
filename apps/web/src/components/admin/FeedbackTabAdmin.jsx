@@ -97,7 +97,7 @@ export default function FeedbackTabAdmin() {
 
       {/* Email testing */}
       <div className="celestial-card p-4 space-y-3">
-        <p className="font-body text-[10px] uppercase tracking-widest text-brass/60">Email Testing</p>
+        <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/60">Email Testing</p>
         <div className="flex gap-3 flex-wrap">
           <Button
             size="sm"
@@ -163,7 +163,7 @@ export default function FeedbackTabAdmin() {
                       {meta.label} · {new Date(item.created_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   </div>
-                  <span className={`font-body text-[10px] uppercase tracking-wide ${STATUS_COLORS[item.status] || 'text-white/40'}`}>
+                  <span className={`font-body text-[0.625rem] uppercase tracking-wide ${STATUS_COLORS[item.status] || 'text-white/40'}`}>
                     {item.status.replace('_', ' ')}
                   </span>
                   {isOpen ? <ChevronUp size={14} className="text-white/30" /> : <ChevronDown size={14} className="text-white/30" />}
@@ -180,7 +180,7 @@ export default function FeedbackTabAdmin() {
                     )}
 
                     {item.page_url && (
-                      <p className="font-body text-[10px] text-brass/40">Page: {item.page_url}</p>
+                      <p className="font-body text-[0.625rem] text-brass/40">Page: {item.page_url}</p>
                     )}
 
                     <div className="flex gap-2 flex-wrap pt-1">
@@ -188,7 +188,7 @@ export default function FeedbackTabAdmin() {
                         <button
                           key={s}
                           onClick={() => updateStatus(item.id, s)}
-                          className={`px-2.5 py-1 rounded-full font-body text-[10px] transition-all ${
+                          className={`px-2.5 py-1 rounded-full font-body text-[0.625rem] transition-all ${
                             item.status === s
                               ? 'bg-gold-primary/20 text-white border border-gold-accent/40'
                               : 'text-brass/50 border border-white/[0.06] hover:border-gold-primary/20'

@@ -744,7 +744,7 @@ export default function FloatingNavigator() {
               style={{ background: 'rgba(15,26,46,0.97)', border: '1px solid rgba(201,169,97,0.35)' }}
             >
               <p className="font-body text-xs text-white/85 leading-snug">{ctx.nudge}</p>
-              <p className="font-body text-[10px] text-gold-accent mt-1">Tap to chat ✦</p>
+              <p className="font-body text-[0.625rem] text-gold-accent mt-1">Tap to chat ✦</p>
             </button>
             <button
               onClick={() => { setNudgeVisible(false); setHasInteracted(true); }}
@@ -828,12 +828,12 @@ export default function FloatingNavigator() {
                                   [&>*:first-child]:mt-0 [&>*:last-child]:mb-0
                                   [&_ul]:my-1.5 [&_ul]:pl-4 [&_ul]:space-y-1
                                   [&_ol]:my-1.5 [&_ol]:pl-4 [&_ol]:space-y-1
-                                  [&_li]:leading-snug [&_li]:text-[13px]
+                                  [&_li]:leading-snug [&_li]:text-[0.8125rem]
                                   [&_strong]:text-gold-accent [&_strong]:font-semibold
                                   [&_p]:my-1
                                   [&_h1]:text-sm [&_h1]:font-semibold [&_h1]:text-gold-accent [&_h1]:mt-2 [&_h1]:mb-1
                                   [&_h2]:text-sm [&_h2]:font-semibold [&_h2]:text-gold-accent [&_h2]:mt-2 [&_h2]:mb-1
-                                  [&_h3]:text-[13px] [&_h3]:font-semibold [&_h3]:text-gold-accent [&_h3]:mt-1.5 [&_h3]:mb-1
+                                  [&_h3]:text-[0.8125rem] [&_h3]:font-semibold [&_h3]:text-gold-accent [&_h3]:mt-1.5 [&_h3]:mb-1
                                   [&_hr]:my-2 [&_hr]:border-white/10
                                   [&_blockquote]:border-l-gold-primary/40 [&_blockquote]:pl-2.5 [&_blockquote]:italic [&_blockquote]:text-white/70"
                               >
@@ -847,7 +847,7 @@ export default function FloatingNavigator() {
                                   {copiedIdx === i
                                     ? <Check size={11} className="text-green-400" />
                                     : <Copy size={11} className="text-white/40" />}
-                                  <span className="font-body text-[10px] text-white/40">{copiedIdx === i ? 'Copied' : 'Copy'}</span>
+                                  <span className="font-body text-[0.625rem] text-white/40">{copiedIdx === i ? 'Copied' : 'Copy'}</span>
                                 </button>
                                 <button
                                   onClick={() => handleEmailSelf(i, m.content)}
@@ -855,7 +855,7 @@ export default function FloatingNavigator() {
                                   className="flex items-center gap-1 px-1.5 py-1 rounded-md hover:bg-white/10 transition-colors disabled:opacity-50"
                                 >
                                   <Mail size={11} className="text-white/40" />
-                                  <span className="font-body text-[10px] text-white/40">
+                                  <span className="font-body text-[0.625rem] text-white/40">
                                     {emailingIdx === i ? 'Sending…' : emailSentIdx === i ? 'Sent ✓' : 'Email me'}
                                   </span>
                                 </button>

@@ -28,7 +28,7 @@ export default function QuizQuestion({ question, questionNumber, totalQuestions,
         ))}
       </div>
 
-      <p className="text-[11px] font-body text-brass uppercase tracking-wider">
+      <p className="text-[0.6875rem] font-body text-brass uppercase tracking-wider">
         Question {questionNumber} of {totalQuestions}
       </p>
 
@@ -38,7 +38,7 @@ export default function QuizQuestion({ question, questionNumber, totalQuestions,
         <button
           type="button"
           onClick={onLearn}
-          className="flex items-center gap-1.5 font-body text-[11px] text-brass hover:text-gold-accent transition-colors self-start -mt-1"
+          className="flex items-center gap-1.5 font-body text-[0.6875rem] text-brass hover:text-gold-accent transition-colors self-start -mt-1"
         >
           <BookOpen size={11} />
           I don't know — learn this

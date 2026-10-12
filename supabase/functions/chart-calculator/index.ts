@@ -469,26 +469,33 @@ Deno.serve(async (req) => {
         } else {
           // Degree within the current sign (0–30)
           const degInSign = n360(tp.longitude) % 30;
-          // Approaching — within 3° of the next sign boundary (27°+), not retrograde
-          if (!tp.retrograde && degInSign >= 27) {
+          // dailyMotion = degrees the planet advances per day (lonEnd - lonStart).
+          // Windows are TIME-based, not degree-based: 3° is days for Mars but
+          // ~18 months for Neptune, which made long-past ingresses show as
+          // current news (and far-future ones as imminent).
+          const dailyMotion = lonEnd - lonStart;
+          const INGRESS_WINDOW_DAYS = 14;
+          // Approaching — crosses into the next sign within the window, not retrograde
+          if (!tp.retrograde && degInSign >= 27 && dailyMotion > 0) {
             const nextSignIdx = (signEnd + 1) % 12;
-            // Estimate the date the planet will cross into the next sign.
-            // dailyMotion = degrees the planet advances per day (lonEnd - lonStart).
-            const dailyMotion = lonEnd - lonStart;
-            let expected_date = null;
-            let days_until = null;
-            if (dailyMotion > 0) {
-              const remaining = 30 - degInSign;
-              days_until = remaining / dailyMotion;
+            const remaining = 30 - degInSign;
+            const days_until = remaining / dailyMotion;
+            if (days_until <= INGRESS_WINDOW_DAYS) {
               const expectedMs = (tJDE + days_until - 2440587.5) * 86400000;
-              expected_date = new Date(expectedMs).toISOString().slice(0, 10);
+              const expected_date = new Date(expectedMs).toISOString().slice(0, 10);
+              ingresses.push({ planet: tp.name, from_sign: tp.sign, to_sign: SIGNS[nextSignIdx], degree: tp.degree, approaching: true, expected_date, days_until });
             }
-            ingresses.push({ planet: tp.name, from_sign: tp.sign, to_sign: SIGNS[nextSignIdx], degree: tp.degree, approaching: true, expected_date, days_until });
           }
-          // Recent — within 3° of having entered this sign (0°–3°)
-          if (degInSign <= 3) {
-            const prevSignIdx = (signEnd + 11) % 12;
-            ingresses.push({ planet: tp.name, from_sign: SIGNS[prevSignIdx], to_sign: tp.sign, degree: tp.degree, recent: true });
+          // Recent — entered this sign within the window (direct motion only;
+          // a retrograde re-entry is caught on its crossing day as exact)
+          if (!tp.retrograde && degInSign <= 3 && dailyMotion > 0) {
+            const days_since = degInSign / dailyMotion;
+            if (days_since <= INGRESS_WINDOW_DAYS) {
+              const prevSignIdx = (signEnd + 11) % 12;
+              const enteredMs = (tJDE - days_since - 2440587.5) * 86400000;
+              const entered_date = new Date(enteredMs).toISOString().slice(0, 10);
+              ingresses.push({ planet: tp.name, from_sign: SIGNS[prevSignIdx], to_sign: tp.sign, degree: tp.degree, recent: true, entered_date, days_since });
+            }
           }
         }
       }

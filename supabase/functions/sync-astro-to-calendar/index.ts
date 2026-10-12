@@ -1,94 +1,17 @@
-// v2 — redeployed 2026-06-02
+// v3 — engine-backed positions (B-14): the embedded "simplified VSOP-like"
+// ephemeris this surface shipped with from Base44 was a sign off for slow
+// planets (Pluto in Capricorn). Every date now comes from chart-calculator —
+// the same Swiss-Ephemeris pipeline as the rest of the app (ephemeris_cache
+// keeps the per-day fetches cheap and shared across users).
 import { compatClient } from '../_shared/base44Compat.ts';
 import { json, handleOptions, serviceClient } from '../_shared/edge.ts';
 import { googleAccessToken, calendarAllowed } from '../_shared/googleCalendar.ts';
 import { getLunationsBetween } from '../_shared/lunations.ts';
-
-// Approximate planet longitude using simplified VSOP-like formulas (good to ~1°)
-// Epoch: J2000.0, all angles in degrees
-function planetLongitude(name, jd) {
-  const T = (jd - 2451545.0) / 36525.0; // Julian centuries from J2000
-  const deg = v => ((v % 360) + 360) % 360;
-
-  switch (name) {
-    case 'Jupiter': {
-      const L = deg(34.351519 + 3034.905675 * T);
-      return deg(L + 5.55 * Math.sin((357.529 + 35999.050 * T) * Math.PI / 180));
-    }
-    case 'Saturn': {
-      return deg(50.077444 + 1222.113794 * T);
-    }
-    case 'Uranus': {
-      return deg(314.055005 + 428.466998 * T);
-    }
-    case 'Neptune': {
-      return deg(304.348665 + 218.459213 * T);
-    }
-    case 'Pluto': {
-      return deg(238.929 + 145.2069 * T);
-    }
-    case 'Mars': {
-      return deg(355.433 + 19140.299 * T);
-    }
-    case 'Venus': {
-      return deg(181.979 + 58517.816 * T);
-    }
-    case 'Mercury': {
-      return deg(252.251 + 149472.675 * T);
-    }
-    default: return 0;
-  }
-}
-
-function dateToJD(date) {
-  return date.getTime() / 86400000 + 2440587.5;
-}
+import { fetchCalendarDays, natalParamsFromRaw } from '../_shared/calendarDays.ts';
 
 const SLOW_PLANETS = ['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
-const ASPECT_ANGLES = { conjunction: 0, opposition: 180, trine: 120, square: 90, sextile: 60 };
-const TRANSIT_ORB = 2.0; // degrees
+const TRANSIT_ORB = 2.0; // degrees — same threshold the old in-file math used
 
-// Check if a transiting planet is within orb of a natal planet longitude
-function checkNatalAspects(transitLon, natalLon, planetName) {
-  let diff = Math.abs(transitLon - natalLon);
-  if (diff > 180) diff = 360 - diff;
-  for (const [aspName, aspAngle] of Object.entries(ASPECT_ANGLES)) {
-    const orb = Math.abs(diff - aspAngle);
-    if (orb <= TRANSIT_ORB) {
-      return { aspect: aspName, orb };
-    }
-  }
-  return null;
-}
-
-// Detect retrograde station: planet changes direction between day i-1 and day i
-// Returns 'retrograde_start' or 'retrograde_end' or null
-function detectRetrograde(name, date) {
-  const prevDate = new Date(date.getTime() - 2 * 86400000);
-  const nextDate = new Date(date.getTime() + 2 * 86400000);
-  const jd0 = dateToJD(prevDate);
-  const jd1 = dateToJD(date);
-  const jd2 = dateToJD(nextDate);
-  const l0 = planetLongitude(name, jd0);
-  const l1 = planetLongitude(name, jd1);
-  const l2 = planetLongitude(name, jd2);
-
-  // Motion: positive = direct, negative = retrograde
-  function motion(la, lb) {
-    let d = lb - la;
-    if (d > 180) d -= 360;
-    if (d < -180) d += 360;
-    return d;
-  }
-
-  const m1 = motion(l0, l1);
-  const m2 = motion(l1, l2);
-  if (m1 > 0 && m2 < 0) return 'retrograde_start'; // goes retrograde
-  if (m1 < 0 && m2 > 0) return 'retrograde_end';   // goes direct
-  return null;
-}
-
-const PLANET_GLYPHS = { Jupiter: '♃', Saturn: '♄', Uranus: '♅', Neptune: '♆', Pluto: '♇', Mars: '♂', Venus: '♀', Mercury: '☿' };
 const ASPECT_EMOJIS = { conjunction: '☌', opposition: '☍', trine: '△', square: '□', sextile: '⚹' };
 
 const DAILY_MOTIONS = {
@@ -136,13 +59,13 @@ async function syncCalendar(base44, user, body) {
   const includeFullMoon = filters.full_moon !== false;
   const includeTransits = filters.major_transits !== false;
   const includeRetrogrades = filters.retrogrades !== false;
-  const includeJournal = filters.journal !== false;
   const daysAhead = Math.min(90, Math.max(1, Number(body.days_ahead) || 28));
 
+  const charts = await base44.asServiceRole.entities.Chart.filter({ user_id: user.id });
+  const chartRaw = charts[0]?.raw_data || {};
   let natalPlanets = [];
   if (includeTransits) {
-    const charts = await base44.asServiceRole.entities.Chart.filter({ user_id: user.id });
-    const raw = charts[0]?.raw_data || {};
+    const raw = chartRaw;
     natalPlanets = (raw.planets || [])
       .filter(p => SLOW_PLANETS.includes(p.name) || ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Ascendant'].includes(p.name))
       .map(p => ({ name: p.name, longitude: parseFloat(p.longitude) || 0 }));
@@ -181,11 +104,19 @@ async function syncCalendar(base44, user, body) {
 
   const eventsToCreate = [];
 
+  // Engine data for every day in the window (B-14: accurate positions,
+  // stations and aspects from chart-calculator instead of in-file formulas).
+  const natalParams = natalParamsFromRaw(chartRaw);
+  let engineDays = [];
+  if (natalParams && (includeTransits || includeRetrogrades)) {
+    engineDays = await fetchCalendarDays(base44, natalParams, today, daysAhead + 1);
+  }
+
   for (let i = 0; i <= daysAhead; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     const dateStr = d.toISOString().split('T')[0];
-    const jd = dateToJD(d);
+    const day = engineDays[i];
 
     if (includeNewMoon || includeFullMoon) {
       const lunation = lunationByDate.get(dateStr);
@@ -200,53 +131,35 @@ async function syncCalendar(base44, user, body) {
       }
     }
 
-    if (includeTransits && natalPlanets.length) {
+    if (includeTransits && day) {
       const seen = new Set();
-      for (const tPlanet of SLOW_PLANETS) {
-        const transitLon = planetLongitude(tPlanet, jd);
-        for (const nPlanet of natalPlanets) {
-          const result = checkNatalAspects(transitLon, nPlanet.longitude, tPlanet);
-          if (result) {
-            const key = `${tPlanet}_${result.aspect}_${nPlanet.name}`;
-            if (!seen.has(key)) {
-              seen.add(key);
-              const g = PLANET_GLYPHS[tPlanet] || '';
-              const aspSym = ASPECT_EMOJIS[result.aspect] || result.aspect;
-              const estHour = estimateTransitHour(result.orb, tPlanet);
-              eventsToCreate.push({ dateTime: formatDateTime(dateStr, estHour), summary: `${g} ${tPlanet} ${aspSym} natal ${nPlanet.name}`, description: `Major transit: ${tPlanet} ${result.aspect} your natal ${nPlanet.name} (orb ~${result.orb.toFixed(1)}°).\n\nAdded by Astro Planner`, colorId: '1' });
-            }
-          }
-        }
+      const natalNames = new Set(natalPlanets.map((p) => p.name));
+      for (const a of day.transit_aspects) {
+        if (!SLOW_PLANETS.includes(a.transit_planet)) continue;
+        if (!natalNames.has(a.natal_planet)) continue;
+        if (a.orb > TRANSIT_ORB) continue;
+        const key = `${a.transit_planet}_${a.aspect}_${a.natal_planet}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const g = PLANET_GLYPHS[a.transit_planet] || '';
+        const aspSym = ASPECT_EMOJIS[a.aspect] || a.aspect;
+        const estHour = estimateTransitHour(a.orb, a.transit_planet);
+        eventsToCreate.push({ dateTime: formatDateTime(dateStr, estHour), summary: `${g} ${a.transit_planet} ${aspSym} natal ${a.natal_planet}`, description: `Major transit: ${a.transit_planet} ${a.aspect} your natal ${a.natal_planet} (orb ~${a.orb.toFixed(1)}°).\n\nAdded by Astro Planner`, colorId: '1' });
       }
     }
 
-    if (includeRetrogrades) {
-      for (const planet of [...SLOW_PLANETS, 'Mercury', 'Venus', 'Mars']) {
-        const station = detectRetrograde(planet, d);
-        if (station) {
-          const g = PLANET_GLYPHS[planet] || '';
-          const isRx = station === 'retrograde_start';
-          eventsToCreate.push({ dateTime: formatDateTime(dateStr, 12), summary: `${g} ${planet} ${isRx ? 'Retrograde ℞ begins' : 'Direct ☌ resumes'}`, description: `${planet} stations ${isRx ? 'retrograde' : 'direct'} today.\n\nAdded by Astro Planner`, colorId: isRx ? '11' : '2' });
-        }
+    if (includeRetrogrades && day) {
+      for (const st of day.stations) {
+        const g = PLANET_GLYPHS[st.planet] || '';
+        const isRx = st.type === 'retrograde';
+        eventsToCreate.push({ dateTime: formatDateTime(dateStr, 12), summary: `${g} ${st.planet} ${isRx ? 'Retrograde ℞ begins' : 'Direct ☌ resumes'}`, description: `${st.planet} stations ${isRx ? 'retrograde' : 'direct'} today.\n\nAdded by Astro Planner`, colorId: isRx ? '11' : '2' });
       }
     }
   }
 
-  // Sync planner journal entries as calendar events
-  if (includeJournal) {
-    const journals = await base44.asServiceRole.entities.PlannerJournalEntry.filter({ user_id: user.id });
-    for (const entry of journals) {
-      if (!entry.date_key || !entry.notes) continue;
-      const entryDate = new Date(entry.date_key + 'T00:00:00');
-      if (entryDate < today || entryDate > endDate) continue;
-      eventsToCreate.push({
-        dateTime: formatDateTime(entry.date_key, 9),
-        summary: '✦ Planner Journal',
-        description: `${entry.notes}\n\nAdded by Astro Planner`,
-        colorId: '6',
-      });
-    }
-  }
+  // Journal entries are deliberately NOT synced (B-16): journal content is
+  // private to the app; a journal in a Google Calendar leaks it to anyone
+  // the calendar is shared with.
 
   let events_created = 0;
   for (const evt of eventsToCreate) {

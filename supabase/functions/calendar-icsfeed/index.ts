@@ -5,27 +5,9 @@ import { compatClient } from '../_shared/base44Compat.ts';
 import { json, handleOptions, serviceClient } from '../_shared/edge.ts';
 import { calendarAllowed } from '../_shared/googleCalendar.ts';
 import { getLunationsBetween } from '../_shared/lunations.ts';
+import { fetchCalendarDays, natalParamsFromRaw } from '../_shared/calendarDays.ts';
 
-function planetLongitude(name, jd) {
-  const T = (jd - 2451545.0) / 36525.0;
-  const deg = v => ((v % 360) + 360) % 360;
-  switch (name) {
-    case 'Jupiter': return deg(34.351519 + 3034.905675 * T);
-    case 'Saturn': return deg(50.077444 + 1222.113794 * T);
-    case 'Uranus': return deg(314.055005 + 428.466998 * T);
-    case 'Neptune': return deg(304.348665 + 218.459213 * T);
-    case 'Pluto': return deg(238.929 + 145.2069 * T);
-    case 'Mars': return deg(355.433 + 19140.299 * T);
-    case 'Venus': return deg(181.979 + 58517.816 * T);
-    case 'Mercury': return deg(252.251 + 149472.675 * T);
-    case 'Sun': return deg(280.460 + 35999.372 * T);
-    default: return 0;
-  }
-}
 
-function dateToJD(date) {
-  return date.getTime() / 86400000 + 2440587.5;
-}
 
 const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 
@@ -154,11 +136,30 @@ function checkNatalAspects(transitLon, natalLon, maxOrb = TRANSIT_ORB) {
   return null;
 }
 
-function isApplying(transitLon, natalLon, aspect, jd, planetName) {
-  // Check if orb is shrinking (applying) or growing (separating) by comparing today vs tomorrow
-  const tomorrowJd = jd + 1;
+
+// C-02 — one-line meanings for sky (mundane) aspects, instead of the old
+// "collective aspect affecting everyone + orb" boilerplate.
+const PLANET_THEMES = {
+  Sun: 'identity and vitality', Mercury: 'communication and thinking', Venus: 'love and values',
+  Mars: 'drive and action', Jupiter: 'growth and opportunity', Saturn: 'structure and responsibility',
+  Uranus: 'change and breakthroughs', Neptune: 'imagination and intuition', Pluto: 'power and transformation',
+};
+const MUNDANE_ASPECT_TEMPLATES = {
+  conjunction: (a, b) => `${a} and ${b} join forces: ${PLANET_THEMES[a]} blends with ${PLANET_THEMES[b]}, each amplifying the other today.`,
+  opposition: (a, b) => `${a} faces off with ${b}: ${PLANET_THEMES[a]} pulls against ${PLANET_THEMES[b]}, and balance comes from honoring both.`,
+  square: (a, b) => `${a} squares ${b}: friction between ${PLANET_THEMES[a]} and ${PLANET_THEMES[b]} pushes for adjustment.`,
+  trine: (a, b) => `${a} trines ${b}: ${PLANET_THEMES[a]} flows easily with ${PLANET_THEMES[b]}, a supportive current for both.`,
+  sextile: (a, b) => `${a} sextiles ${b}: a gentle opening where ${PLANET_THEMES[a]} can work with ${PLANET_THEMES[b]} if you engage it.`,
+};
+function mundaneMeaning(a, aspect, b) {
+  const tpl = MUNDANE_ASPECT_TEMPLATES[aspect];
+  return tpl ? tpl(a, b) : `${a} ${aspect} ${b}.`;
+}
+
+function isApplying(transitLon, natalLon, aspect, tomorrowLon) {
+  // Orb shrinking (applying) vs growing (separating), today vs tomorrow
+  if (tomorrowLon == null) return false;
   const todayDiff = Math.abs(transitLon - natalLon);
-  const tomorrowLon = planetLongitude(planetName, tomorrowJd);
   const tomorrowDiff = Math.abs(tomorrowLon - natalLon);
   // Normalize diffs to aspect angle
   const target = ASPECT_ANGLES[aspect];
@@ -167,27 +168,6 @@ function isApplying(transitLon, natalLon, aspect, jd, planetName) {
   return tomorrowOrb < todayOrb;
 }
 
-function detectRetrograde(name, date) {
-  const prevDate = new Date(date.getTime() - 2 * 86400000);
-  const nextDate = new Date(date.getTime() + 2 * 86400000);
-  const jd0 = dateToJD(prevDate);
-  const jd1 = dateToJD(date);
-  const jd2 = dateToJD(nextDate);
-  const l0 = planetLongitude(name, jd0);
-  const l1 = planetLongitude(name, jd1);
-  const l2 = planetLongitude(name, jd2);
-  function motion(la, lb) {
-    let d = lb - la;
-    if (d > 180) d -= 360;
-    if (d < -180) d += 360;
-    return d;
-  }
-  const m1 = motion(l0, l1);
-  const m2 = motion(l1, l2);
-  if (m1 > 0 && m2 < 0) return 'retrograde_start';
-  if (m1 < 0 && m2 > 0) return 'retrograde_end';
-  return null;
-}
 
 function estimateTransitHour(orb, planetName) {
   const dailyMotion = DAILY_MOTIONS[planetName] || 0.5;
@@ -359,11 +339,20 @@ Deno.serve(async (req) => {
 
     const events = [];
 
+    // Engine-backed positions for every day (B-14): the in-file approximate
+    // ephemeris was a sign off for slow planets. One chart-calculator call per
+    // day; the shared ephemeris cache keeps repeat renders cheap.
+    const natalParams = natalParamsFromRaw(raw);
+    const engineDays = natalParams
+      ? await fetchCalendarDays(base44, natalParams, today, daysAhead + 2, 3)
+      : [];
+    const planetOn = (dayIdx, name) =>
+      engineDays[dayIdx]?.transit_planets?.find((p) => p.name === name) || null;
+
     for (let i = 0; i <= daysAhead; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() + i);
       const dateStr = d.toISOString().split('T')[0];
-      const jd = dateToJD(d);
 
       // Moon phases — ONE event per exact new/full moon, on the same local
       // date the Planner shows, at the exact moment, with sign info.
@@ -398,8 +387,10 @@ Deno.serve(async (req) => {
       if (natalPlanets.length) {
         const seen = new Set();
         for (const tPlanetName of ALL_TRANSIT_PLANETS) {
-          const transitLon = planetLongitude(tPlanetName, jd);
-          const transitSign = longitudeToSign(transitLon);
+          const tp = planetOn(i, tPlanetName);
+          if (!tp) continue;
+          const transitLon = tp.longitude;
+          const transitSign = tp.sign || longitudeToSign(transitLon);
           const orbLimit = FAST_PLANETS.includes(tPlanetName) ? FAST_ORB : TRANSIT_ORB;
           for (const nPlanet of natalPlanets) {
             const result = checkNatalAspects(transitLon, nPlanet.longitude, orbLimit);
@@ -415,7 +406,7 @@ Deno.serve(async (req) => {
               const sym = ASPECT_EMOJIS[result.aspect] || result.aspect;
               const houseStr = nPlanet.house ? ` · ${ordinal(nPlanet.house)} House` : '';
               const signStr = nPlanet.sign ? ` of ${nPlanet.sign}` : '';
-              const applying = isApplying(transitLon, nPlanet.longitude, result.aspect, jd, tPlanetName);
+              const applying = isApplying(transitLon, nPlanet.longitude, result.aspect, planetOn(i + 1, tPlanetName)?.longitude);
               const dirStr = applying ? '▲ Applying (building)' : '▽ Separating (fading)';
               const interpretation = getTransitInterpretation(result.aspect, nPlanet.name);
 
@@ -431,13 +422,12 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Retrograde stations — with sign and glyph
-      for (const planet of STATION_PLANETS) {
-        const station = detectRetrograde(planet, d);
-        if (station) {
-          const isRx = station === 'retrograde_start';
-          const lon = planetLongitude(planet, jd);
-          const sign = longitudeToSign(lon);
+      // Retrograde stations — from the engine's same-day station detection
+      for (const st of (engineDays[i]?.stations || [])) {
+        const planet = st.planet;
+        if (STATION_PLANETS.includes(planet)) {
+          const isRx = st.type === 'retrograde';
+          const sign = st.sign;
           const g = PLANET_GLYPHS[planet] || '';
           const meaning = isRx
             ? `${planet} turns retrograde in ${sign}. A period of review, revisiting, and reconsidering matters ruled by ${planet} begins. Reflect before pushing forward.`
@@ -459,8 +449,11 @@ Deno.serve(async (req) => {
           const p1Name = ALL_TRANSIT_PLANETS[mi];
           const p2Name = ALL_TRANSIT_PLANETS[mj];
           if (FAST_PLANETS.includes(p1Name) && FAST_PLANETS.includes(p2Name)) continue;
-          const lon1 = planetLongitude(p1Name, jd);
-          const lon2 = planetLongitude(p2Name, jd);
+          const tp1 = planetOn(i, p1Name);
+          const tp2 = planetOn(i, p2Name);
+          if (!tp1 || !tp2) continue;
+          const lon1 = tp1.longitude;
+          const lon2 = tp2.longitude;
           const mResult = checkNatalAspects(lon1, lon2, MUNDANE_ORB);
           if (mResult) {
             const mKey = `${p1Name}_${mResult.aspect}_${p2Name}`;
@@ -477,27 +470,18 @@ Deno.serve(async (req) => {
               dtLocal: new Date(dateStr + 'T12:00:00'),
               allDay: false,
               summary: `🌌 ${g1}${p1Name} in ${sign1} ${sym} ${g2}${p2Name} in ${sign2}`,
-              description: `Sky event: ${p1Name} in ${sign1} ${aspectLabel} ${p2Name} in ${sign2} — a collective aspect affecting everyone.\nOrb: ~${mResult.orb.toFixed(1)}°\n\nAdded by Astrosetta`,
+              // C-02: a short definition of what the transit means — no orb,
+              // no "collective aspect" boilerplate.
+              description: `${mundaneMeaning(p1Name, mResult.aspect, p2Name)}\n\nAdded by Astrosetta`,
             });
           }
         }
       }
     }
 
-    // Planner journal entries
-    const journals = await base44.asServiceRole.entities.PlannerJournalEntry.filter({ user_id: userId });
-    for (const entry of journals) {
-      if (!entry.date_key || !entry.notes) continue;
-      const entryDate = new Date(entry.date_key + 'T00:00:00');
-      if (entryDate < today || entryDate > new Date(today.getTime() + daysAhead * 86400000)) continue;
-      events.push({
-        dateStr: entry.date_key,
-        dtLocal: new Date(entry.date_key + 'T09:00:00'),
-        allDay: false,
-        summary: '✦ Planner Journal',
-        description: entry.notes + '\n\nAdded by Astrosetta',
-      });
-    }
+    // Journal entries are deliberately NOT in the feed (B-16): the feed URL
+    // is private but calendar apps and shared calendars re-expose events —
+    // journal content stays in the app.
 
     // Calendar synthesis events (pre-generated by weekly automation)
     const syntheses = await base44.asServiceRole.entities.CalendarSynthesis.filter({ user_id: userId });

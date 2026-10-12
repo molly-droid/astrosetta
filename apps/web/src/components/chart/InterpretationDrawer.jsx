@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { invokeLLMTask } from '@/api/llmTasks';
 import { getHouseName, findNatalHouseForLongitude } from '@/lib/houseUtils';
 import { forceTextGlyph } from '@/lib/chartUtils';
+import { loadInterpretation, saveInterpretation } from '@/lib/interpretationStore';
 
 // Assembles the astrological facts for the 'interpretation-deep-dive'
 // server task — the sectioned templates and FORMAT rules live in
@@ -70,11 +71,24 @@ function makeCacheKey(item, chartContext) {
   return `${base}${houseTag}`;
 }
 
+// Saved reading (account-persistent) → else generate, then persist. Returns
+// cleaned text; used by both the preloader and the hook below.
+function fetchInterpretation(item, chartContext) {
+  const params = buildTaskParams(item, chartContext);
+  return loadInterpretation('interpretation-deep-dive', params).then(saved => {
+    if (saved) return forceTextGlyph(saved);
+    return invokeLLMTask('interpretation-deep-dive', params).then(res => {
+      const cleaned = forceTextGlyph(res);
+      saveInterpretation('interpretation-deep-dive', params, cleaned, item?.key);
+      return cleaned;
+    });
+  });
+}
+
 export function preloadInterpretation(item, chartContext) {
   const cacheKey = makeCacheKey(item, chartContext);
   if (!item?.key || interpretationCache[cacheKey]) return;
-  const params = buildTaskParams(item, chartContext);
-  interpretationCache[cacheKey] = invokeLLMTask('interpretation-deep-dive', params).then(res => forceTextGlyph(res));
+  interpretationCache[cacheKey] = fetchInterpretation(item, chartContext);
 }
 
 // ── Hook: used by InterpretCard in MyChart ─────────────────────────────────
@@ -97,11 +111,11 @@ export function useInterpretation(item, chartContext) {
       return;
     }
 
-    // Fire (or reuse an in-flight) LLM call. We do NOT permanently cache a
-    // rejected promise — on error we delete it so a retry can fire fresh.
+    // Fire (or reuse an in-flight) lookup: saved reading from the account
+    // store, else an LLM call persisted back to it. We do NOT permanently
+    // cache a rejected promise — on error we delete it so a retry can fire.
     if (!interpretationCache[cacheKey]) {
-      const params = buildTaskParams(item, chartContext);
-      interpretationCache[cacheKey] = invokeLLMTask('interpretation-deep-dive', params);
+      interpretationCache[cacheKey] = fetchInterpretation(item, chartContext);
     }
     const cached = interpretationCache[cacheKey];
 

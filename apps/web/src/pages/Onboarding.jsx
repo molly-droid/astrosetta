@@ -8,11 +8,14 @@ import OrnamentDivider from '@/components/ui/OrnamentDivider';
 import { track, EVENTS } from '@/lib/analytics';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
-import { Mail, Check, ArrowRight } from 'lucide-react';
+import { Mail, Check, ArrowRight, Sparkles } from 'lucide-react';
+import PlanSelection from '@/components/plans/PlanSelection';
 import { depthFromOnboardingLevel } from '@/lib/knowledgeDensity';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
 
-const STEPS = ['age_gate', 'experience', 'referral', 'birth_data', 'chart_summary', 'email_digest'];
+const STEPS = ['age_gate', 'experience', 'referral', 'birth_data', 'chart_summary', 'email_digest', 'plan'];
+
+const TIER_LABELS = { interpret: 'Core', calendar: 'Premium' };
 
 const ASTRO_LEVELS = [
   { key: 'new',      label: "New to astrology",           desc: "I know my Sun sign but not much else",            start: 'foundations' },
@@ -35,6 +38,7 @@ export default function Onboarding() {
   const [ascSign, setAscSign] = useState('');
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [emailOptIn, setEmailOptIn] = useState(true);
+  const [purchasedTier, setPurchasedTier] = useState(null);
 
   const handleReferralComplete = (referral) => {
     setReferralSource(referral);
@@ -103,21 +107,28 @@ export default function Onboarding() {
               ? 'Let us cast your natal chart'
               : step === 'email_digest'
               ? 'One last thing'
+              : step === 'plan'
+              ? 'Choose your plan'
+              : step === 'plan_confirm'
+              ? 'Welcome aboard'
               : 'Your chart has been drawn'}
           </p>
           <OrnamentDivider className="mt-2" />
         </div>
 
-        {/* Step indicator */}
+        {/* Step indicator — the confirmation slide counts as everything done */}
         <div className="flex gap-2 mb-8">
-          {STEPS.map((s, i) => (
-            <div
-              key={s}
-              className={`h-1 flex-1 rounded-full transition-all duration-500 ${
-                step === s || STEPS.indexOf(step) > i ? 'bg-gold-primary' : 'bg-white/10'
-              }`}
-            />
-          ))}
+          {STEPS.map((s, i) => {
+            const stepIdx = step === 'plan_confirm' ? STEPS.length : STEPS.indexOf(step);
+            return (
+              <div
+                key={s}
+                className={`h-1 flex-1 rounded-full transition-all duration-500 ${
+                  step === s || stepIdx > i ? 'bg-gold-primary' : 'bg-white/10'
+                }`}
+              />
+            );
+          })}
         </div>
 
         <div className="flex-1">
@@ -261,7 +272,7 @@ export default function Onboarding() {
                   if (emailOptIn) {
                     base44.functions.invoke('sendChartRecapEmail', {}).catch(() => {});
                   }
-                  handleStartLearning();
+                  setStep('plan');
                 }}
                 className="w-full bg-gold-primary hover:bg-gold-accent text-deep-blue font-display font-bold text-base tracking-wide rounded-xl h-12 shadow-sm transition-all"
               >
@@ -270,6 +281,43 @@ export default function Onboarding() {
                 ) : (
                   'Maybe later'
                 )}
+              </Button>
+            </div>
+          )}
+
+          {/* F-01 Slide 1 — plan selection (shared with the Subscribe page) */}
+          {step === 'plan' && (
+            <div className="space-y-5 animate-fade-up">
+              <div className="space-y-1 text-center">
+                <h2 className="font-display text-xl text-white">Choose how deep you want to go</h2>
+                <p className="font-body text-xs text-brass/80">Start free and learn the language of your chart. Upgrade anytime.</p>
+              </div>
+              <PlanSelection
+                variant="onboarding"
+                onFree={handleStartLearning}
+                onPurchased={(tier) => { setPurchasedTier(tier); setStep('plan_confirm'); }}
+                onRestored={handleStartLearning}
+              />
+            </div>
+          )}
+
+          {/* F-01 Slide 2 — confirmation (paid plans only) */}
+          {step === 'plan_confirm' && (
+            <div className="space-y-6 animate-fade-up text-center pt-6">
+              <div className="w-16 h-16 rounded-full bg-gold-primary/10 border border-gold-primary/25 flex items-center justify-center mx-auto">
+                <Sparkles size={28} className="text-gold-accent" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="font-display text-2xl font-bold text-white">You're in.</h2>
+                <p className="font-body text-sm text-brass/80">
+                  Welcome to {TIER_LABELS[purchasedTier] || 'your plan'}. Your full chart is unlocked.
+                </p>
+              </div>
+              <Button
+                onClick={handleStartLearning}
+                className="w-full bg-gold-primary hover:bg-gold-accent text-deep-blue font-display font-bold text-base tracking-wide rounded-xl h-12 shadow-sm transition-all"
+              >
+                Show me around <ArrowRight size={16} className="ml-1 inline" />
               </Button>
             </div>
           )}

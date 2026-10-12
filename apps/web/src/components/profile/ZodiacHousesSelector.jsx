@@ -1,19 +1,57 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { base44 } from '@/api/base44Client';
 import { Loader2, Check, Lock } from 'lucide-react';
 import { extractPlacementKeys } from '@/lib/chartUtils';
-import { TRADITIONS, getTradition, traditionChangeSummary } from '@/lib/traditions';
+import { getTradition } from '@/lib/traditions';
 import { usePermissions } from '@/lib/permissions';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
 import PaywallModal from '@/components/paywall/PaywallModal';
 
-export default function TraditionSelector({ userProgress, existingChart, onChartRegenerated }) {
+/**
+ * Zodiac + Houses settings (UX-01) — replaces the single unlabeled Tradition
+ * selector with two independent, labeled settings. Zodiac decides where the
+ * signs start; the house system decides how the chart divides into 12 life
+ * areas. Any combination is valid.
+ *
+ * The stored data model is unchanged: UserProgress keeps active_tradition +
+ * house_system, and the tradition key is derived from the pair (sidereal →
+ * vedic; tropical+placidus → modern; tropical+whole_sign → hellenistic) so
+ * the interpretive lens follows the canonical profile for each combination.
+ */
+
+// Pending client decision: her spec says "Tropical only at launch; Sidereal
+// comes later", written before she knew the engine already supports sidereal.
+// Flip to true to hide the Sidereal option if she chooses to hold it back.
+const HIDE_SIDEREAL = false;
+
+const ZODIACS = [
+  { key: 'tropical', label: 'Tropical (Western)' },
+  { key: 'sidereal', label: 'Sidereal (Vedic)' },
+];
+const HOUSES = [
+  { key: 'whole_sign', label: 'Whole Sign' },
+  { key: 'placidus', label: 'Placidus' },
+];
+
+function deriveTradition(zodiac, houseSystem) {
+  if (zodiac === 'sidereal') return 'vedic';
+  return houseSystem === 'placidus' ? 'modern' : 'hellenistic';
+}
+
+export default function ZodiacHousesSelector({ userProgress, existingChart, onChartRegenerated }) {
   const { user } = useAuth();
-  const current = userProgress?.active_tradition || 'modern';
   const { canSwitchTradition, tier } = usePermissions(user);
-  const [pending, setPending] = useState(null);
-  const [confirming, setConfirming] = useState(null); // the tradition key awaiting confirmation
+  const currentTradition = getTradition(userProgress?.active_tradition || 'modern');
+  const currentZodiac = currentTradition.zodiac;
+  const currentHouses = userProgress?.house_system
+    || existingChart?.raw_data?.house_system
+    || currentTradition.houseSystem
+    || 'whole_sign';
+
+  const [pending, setPending] = useState(false);
+  const [confirming, setConfirming] = useState(null); // { zodiac, houses }
   const [error, setError] = useState('');
   const [showPaywall, setShowPaywall] = useState(false);
 
@@ -40,40 +78,41 @@ export default function TraditionSelector({ userProgress, existingChart, onChart
     return utcOffset;
   };
 
-  const handleActivate = async (traditionKey) => {
-    if (pending || traditionKey === current) return;
-    setConfirming(traditionKey);
+  const requestChange = (zodiac, houses) => {
+    if (pending) return;
+    if (zodiac === currentZodiac && houses === currentHouses) return;
+    if (!canSwitchTradition) { setShowPaywall(true); return; }
+    setConfirming({ zodiac, houses });
   };
 
-  const confirmActivation = async () => {
-    const traditionKey = confirming;
+  const confirmChange = async () => {
+    const { zodiac, houses } = confirming;
     setConfirming(null);
-    setPending(traditionKey);
+    setPending(true);
     setError('');
-    const t = getTradition(traditionKey);
+    const traditionKey = deriveTradition(zodiac, houses);
     try {
-      // 1. Persist active_tradition + canonical house_system to UserProgress
+      // 1. Persist the pair (tradition derived from it) to UserProgress
       if (userProgress?.id) {
         await base44.entities.UserProgress.update(userProgress.id, {
           active_tradition: traditionKey,
-          house_system: t.houseSystem,
+          house_system: houses,
         });
       }
 
-      // 2. Recalculate chart with the tradition's canonical settings
+      // 2. Recalculate the chart with the new settings
       const raw = existingChart?.raw_data;
       if (raw?.birth_date && raw?.birth_location?.latitude != null) {
         const utcOffset = recalcOffset(raw);
-        const payload = {
+        const res = await base44.functions.invoke('chartCalculator', {
           chart_type: 'natal',
           birth_date: raw.birth_date,
           birth_time: raw.birth_time || '12:00:00',
           utc_offset: utcOffset,
           birth_location: raw.birth_location,
-          house_system: t.houseSystem,
+          house_system: houses,
           tradition: traditionKey,
-        };
-        const res = await base44.functions.invoke('chartCalculator', payload);
+        });
         const chartData = res.data;
         if (chartData?.error) throw new Error(chartData.error);
 
@@ -93,63 +132,72 @@ export default function TraditionSelector({ userProgress, existingChart, onChart
         });
       }
 
-      setPending(null);
-      toast.success(`Chart updated to ${t.label}`);
+      setPending(false);
+      toast.success('Chart updated');
       if (onChartRegenerated) onChartRegenerated();
     } catch (err) {
-      setError(err.message || 'Failed to switch tradition');
-      setPending(null);
+      setError(err.message || 'Failed to update chart settings');
+      setPending(false);
     }
   };
 
-  return (
-    <div className="celestial-card p-3 space-y-2.5">
-      <div className="flex items-center gap-2">
-        <span className="text-brass/60 text-[0.8125rem]">⊕</span>
-        <p className="font-body text-xs text-brass/70 uppercase tracking-wide">Tradition</p>
-      </div>
-
-      {/* Segmented pill control */}
+  const SettingRow = ({ label, tooltip, options, value, onPick }) => (
+    <div className="space-y-1.5">
+      <p className="font-body text-xs text-brass/70 uppercase tracking-wide">{label}</p>
       <div className="flex items-center gap-1 bg-white/[0.05] rounded-full p-0.5">
-        {TRADITIONS.map(opt => {
-          const active = current === opt.key;
-          const isPending = pending === opt.key;
+        {options.map(opt => {
+          const active = value === opt.key;
           const locked = !canSwitchTradition && !active;
           return (
             <button
               key={opt.key}
-              onClick={() => (locked ? null : handleActivate(opt.key))}
-              disabled={!!pending || locked}
+              onClick={() => onPick(opt.key)}
+              disabled={pending}
               className={`flex-1 px-2 py-1.5 rounded-full font-body text-[0.6875rem] transition-all disabled:cursor-not-allowed flex items-center justify-center gap-1 ${
                 active ? 'bg-gold-primary/20 text-white font-semibold' : 'text-white/30 hover:text-white/50'
               } ${locked ? 'opacity-50' : ''}`}
             >
-              {isPending ? (
-                <Loader2 size={11} className="animate-spin" />
-              ) : active ? (
-                <Check size={11} />
-              ) : locked ? (
-                <Lock size={9} />
-              ) : null}
-              <span style={{ fontVariantEmoji: 'text', fontFamily: 'serif' }}>{opt.glyph}</span>
-              <span className="hidden sm:inline">{opt.short}</span>
+              {active ? <Check size={11} /> : locked ? <Lock size={9} /> : null}
+              {opt.label}
             </button>
           );
         })}
       </div>
+      <p className="font-body text-[0.625rem] text-brass/40 leading-relaxed">{tooltip}</p>
+    </div>
+  );
 
-      <p className="font-body text-[0.625rem] text-brass/40 leading-relaxed">
-        {getTradition(current).descriptor}
-        {pending && ' · Recalculating chart…'}
-      </p>
+  const zodiacOptions = HIDE_SIDEREAL ? ZODIACS.filter(z => z.key === 'tropical') : ZODIACS;
 
+  return (
+    <div className="celestial-card p-3 space-y-3">
+      <SettingRow
+        label="Zodiac"
+        tooltip="Tropical follows the seasons and is used in most Western astrology. Sidereal (Vedic) follows the constellations."
+        options={zodiacOptions}
+        value={currentZodiac}
+        onPick={(z) => requestChange(z, currentHouses)}
+      />
+      <SettingRow
+        label="Houses"
+        tooltip="Whole Sign gives each house one full sign. Placidus divides houses by time and your exact birth location."
+        options={HOUSES}
+        value={currentHouses}
+        onPick={(h) => requestChange(currentZodiac, h)}
+      />
+
+      {pending && (
+        <p className="font-body text-[0.625rem] text-brass/50 flex items-center gap-1.5">
+          <Loader2 size={10} className="animate-spin" /> Recalculating chart…
+        </p>
+      )}
       {error && <p className="font-body text-[0.625rem] text-red-400/70">{error}</p>}
 
       {/* Locked helper for free users */}
       {!canSwitchTradition && (
         <div className="pt-1.5 space-y-2">
           <p className="font-body text-[0.625rem] text-white/70 leading-relaxed">
-            Switching your live chart's tradition — recalculate with a sidereal zodiac, whole-sign houses, and classical rulerships — is part of Core.
+            Choosing your zodiac and house system — and recalculating your live chart with them — is part of Core.
           </p>
           <button
             onClick={() => setShowPaywall(true)}
@@ -161,27 +209,24 @@ export default function TraditionSelector({ userProgress, existingChart, onChart
       )}
 
       {showPaywall && (
-        <PaywallModal variant="interpret" fromTier={tier} context="Tradition switcher" onClose={() => setShowPaywall(false)} />
+        <PaywallModal variant="interpret" fromTier={tier} context="Zodiac & Houses settings" onClose={() => setShowPaywall(false)} />
       )}
 
-      {/* Confirmation dialog */}
-      {confirming && (
+      {/* Confirmation dialog — portaled to <body>: an ancestor card's
+          backdrop-filter creates a stacking context that otherwise traps this
+          fixed overlay beneath the next card (B-02). */}
+      {confirming && createPortal(
         <div className="fixed inset-0 z-[10020] flex items-center justify-center bg-black/60 px-4" onClick={() => setConfirming(null)}>
           <div
             className="celestial-card p-5 max-w-sm w-full space-y-3 animate-fade-up"
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center gap-2">
-              <span className="text-xl text-gold-accent" style={{ fontVariantEmoji: 'text', fontFamily: 'serif' }}>
-                {getTradition(confirming).glyph}
-              </span>
-              <h3 className="font-display text-base font-bold text-white">Switch to {getTradition(confirming).label}?</h3>
-            </div>
+            <h3 className="font-display text-base font-bold text-white">Recalculate your chart?</h3>
             <p className="font-body text-xs text-brass leading-relaxed">
-              Your chart will recalculate with{' '}
-              <span className="text-cream">{traditionChangeSummary(confirming).zodiac}</span> and{' '}
-              <span className="text-cream">{traditionChangeSummary(confirming).houses}</span>.{' '}
-              {traditionChangeSummary(confirming).lens}
+              Your chart will recalculate with the{' '}
+              <span className="text-cream">{confirming.zodiac === 'sidereal' ? 'sidereal zodiac (Lahiri ayanamsa)' : 'tropical zodiac'}</span> and{' '}
+              <span className="text-cream">{confirming.houses === 'placidus' ? 'Placidus houses' : 'Whole Sign houses'}</span>.
+              {confirming.zodiac !== currentZodiac && confirming.zodiac === 'sidereal' && ' Sidereal shifts every placement back about 24°, so many planets land one sign earlier.'}
             </p>
             <div className="flex gap-2 pt-1">
               <button
@@ -191,15 +236,16 @@ export default function TraditionSelector({ userProgress, existingChart, onChart
                 Cancel
               </button>
               <button
-                onClick={confirmActivation}
-                disabled={!!pending}
+                onClick={confirmChange}
+                disabled={pending}
                 className="flex-1 px-3 py-2 rounded-md font-body text-xs font-semibold text-paper bg-gold-primary hover:bg-gold-accent disabled:opacity-50"
               >
                 {pending ? 'Recalculating…' : 'Confirm'}
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

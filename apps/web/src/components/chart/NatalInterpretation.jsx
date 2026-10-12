@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { invokeLLMTask } from '@/api/llmTasks';
+import { loadInterpretation, saveInterpretation } from '@/lib/interpretationStore';
 import { getHouseName } from '@/lib/houseUtils';
 import { mergeNatalPoints } from '@/lib/transitUtils';
 import { highlightSynthesisText } from '@/lib/transitUtils';
@@ -105,7 +106,20 @@ export default function NatalInterpretation({ item, chartData, skyMode = false, 
     setLoading(true);
     setText(null);
 
-    invokeLLMTask('natal-interpretation', params)
+    // Natal readings persist per account; sky/transit readings change with the
+    // date, so those stay session-only.
+    const persistent = ['planet', 'sign', 'house', 'aspect'].includes(params.kind);
+    const lookup = persistent
+      ? loadInterpretation('natal-interpretation', params).then(saved => {
+          if (saved) return saved;
+          return invokeLLMTask('natal-interpretation', params).then(res => {
+            saveInterpretation('natal-interpretation', params, res, item?.key);
+            return res;
+          });
+        })
+      : invokeLLMTask('natal-interpretation', params);
+
+    lookup
       .then(res => {
         if (!cancelled) {
           cache[cacheKey] = res;

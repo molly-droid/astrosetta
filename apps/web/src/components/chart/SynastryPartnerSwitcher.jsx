@@ -73,7 +73,7 @@ export default function SynastryPartnerSwitcher({
 function PartnerPicker({ selectedChart, savedCharts, onSelect, onAddChart, onClose }) {
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 px-0 sm:px-4 pb-[72px] sm:pb-0"
+      className="fixed inset-0 z-[10010] flex items-end sm:items-center justify-center bg-black/50 px-0 sm:px-4 pb-[calc(72px+env(safe-area-inset-bottom,0px))] sm:pb-0"
       onClick={onClose}
     >
       <div

@@ -104,7 +104,10 @@ export default function SubscriptionSection() {
   // but no one has actually paid). At launch these flip on automatically.
   const realTier = user?.subscription_tier || 'free';
   const isExpired = realTier !== 'free' && effectiveTier === 'free';
-  const currentIndex = TIER_ORDER.indexOf(effectiveTier);
+  // B-19: the plan cards manage the STORED subscription, so "current" and
+  // upgrade targets come from realTier — during beta effectiveTier is
+  // 'calendar' for every non-admin, which made the Plan tab a dead end.
+  const currentIndex = TIER_ORDER.indexOf(realTier);
   const isFoundingMember = !!user?.is_founding_member;
   const preference = PREFERENCE_MAP[user?.founding_tier_preference];
 
@@ -289,7 +292,7 @@ export default function SubscriptionSection() {
       <div className="space-y-2">
         {PLANS.map((plan) => {
           const planIndex = TIER_ORDER.indexOf(plan.tier);
-          const isCurrent = plan.tier === effectiveTier;
+          const isCurrent = plan.tier === realTier;
           const isUpgrade = planIndex > currentIndex;
 
           return (

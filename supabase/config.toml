@@ -92,6 +92,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.notify-admin-bug-report]
 verify_jwt = false
+[functions.pre-generate-interpretations]
+verify_jwt = false
 [functions.pre-generate-synthesis]
 verify_jwt = false
 [functions.recalc-all-charts]

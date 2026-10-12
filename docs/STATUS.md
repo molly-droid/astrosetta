@@ -213,6 +213,66 @@ validation cannot be repeated here. Native and live-provider QA remain gates.
       (mechanical patches; cover in Phase 4 device QA) and the
       weekly/monthly/recap emails (same template pattern as daily).
 
+- [x] **Feedback round 1, Batch D + PF items (2026-10-12)** — uncommitted in
+      the working tree pending Tony's commit; server pieces deployed:
+      - **PF-04 root cause found: NO scheduled job has ever run in prod.**
+        The vault was mis-seeded (args swapped — a secret NAMED the legacy
+        service JWT instead of one named `edge_service_key`), so
+        `invoke_edge_function()` warn+no-op'd on every cron tick while
+        pg_cron reported "succeeded". Every first open of the day generated
+        the reading live (= Molly's "reloads after a while"); daily/weekly/
+        monthly digests never sent. Client cache logic was already correct
+        (verified: user-JWT insert 201, save-back updates in place).
+      - **Vault fix needs Tony** (secret-store write blocked for Claude):
+        command below under "Tony to run". ALSO discovered: the Edge runtime
+        injects the NEW `sb_secret_...` key as SUPABASE_SERVICE_ROLE_KEY, so
+        `edge_service_key` must be the sb_secret key — the legacy JWT would
+        pass the gateway but fail `isServiceRole()` (verified live: legacy →
+        403, sb_secret → 200).
+      - **PF-03 shipped**: interpretations persist per account in
+        `calendar_synthesis` (period_type `interpretation`, period_key =
+        djb2 hash of the task params, so birth-data edits self-invalidate).
+        Client: `lib/interpretationStore.js` + wired into
+        InterpretationDrawer (deep-dives) and NatalInterpretation (natal
+        kinds only). Server: new `pre-generate-interpretations` function
+        (classic 10 placements + 12 houses per chart, 8 per run) + 10-min
+        cron (migration 20261012000001). Deployed, loop-run until all charts
+        covered; client/server key parity verified (8/8 exact match on
+        Molly's chart).
+      - **F-01 shipped**: plan selection inside onboarding (Molly's final
+        copy) — new shared `components/plans/PlanSelection.jsx` used by BOTH
+        the new onboarding `plan` step (+ "You're in." confirmation slide)
+        and Subscribe.jsx (rewritten around it), so upgrades use one flow.
+        Platform routing unchanged (StoreKit/Play via RevenueCat, Stripe on
+        web); restore-purchases link in fine print on native.
+      - **UX-01 shipped**: TraditionSelector replaced by
+        `ZodiacHousesSelector` — two labeled settings (Zodiac:
+        Tropical/Sidereal · Houses: Whole Sign/Placidus) with Molly's
+        tooltip copy; tradition key derived from the pair (sidereal→vedic,
+        tropical+placidus→modern, tropical+whole_sign→hellenistic).
+        `HIDE_SIDEREAL` flag ready if Molly says hold Sidereal back.
+      - Deploy gotcha recorded: `functions deploy` hangs without `--use-api`
+        (Docker); use `--use-api`.
+      - **Vault seeded by Tony (2026-10-12)** — verified: secrets are exactly
+        edge_base_url + edge_service_key (sb_secret), manual
+        invoke_edge_function accepted. Scheduled jobs are LIVE from now,
+        including the real daily digest (12:00 UTC) to opted-in beta users.
+      - **TestFlight build 4 uploaded (2026-10-12)** with this whole batch —
+        the Molly candidate for feedback round 1 verification.
+
+### Tony to run (blocked for Claude by permissions)
+
+Seed the vault so ALL scheduled jobs start working (paste as one `!` command):
+
+```
+! cd /Users/tonyt/Projects/astrosetta && TOKEN=$(cat ~/.supabase/access-token) && SB=$(curl -s "https://api.supabase.com/v1/projects/sqdpawyqvgqadflezxxk/api-keys?reveal=true" -H "Authorization: Bearer $TOKEN" | python3 -c "import json,sys; print([k['api_key'] for k in json.load(sys.stdin) if k.get('type')=='secret'][0])") && curl -s -X POST "https://api.supabase.com/v1/projects/sqdpawyqvgqadflezxxk/database/query" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" -d "{\"query\":\"select vault.create_secret('$SB','edge_service_key'); delete from vault.secrets where name like 'eyJ%';\"}"
+```
+
+Then verify (should show day-v20 rows appearing for today within ~20 min):
+`select jobname, status, return_message from cron.job_run_details order by start_time desc limit 5;`
+⚠️ Arming the vault turns on the real email digests (daily 12:00 UTC) for
+opted-in beta users — expected, but know it's live.
+
 ## Remaining work, in order
 
 **Phase 1 — parallel, no dependencies (now):**

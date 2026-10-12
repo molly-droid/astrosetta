@@ -28,7 +28,7 @@ import SubscriptionSection from '@/components/profile/SubscriptionSection';
 import DeleteAccountSection from '@/components/profile/DeleteAccountSection';
 import FontSizeControl from '@/components/profile/FontSizeControl';
 import GoogleCalendarConnect from '@/components/profile/GoogleCalendarConnect';
-import TraditionSelector from '@/components/profile/TraditionSelector';
+import ZodiacHousesSelector from '@/components/profile/ZodiacHousesSelector';
 import KnowledgeDensitySlider from '@/components/profile/KnowledgeDensitySlider';
 import FoundingPatronBadge from '@/components/shared/FoundingPatronBadge';
 import ChartDisplaySettings from '@/components/profile/ChartDisplaySettings';
@@ -337,7 +337,7 @@ export default function Profile() {
               </div>
               <OrnamentDivider />
               <ChartWheel chartData={chart.raw_data} showAsteroids={user?.show_asteroids !== false} showAngles={user?.show_angles !== false} showPof={user?.show_pof !== false} showNodes={user?.show_nodes !== false} showLilith={user?.show_lilith !== false} />
-              <TraditionSelector
+              <ZodiacHousesSelector
                 userProgress={userProgress}
                 existingChart={chart}
                 onChartRegenerated={loadData}

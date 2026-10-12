@@ -8,6 +8,8 @@ Astrosetta is a live astrology education app (astrosetta.com, operated by Sharp 
 
 pnpm workspace + Turborepo monorepo (Node ≥20, pnpm 9). The migration work happens on the `migration/base44-to-supabase` branch.
 
+**`docs/STATUS.md` is the living tracker** — what's done, what's blocked on the client, and the ordered remaining phases (data transfer is deliberately last, at cutover). Keep it updated as work lands.
+
 ## Layout
 
 - **`apps/web`** — the real product: the complete React/Vite/Tailwind/shadcn frontend from the client's Base44 export (JSX, not TS). This is what gets migrated and shipped.
@@ -69,7 +71,7 @@ Local testing: `supabase start` (ports shifted to 5434x to coexist with another 
 - Tiers: internal IDs stay `free`/`interpret`/`calendar`; Core/Premium are display names (interpret=Core, calendar=Premium). Tier enforcement must be server-side.
 - Founding members: `LAUNCH_DATE = null` in `stampFoundingMember` — every signup is stamped `is_founding_member` until launch is declared. This cohort and behavior must survive migration.
 - Auth cutover: pre-created Supabase accounts; existing users get reset/magic-link on first login. A `/login` page must be built (`shim/auth.js` `redirectToLogin` points at it).
-- Charts: `base44/functions/chartCalculator` is a hand-rolled ephemeris (fixed TZ offsets, known accuracy issues) — port it as-is behind a stable adapter first; swap to Astrology-API.io once the client has credentials. All cached chart data gets recalculated at cutover.
+- Charts: **swapped to Astrology-API.io (live since 2026-09-30).** `chart-calculator`'s position layer (planet longitudes/retrogrades, angles, cusps) comes from their Swiss-Ephemeris `/charts/natal` via `_shared/astrologyApiEngine.ts` when `CHART_ENGINE=astrology-api`; the ported hand-rolled ephemeris remains as automatic fallback and still powers day-sampling (stations/ingresses) and Tyche (not served by their deployment). Downstream math and response shape unchanged. Fetches are permanently cached in `ephemeris_cache` (one row per moment, shared across users). The Navigator likewise runs on their hosted chat (`NAVIGATOR_PROVIDER=astrology-api` in navigator-chat; Claude is the rollback). All cached chart data still gets recalculated at cutover.
 - The old `supabase/migrations/20260724000001_initial_schema.sql` is the superseded V2-plan schema, **not** the replica schema the shim expects — the replica schema is generated from `base44/entities/*.jsonc`.
 - Media on `media.base44.com` (referenced in `index.html`, `src/lib/moduleImages.js`, and inside data) must be re-hosted before Base44 is decommissioned.
 

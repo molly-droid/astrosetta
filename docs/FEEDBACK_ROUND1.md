@@ -67,28 +67,39 @@ Root causes and fixes (all verified against live output):
 - **C-02 mundane transit text** in calendar events: replace "collective aspect
   affecting everyone + orb" with a short definition — same code path as B-14.
 
-## D. P0 batch — store blockers / layout
+## D. P0 batch — store blockers / layout — ✅ DONE 2026-10-12 (uncommitted; server pieces deployed)
 
-- **B-01 app icon overflows frame** — rescale artwork with padding (asset fix).
-- **B-02 tradition confirm dialog behind Chart Display card** (z-index).
-- **B-09/B-10 add/edit chart hidden behind bottom nav** (same overlay class as
-  the safe-area fixes we shipped — bottom inset this time).
-- **UX-01 zodiac/houses split** — her decision table is in the doc: two labeled
-  settings, Zodiac (Tropical only at launch) + Houses (Whole Sign default /
-  Placidus), tooltip copy provided. Replaces the unlabeled 3-icon selector.
-  NOTE: the app already HAS Vedic/sidereal via the tradition engine — her
-  "Tropical only at launch, Sidereal comes later" may be out of date; confirm
-  whether to hide or keep Vedic.
-- **B-19 + F-01 (P0): plan management + onboarding plan selection.** B-19 (My
-  Info → Plan opens the plan/upgrade flow) is mostly wiring to the existing
-  Subscribe screen. F-01 (plan choice INSIDE onboarding, full spec + copy in
-  her doc) is the one genuinely new pre-freeze feature.
-- **PF-03/PF-04 (P0): persist interpretations + daily reading.** PF-04: daily
-  reading IS server-cached (day-v20) — reproduce "reloads after a while"
-  (suspect: client cache or knowledge-depth key change). PF-03: save generated
-  Placements/Houses/Aspects/Dynamics interpretations per account (new
-  persistence), pre-generate Placements+Houses in background at account
-  creation/upgrade.
+- **B-01 ✅** app icon: full padded emblem, opaque 1024×1024.
+- **B-02 ✅** tradition confirm dialog portaled to `document.body` (ancestor
+  backdrop-filter trapped the fixed overlay).
+- **B-09/B-10 ✅** add/edit chart sheets: z-[10010] above the nav (z-[9999]) +
+  safe-area bottom padding.
+- **UX-01 ✅** `ZodiacHousesSelector` replaces the unlabeled 3-icon
+  TraditionSelector: two labeled settings (Zodiac Tropical/Sidereal · Houses
+  Whole Sign default/Placidus) with Molly's tooltip copy; tradition derived
+  from the pair, any combination valid. Sidereal is live (engine supports it)
+  with a `HIDE_SIDEREAL` flag ready if Molly wants it held back (her
+  "Tropical only at launch" predates knowing the engine does sidereal).
+- **B-19 ✅** plan page shows the real paid tier, editable (earlier batch) —
+  and now opens the same PlanSelection flow as onboarding (F-01).
+- **F-01 ✅** plan selection inside onboarding: new shared
+  `components/plans/PlanSelection.jsx` (Molly's final copy: billing toggle,
+  Free/Core/Premium cards, fine print, restore link) used by a new onboarding
+  `plan` step + "You're in." confirmation slide AND by Subscribe.jsx — one
+  flow everywhere, platform-routed checkout unchanged. Free-trial question
+  still open (§B) — none implemented.
+- **PF-04 ✅ root-caused**: not a client bug — NO scheduled job had EVER run
+  (vault secrets mis-seeded, cron silently no-oped), so every first open of
+  the day generated live. Client cache verified correct. Fix needs one Tony
+  command (STATUS.md "Tony to run") because secret-store writes are blocked
+  for Claude; also discovered `edge_service_key` must be the NEW sb_secret
+  key (runtime injects it; legacy JWT fails isServiceRole).
+- **PF-03 ✅**: interpretations persist per account (calendar_synthesis,
+  period_type `interpretation`, param-hash keys that self-invalidate on
+  birth-data edits) in InterpretationDrawer + NatalInterpretation; new
+  `pre-generate-interpretations` function + 10-min cron pre-generates the
+  classic 10 placements + 12 houses per chart. Key parity client↔server
+  verified 8/8; all existing charts back-filled manually.
 
 ## E. P1 batch — bugs
 

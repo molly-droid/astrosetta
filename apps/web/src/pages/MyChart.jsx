@@ -77,13 +77,20 @@ function highlightAstro(node, cls = 'text-gold-accent') {
   });
 }
 
+// Explicit classes, not `prose-*` utilities — @tailwindcss/typography is not
+// installed, so the prose variants never produced any styling (B-12).
+const MD_HEADING = 'font-display text-gold-accent font-bold mt-4 mb-1.5 leading-snug';
+
 const ASTRO_MD_COMPONENTS = {
-  p: ({ children }) => <p>{highlightAstro(children)}</p>,
-  li: ({ children }) => <li>{highlightAstro(children)}</li>,
-  h1: ({ children }) => <h1>{highlightAstro(children)}</h1>,
-  h2: ({ children }) => <h2>{highlightAstro(children)}</h2>,
-  h3: ({ children }) => <h3>{highlightAstro(children)}</h3>,
-  h4: ({ children }) => <h4>{highlightAstro(children)}</h4>,
+  p: ({ children }) => <p className="my-2 text-white/85">{highlightAstro(children)}</p>,
+  ul: ({ children }) => <ul className="list-disc pl-4 my-2 space-y-1">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal pl-4 my-2 space-y-1">{children}</ol>,
+  li: ({ children }) => <li className="text-white/80 leading-relaxed">{highlightAstro(children)}</li>,
+  strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+  h1: ({ children }) => <h1 className={`${MD_HEADING} text-base`}>{highlightAstro(children)}</h1>,
+  h2: ({ children }) => <h2 className={`${MD_HEADING} text-base`}>{highlightAstro(children)}</h2>,
+  h3: ({ children }) => <h3 className={`${MD_HEADING} text-sm`}>{highlightAstro(children)}</h3>,
+  h4: ({ children }) => <h4 className={`${MD_HEADING} text-sm`}>{highlightAstro(children)}</h4>,
 };
 
 function InterpretBody({ item, chartContext }) {
@@ -112,11 +119,7 @@ function InterpretBody({ item, chartContext }) {
         <Sparkles size={10} className="text-gold-accent" />
         <span className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50">Interpretation</span>
       </div>
-      <div className="font-body text-sm text-white/85 leading-relaxed prose prose-sm prose-invert max-w-none
-        prose-headings:font-display prose-headings:text-gold-accent prose-headings:text-sm prose-headings:font-bold prose-headings:mt-4 prose-headings:mb-1.5
-        prose-strong:text-white prose-strong:font-semibold
-        prose-ul:pl-4 prose-li:text-white/80 prose-li:text-xs prose-li:leading-relaxed
-        prose-p:text-white/85 prose-p:text-sm">
+      <div className="font-body text-sm text-white/85 leading-relaxed">
         <ReactMarkdown components={ASTRO_MD_COMPONENTS}>{normalizeInterpretation(text || '')}</ReactMarkdown>
       </div>
     </div>

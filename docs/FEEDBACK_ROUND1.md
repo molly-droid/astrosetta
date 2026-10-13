@@ -35,6 +35,22 @@ blocks store submission or the demo).
   everywhere already.
 - **E-02:** placeholder — Molly's Daily Digest notes still to come.
 - **Free trial question (F-01):** her call; none implemented.
+- **Onboarding emails name points the app now hides (new, found 2026-10-13).**
+  UX-02 made Angles, Lunar Nodes, Black Moon Lilith, Arabic Lots and Asteroids
+  default OFF so a beginner's first chart is clean. Both onboarding emails
+  still list every point in their house sections: the welcome email's "Your
+  twelve houses" ("Part of Necessity lives here") and the chart recap's "Your
+  Houses, House by House" ("Part of Fortune in Pisces"). A new user's first
+  two emails therefore name terms that appear nowhere in their app and that
+  her own house copy never defines. Options: (1) filter both sections to the
+  ten classic planets (recommended, ~2 lines per function, one deploy each);
+  (2) keep as-is as a teaser for what the toggles unlock; (3) filter the
+  welcome email only and leave the recap exhaustive. Her copy, her call.
+- **Em dashes in static email copy (new, found 2026-10-13).** AI-04 strips
+  dashes from AI output only. The welcome email's subject, body and footer
+  carry three em dashes that are verbatim Base44 copy she wrote herself.
+  Ask whether the no-dash rule extends to hand-written copy; if yes it's a
+  sweep across the email templates, not a code change.
 
 ## C. P0 batch — data accuracy (her #1 priority) — ✅ DONE 2026-10-11, deployed + verified
 

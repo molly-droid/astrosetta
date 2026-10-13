@@ -26,7 +26,21 @@ export default function BonusQuizCard({ userProgress, onClose }) {
     const prevCorrect = Math.round(((prog.accuracy_rate || 0) / 100) * prevTotal);
     const newTotal = prevTotal + total;
     const newAccuracy = newTotal > 0 ? Math.round(((prevCorrect + correct) / newTotal) * 100) : 0;
-    await base44.entities.UserProgress.update(prog.id, { total_answered: newTotal, accuracy_rate: newAccuracy });
+    const updates = { total_answered: newTotal, accuracy_rate: newAccuracy };
+    // B-05/B-06: bonus rounds used to update only the overall stats, so the
+    // tier accuracy bar ignored them entirely — the app then showed two
+    // different accuracy figures for the same answers, and practising moved
+    // nothing. Every answered question counts toward the tier's accuracy;
+    // the quiz-DAY counter still only advances once per day.
+    const tier = prog.current_tier || 'apprentice';
+    if (tier === 'apprentice') {
+      updates.apprentice_correct_total = (prog.apprentice_correct_total || 0) + correct;
+      updates.apprentice_questions_total = (prog.apprentice_questions_total || 0) + total;
+    } else if (tier === 'adept') {
+      updates.adept_correct_total = (prog.adept_correct_total || 0) + correct;
+      updates.adept_questions_total = (prog.adept_questions_total || 0) + total;
+    }
+    await base44.entities.UserProgress.update(prog.id, updates);
     // Refresh the shared record so the gauges reflect this round (B-05/B-06).
     reloadProgress?.();
   };

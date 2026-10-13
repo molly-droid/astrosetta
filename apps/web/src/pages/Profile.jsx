@@ -336,7 +336,7 @@ export default function Profile() {
                 ))}
               </div>
               <OrnamentDivider />
-              <ChartWheel chartData={chart.raw_data} showAsteroids={user?.show_asteroids === true} showAngles={user?.show_angles === true} showPof={user?.show_lots === true} showNodes={user?.show_nodes === true} showLilith={user?.show_lilith === true} />
+              <ChartWheel chartData={chart.raw_data} showAsteroids={user?.show_asteroids === true} showLots={user?.show_lots === true} showNodes={user?.show_nodes === true} showLilith={user?.show_lilith === true} />
               <ZodiacHousesSelector
                 userProgress={userProgress}
                 existingChart={chart}

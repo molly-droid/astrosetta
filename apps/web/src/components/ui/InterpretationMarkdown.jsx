@@ -50,22 +50,30 @@ function highlightAstro(node, onHighlightTransit, cls = 'text-gold-accent') {
   });
 }
 
+// Element styling is explicit rather than Tailwind `prose-*` utilities:
+// @tailwindcss/typography is not installed in this project, so every prose
+// class is a no-op — which is the other half of why generated headers showed
+// as plain body text (B-12). Sizes are in em so each surface's own font size
+// still drives them.
+const HEADING = 'font-display text-gold-accent font-bold mt-3 mb-1 leading-snug';
+
 export default function InterpretationMarkdown({ text, className = '', onHighlightTransit = null, highlightClass = 'text-gold-accent' }) {
   if (!text) return null;
+  const hl = (children) => highlightAstro(children, onHighlightTransit, highlightClass);
   const components = {
-    p: ({ children }) => <p>{highlightAstro(children, onHighlightTransit, highlightClass)}</p>,
-    li: ({ children }) => <li>{highlightAstro(children, onHighlightTransit, highlightClass)}</li>,
-    h1: ({ children }) => <h1>{highlightAstro(children, onHighlightTransit, highlightClass)}</h1>,
-    h2: ({ children }) => <h2>{highlightAstro(children, onHighlightTransit, highlightClass)}</h2>,
-    h3: ({ children }) => <h3>{highlightAstro(children, onHighlightTransit, highlightClass)}</h3>,
-    h4: ({ children }) => <h4>{highlightAstro(children, onHighlightTransit, highlightClass)}</h4>,
+    p: ({ children }) => <p className="my-1.5">{hl(children)}</p>,
+    ul: ({ children }) => <ul className="list-disc pl-4 my-1.5 space-y-1">{children}</ul>,
+    ol: ({ children }) => <ol className="list-decimal pl-4 my-1.5 space-y-1">{children}</ol>,
+    li: ({ children }) => <li className="leading-relaxed">{hl(children)}</li>,
+    strong: ({ children }) => <strong className="text-white font-semibold">{children}</strong>,
+    em: ({ children }) => <em className="italic">{children}</em>,
+    h1: ({ children }) => <h1 className={`${HEADING} text-[1.2em]`}>{hl(children)}</h1>,
+    h2: ({ children }) => <h2 className={`${HEADING} text-[1.15em]`}>{hl(children)}</h2>,
+    h3: ({ children }) => <h3 className={`${HEADING} text-[1.1em]`}>{hl(children)}</h3>,
+    h4: ({ children }) => <h4 className={`${HEADING} text-[1.05em]`}>{hl(children)}</h4>,
   };
   return (
-    <div className={`prose prose-sm prose-invert max-w-none
-      prose-headings:font-display prose-headings:text-gold-accent prose-headings:text-[1.05em] prose-headings:font-bold prose-headings:mt-3 prose-headings:mb-1
-      prose-strong:text-white prose-strong:font-semibold
-      prose-ul:pl-4 prose-li:leading-relaxed
-      prose-p:my-1.5 ${className}`}>
+    <div className={className}>
       <ReactMarkdown components={components}>{normalizeInterpretation(text)}</ReactMarkdown>
     </div>
   );

@@ -322,7 +322,7 @@ export default function AppLayout() {
 
       {/* Mobile Bottom Navigation — fixed to viewport bottom */}
       <nav
-        className="fixed bottom-0 left-0 w-full md:hidden z-[9999] border-t border-white/[0.12]"
+        className="app-bottom-nav fixed bottom-0 left-0 w-full md:hidden z-[9999] border-t border-white/[0.12]"
         style={{
           background: 'rgba(15, 26, 46, 0.95)',
           backdropFilter: 'blur(16px)',

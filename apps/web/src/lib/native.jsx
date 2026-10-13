@@ -46,6 +46,15 @@ export async function initNative() {
     await StatusBar.setBackgroundColor({ color: '#0f1a2e' }).catch(() => {}); // Android only
   } catch { /* plugin missing (web) */ }
   try {
+    // Hide the fixed bottom nav while the keyboard is up: iOS shrinks the
+    // viewport for the keyboard, so a bottom-anchored bar lands directly on
+    // top of the field being typed into.
+    const { Keyboard } = await import('@capacitor/keyboard');
+    const root = document.documentElement;
+    Keyboard.addListener('keyboardWillShow', () => root.classList.add('keyboard-open'));
+    Keyboard.addListener('keyboardWillHide', () => root.classList.remove('keyboard-open'));
+  } catch { /* plugin missing (web) */ }
+  try {
     const { SplashScreen } = await import('@capacitor/splash-screen');
     // launchAutoHide is false in capacitor.config.ts — hide once React owns
     // the screen so there's no white flash between splash and first paint.

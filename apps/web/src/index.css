@@ -127,6 +127,33 @@ input::-webkit-datetime-edit-fields-wrapper {
   padding: 0;
 }
 
+/* iOS zooms the whole page when you focus an input whose text is under 16px,
+   which drags the field you are typing in off the screen. Our form fields are
+   text-sm (14px), so every one of them did it.
+
+   The attribute selectors are load-bearing: a bare `input` selector loses to
+   Tailwind's `.text-sm` class on specificity, so the rule silently never
+   applied. These push specificity above a single class while excluding
+   controls that have no text to zoom.
+
+   max(1rem, 16px) keeps the Text Size setting working: at scale 1 that is
+   exactly 16px, and above 1 the rem value wins. Touch devices only. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea:not([readonly]),
+  select:not([multiple]) {
+    font-size: max(1rem, 16px);
+  }
+}
+
+/* The fixed bottom nav sits at the bottom of the viewport, which iOS shrinks
+   to make room for the keyboard — so it landed on top of the field being
+   typed into. html.keyboard-open is toggled from the Keyboard plugin
+   (lib/native.jsx). */
+html.keyboard-open nav.app-bottom-nav {
+  display: none;
+}
+
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-6px); }

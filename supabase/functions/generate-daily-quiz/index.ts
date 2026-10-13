@@ -326,6 +326,21 @@ async function getCurriculumQuestions(base44, count) {
 }
 
 // ── Apprentice quiz builder — diverse pool, randomly selected ─────────────────
+// Curriculum module that teaches each aspect, for the "I don't know — learn
+// this" link (subject keys verified against the learning_module table).
+const ASPECT_MODULE = {
+  conjunction: { subject_key: 'conjunction', title: 'The Conjunction' },
+  opposition: { subject_key: 'square_opposition', title: 'Squares & Oppositions' },
+  square: { subject_key: 'square_opposition', title: 'Squares & Oppositions' },
+  trine: { subject_key: 'trine_sextile', title: 'Trines & Sextiles' },
+  sextile: { subject_key: 'trine_sextile', title: 'Trines & Sextiles' },
+};
+
+// Aspect names as they read in a sentence ("is conjunct it", not
+// "is conjunction it").
+const ASPECT_VERB = { conjunction: 'conjunct', opposition: 'opposite', trine: 'trine', square: 'square', sextile: 'sextile' };
+const aspectVerb = (a) => ASPECT_VERB[a] || a;
+
 // ── Transit-to-natal generators (AI-03 / F-02) ───────────────────────────────
 // Each question references a real contact between today's sky and this user's
 // natal chart, so the quiz teaches what is actually happening to them.
@@ -339,10 +354,11 @@ function qNatalContactAspect(natalHits) {
   const options = shuffle([meaning, ...others]);
   return {
     type: 'transit_natal_aspect',
-    question: `Today transiting ${hit.transit_planet} is ${hit.aspect} your natal ${hit.natal_planet}. What kind of energy does a ${hit.aspect} describe?`,
+    question: `Today transiting ${hit.transit_planet} is ${aspectVerb(hit.aspect)} your natal ${hit.natal_planet}. What kind of energy does a ${hit.aspect} describe?`,
     options,
     correct_index: options.indexOf(meaning),
     explanation: `A ${hit.aspect} is about ${meaning}. With ${hit.transit_planet} contacting your natal ${hit.natal_planet}, that plays out through ${PLANET_KEYWORDS[hit.natal_planet] || 'that part of your chart'}.`,
+    learn: ASPECT_MODULE[hit.aspect] ? { ...ASPECT_MODULE[hit.aspect], section: 'aspects' } : undefined,
   };
 }
 
@@ -355,10 +371,11 @@ function qNatalContactPlanet(natalHits) {
   const options = shuffle([keyword, ...others]);
   return {
     type: 'transit_natal_planet',
-    question: `Transiting ${hit.transit_planet} is ${hit.aspect} your natal ${hit.natal_planet} today. Which theme does your natal ${hit.natal_planet} carry?`,
+    question: `Transiting ${hit.transit_planet} is ${aspectVerb(hit.aspect)} your natal ${hit.natal_planet} today. Which theme does your natal ${hit.natal_planet} carry?`,
     options,
     correct_index: options.indexOf(keyword),
     explanation: `${hit.natal_planet} governs ${PLANET_KEYWORDS[hit.natal_planet]}, so this transit activates that area for you.`,
+    learn: { subject_key: hit.natal_planet.toLowerCase(), section: 'planets', title: hit.natal_planet },
   };
 }
 
@@ -374,10 +391,11 @@ function qNatalContactHouse(natalHits, natalPlanets) {
   const options = shuffle([theme, ...others]);
   return {
     type: 'transit_natal_house',
-    question: `Your natal ${hit.natal_planet} sits in your ${planet.house}${ordinalSuffix(planet.house)} house, and transiting ${hit.transit_planet} is ${hit.aspect} it today. Which area of life is that house about?`,
+    question: `Your natal ${hit.natal_planet} sits in your ${planet.house}${ordinalSuffix(planet.house)} house, and transiting ${hit.transit_planet} is ${aspectVerb(hit.aspect)} it today. Which area of life is that house about?`,
     options,
     correct_index: options.indexOf(theme),
     explanation: `The ${planet.house}${ordinalSuffix(planet.house)} house covers ${theme}. That is where today's ${hit.transit_planet} contact lands for you.`,
+    learn: { subject_key: `house_${planet.house}`, section: 'houses', title: `The ${planet.house}${ordinalSuffix(planet.house)} House` },
   };
 }
 

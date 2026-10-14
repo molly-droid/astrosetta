@@ -342,7 +342,7 @@ export default function Profile() {
                 existingChart={chart}
                 onChartRegenerated={loadData}
               />
-              <ChartDisplaySettings />
+              <ChartDisplaySettings chart={chart} />
               <div className="flex justify-center gap-3 pt-1">
                 <Button variant="ghost" size="sm" onClick={() => navigate('/chart')} className="font-body text-xs text-gold-accent hover:text-cream">
                   ✦ See Chart Details

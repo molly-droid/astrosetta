@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, MapPin, Trash2, Plus, X, Pencil, Calendar } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { warmSynastry } from '@/lib/synastryCache';
 
 const RELATIONSHIPS = ['Partner', 'Potential Partner', 'Crush', 'Ex', 'Friend', 'Child', 'Mother', 'Father', 'Sibling', 'Colleague', 'Boss', 'Client', 'Mentor', 'Other'];
 const EVENT_TYPES = ['When We Met', 'First Date', 'Wedding', 'Engagement', 'Partnership', 'Career Milestone', 'Relocation', 'Travel', 'Achievement', 'Other'];
@@ -22,7 +23,7 @@ const EMPTY_FORM = {
   unknown_time: false,
 };
 
-export default function SavedChartManager({ user, charts, onRefresh, onClose }) {
+export default function SavedChartManager({ user, charts, natalChart = null, onRefresh, onClose }) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -212,10 +213,25 @@ export default function SavedChartManager({ user, charts, onRefresh, onClose }) 
       ascendant_sign: ascSign,
     };
 
+    let saved;
     if (editingId) {
-      await base44.entities.SavedChart.update(editingId, recordData);
+      saved = await base44.entities.SavedChart.update(editingId, recordData);
     } else {
-      await base44.entities.SavedChart.create(recordData);
+      saved = await base44.entities.SavedChart.create(recordData);
+    }
+
+    // PF-02: calculate the synastry against the user's own chart now, in the
+    // background, so opening this person's comparison is instant instead of
+    // waiting on a two-chart calculation. Also covers an edit, whose new
+    // birth data makes the previous cache key miss.
+    const savedId = saved?.id || editingId;
+    if (savedId && chartData) {
+      warmSynastry({
+        userId: user?.id,
+        natalRaw: natalChart?.raw_data,
+        savedChart: { id: savedId, raw_data: chartData },
+        houseSystem: natalChart?.raw_data?.house_system || 'whole_sign',
+      });
     }
 
     setLoading(false);

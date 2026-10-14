@@ -74,7 +74,11 @@ export async function saveCachedSynthesis(periodType, periodKey, userId, data, e
       date_start: dateStr,
       date_end: extra.date_end || dateStr,
       summary: extra.summary || '',
-      description: typeof data === 'string' ? data : JSON.stringify(data),
+      // Callers holding a large structured payload (synastry) pass
+      // description: '' so it isn't stored a second time as a JSON string.
+      description: extra.description !== undefined
+        ? extra.description
+        : (typeof data === 'string' ? data : JSON.stringify(data)),
       data,
       generated_at: new Date().toISOString(),
     };

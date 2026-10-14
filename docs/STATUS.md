@@ -8,6 +8,20 @@ Update this file as items move. Cutover mechanics live in
 _Completion-pass update: 2026-10-08. Historical notes below describe Tony's
 earlier hosted setup._
 
+_2026-10-13: **TestFlight build 1.0 (6) UPLOADED** (archive + export via
+xcodebuild, ASC key 5W8QPDGB55, issuer 8f6d7d87-…; ExportOptions keeps
+`manageAppVersionAndBuildNumber: true`, which is why the repo sat at
+CURRENT_PROJECT_VERSION 1 through builds 2-5 — now set to 6 explicitly).
+Build 6 carries the five defects found walking the build-5 test plan on a
+physical device: input zoom on the feedback form, bottom nav over the
+keyboard, interpretation headings rendering as plain body text
+(@tailwindcss/typography is NOT installed, so every `prose-*` class in the
+codebase is a no-op — 7 other files still rely on them), bonus rounds not
+feeding the tier accuracy counters, and the new transit quiz questions
+missing their aspect verb and learn links. Round 1 is 41/44 done; B-13
+(needs Molly's repro), C-01 (pricing decision) and E-02 (her notes) are the
+remainder. PF-01/PF-02 closed 2026-10-13 — see FEEDBACK_ROUND1.md §H._
+
 _2026-10-09 (Tony): the completion pass IS deployed — all five 20261008
 migrations applied and every function redeployed 2026-10-09 14:32 UTC
 (including get-interpretations, ahead of the interpretations import — panels

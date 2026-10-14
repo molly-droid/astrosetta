@@ -275,6 +275,83 @@ Root causes, several different from what the report assumed:
 - E-01 welcome email: add the 12-house section (copy + template in her doc).
 - F-03 journal history list (P1; small page).
 
+## H. P1 batch — remaining performance — ✅ DONE 2026-10-13
+
+These two were never triaged into batches D–G; found when re-reading Molly's
+PDF against the tracker.
+
+- **PF-01 ✅ (second half)** the first half was already covered by PF-03's
+  pre-generation job (10 classic planets + 12 houses per chart, 10-min cron).
+  The missing half: generating a point the moment its Chart Display toggle is
+  switched on. UX-02 made all five toggles default OFF, so every extra point
+  was a first-tap wait. `lib/chartPointWarmup.js` now warms exactly the
+  readings a toggle reveals, firing from ChartDisplaySettings' save. It
+  mirrors MyChart's item/context shapes so the hash matches what the card
+  will ask for (planets get the house-stripped `wheelData`, nodes get `raw`),
+  skips points the chart doesn't carry, and no-ops for non-Core accounts,
+  which see a paywall on those cards rather than text. `show_angles` warms
+  nothing — the angles row is a degree readout, not an interpretable card.
+  Verified against a real chart: asteroids warms Chiron/Pallas/Juno/Vesta/
+  Tyche and skips Ceres/Hygiea/Eris (not produced by the engine), lots 4,
+  nodes 2, Lilith 1.
+- **PF-02 ✅** the partner's own chart was already computed and stored at save
+  time, so that half was done. The actual cost was `SynastryView` calling
+  `chartCalculator` with `chart_type: 'synastry'` on EVERY mount and every
+  partner switch — a full two-chart calculation plus cross-aspects, never
+  cached. Now cached per (user, partner) in CalendarSynthesis under
+  `period_type: 'synastry'`, keyed by a hash of both charts' birth inputs +
+  house system, so editing either chart's birth data misses and recalculates
+  with no explicit invalidation. Added in-flight de-duplication (a remount
+  joins the running call) and `warmSynastry` on SavedChart create/update, so
+  the first open is warm too. `saveCachedSynthesis` gained a `description`
+  override so this payload isn't stored twice (once as jsonb, once as a JSON
+  string).
+- **PF-02 follow-on — the relationship reading** ("investigate other caching"
+  in her row). `SynastrySynthesis` had a variable named `cacheKey` that was
+  only a useEffect dependency: nothing was stored, so every mount regenerated
+  the whole LLM reading ("Synthesizing your connection..."). Now persisted
+  under `period_type: 'synastry_synthesis'`, keyed by a hash of the exact
+  params sent to the model. Fixing only the chart calculation would have left
+  the wait she actually reported.
+- **Bug found while testing**: the first cut hashed only top-level keys, but
+  `birth_location` is an object and Postgres `jsonb` does not preserve key
+  order — so a partner warmed on save hashed the calculator's key order while
+  the view hashed jsonb's, missed its own cache entry, and wrote a second row
+  per partner. Hash now sorts at every depth. Caught only because Tony opened
+  a comparison he'd been asked not to; with one row the test would have
+  passed and shipped a cache that never hit.
+
+## I. Found during testing — not in Molly's doc
+
+- **Tab refocus reset every page's state ✅ fixed 2026-10-14.** Switching away
+  from the app and back returned you to the default tab (reported on the
+  Relationship view, but it hit every page: the planner's date, open drawers,
+  scroll position). Chain: `@supabase/auth-js@2.110.8` registers a
+  `visibilitychange` handler (GoTrueClient.js:4642) that calls
+  `_recoverAndRefresh()`, which emits **SIGNED_IN even when the session is
+  unchanged** (:4085, in the branch whose own comment says there is nothing to
+  persist). AuthContext treated that as a real sign-in, re-ran checkUserAuth,
+  flipped `isLoadingAuth`, and App.jsx swapped the entire routed tree for a
+  full-screen spinner — unmounting the current page. It also fired auth.me()
+  plus a UserProgress fetch on every refocus. Fix: SIGNED_IN refreshes
+  silently once a user is loaded (ref, not state — the listener closes over
+  its first render), and a silent check that fails on anything other than
+  401/403 leaves the session alone so a network blip can't sign the user out
+  without explanation. Worth its own ID in Molly's round 2.
+- **...and the follow-on: refocus scrolled the page to the top.** With the
+  tree no longer torn down, a second cause surfaced. `checkUserAuth` published
+  a freshly-built user object every time, and eight components depend on
+  `[user]` rather than `[user?.id]` (MyChart, Planner ×2, Learn,
+  DailyQuizCard, FontSizeControl, Contribute, Admin). The new identity re-ran
+  their loaders, which flip a page-level `loading` flag — the tall content
+  unmounts, the browser clamps scroll to 0, and the content returns with the
+  page at the top. Fixed at the source rather than in eight dependency
+  arrays: AuthContext now keeps the SAME user object when a re-read is
+  byte-identical (same for the progress record), so a quiet refresh really is
+  quiet. `reloadUser`, sign-out and logout keep that ref in step. The `[user]`
+  deps are now harmless but still imprecise — worth tightening to `[user?.id]`
+  if anyone touches those files.
+
 ## Scope flag (Tony)
 
 This round mixes parity bugs (ours under the migration) with new product work

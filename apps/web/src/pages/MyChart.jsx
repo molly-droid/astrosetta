@@ -702,7 +702,7 @@ export default function MyChart() {
       )}
 
       {showManager && (
-        <SavedChartManager user={user} charts={savedCharts} onRefresh={loadSavedCharts} onClose={() => setShowManager(false)} />
+        <SavedChartManager user={user} charts={savedCharts} natalChart={chart} onRefresh={loadSavedCharts} onClose={() => setShowManager(false)} />
       )}
     </div>
   );

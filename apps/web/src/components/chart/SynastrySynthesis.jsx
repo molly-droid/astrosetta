@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { invokeLLMTask } from '@/api/llmTasks';
+import { useAuth } from '@/lib/AuthContext';
+import { loadSynastrySynthesis, saveSynastrySynthesis } from '@/lib/synastryCache';
 import { highlightSynthesisText, PLANET_GLYPHS } from '@/lib/transitUtils';
 import { findChartPoint, getHouseForLongitude } from '@/lib/chartUtils';
 import { Loader2, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
@@ -203,9 +205,12 @@ function AreaCard({ area, crossAspects, onAspectHighlight, natalPlanets, transit
 }
 
 export default function SynastrySynthesis({ userName, partnerName, relationship, partnerPronouns, deceased, dateOfDeath, c1Data, c2Data, crossAspects, onAspectHighlight, natalPlanets, transitPlanets, overlayName, isEvent }) {
+  const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Re-run trigger only. The persisted cache is keyed by a hash of the exact
+  // params sent to the LLM — see loadSynastrySynthesis (PF-02).
   const cacheKey = `${userName}_${partnerName}_${relationship || 'Other'}_${crossAspects?.length || 0}_${deceased ? 'd' : 'l'}_${dateOfDeath || ''}_${isEvent ? 'ev' : 'pr'}_v3`;
 
   useEffect(() => {
@@ -292,33 +297,45 @@ ${overlaysP2inP1.map(p => `- ${partnerName}'s ${p.name} in ${p.sign} → your ${
 ${userName}'s placements in ${partnerName}'s houses:
 ${overlaysP1inP2.map(p => `- your ${p.name} in ${p.sign} → ${partnerName}'s ${ordinal(p.house)} house`).join('\n')}`;
 
+      const params = {
+        isEvent,
+        userName,
+        partnerName,
+        relationship,
+        partnerPronouns,
+        deceased,
+        dateOfDeath,
+        areas: getAreas(relationship, isEvent),
+        sun1, moon1, asc1, mc1, sun2, moon2, asc2, mc2,
+        chart1Planets,
+        chart2Planets,
+        aspectsList,
+        overlayText,
+      };
       try {
-        const res = await invokeLLMTask('synastry-synthesis', {
-          isEvent,
-          userName,
-          partnerName,
-          relationship,
-          partnerPronouns,
-          deceased,
-          dateOfDeath,
-          areas: getAreas(relationship, isEvent),
-          sun1, moon1, asc1, mc1, sun2, moon2, asc2, mc2,
-          chart1Planets,
-          chart2Planets,
-          aspectsList,
-          overlayText,
-        });
+        // PF-02: a saved reading for these exact inputs renders immediately;
+        // only a genuine change to the charts or relationship regenerates.
+        const saved = await loadSynastrySynthesis(user?.id, params);
+        if (saved) {
+          if (!cancelled) {
+            setData(saved);
+            setLoading(false);
+          }
+          return;
+        }
+        const res = await invokeLLMTask('synastry-synthesis', params);
         if (!cancelled) {
           setData(res);
           setLoading(false);
         }
+        saveSynastrySynthesis(user?.id, params, res);
       } catch {
         if (!cancelled) setLoading(false);
       }
     })();
 
     return () => { cancelled = true; };
-  }, [cacheKey]);
+  }, [cacheKey, user?.id]);
 
   if (loading) {
     return (

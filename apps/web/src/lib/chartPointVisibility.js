@@ -46,6 +46,23 @@ export function getHiddenChartPoints(user) {
   return hidden;
 }
 
+/**
+ * The point names a single Chart Display toggle controls (PF-01). Used when a
+ * toggle is switched ON to warm exactly the readings it just revealed.
+ * `show_angles` has no entry: the angles row is a degree/sign readout beneath
+ * the wheel, not an interpretable card, so there is nothing to generate.
+ */
+export const TOGGLE_POINTS = {
+  show_asteroids: ASTEROID_POINTS,
+  show_lots: LOT_POINTS,
+  show_nodes: NODE_POINTS,
+  show_lilith: LILITH_POINTS,
+};
+
+export function pointsForToggle(toggleKey) {
+  return TOGGLE_POINTS[toggleKey] || [];
+}
+
 /** True when hidden set is non-empty and contains the name. */
 export function isPointHidden(name, hidden) {
   return !!hidden?.size && hidden.has(name);

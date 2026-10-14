@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
 import { invokeLLMTask } from '@/api/llmTasks';
+import { getSynastry } from '@/lib/synastryCache';
 import { highlightSynthesisText } from '@/lib/transitUtils';
 import { Loader2, ChevronDown, ChevronRight, Users, Calendar } from 'lucide-react';
 import SignName from '@/components/ui/SignName';
@@ -134,30 +134,20 @@ export default function SynastryView({ userChart, savedChart, user, onSynastryDa
       setLoading(true);
       setError(null);
       try {
-        const chart1 = {
-          birth_date: natalRaw.birth_date,
-          birth_time: natalRaw.birth_time || '12:00:00',
-          birth_location: natalRaw.birth_location,
-          utc_offset: natalRaw.utc_offset ?? 0,
-        };
-        const chart2 = {
-          birth_date: savedRaw.birth_date,
-          birth_time: savedRaw.birth_time || '12:00:00',
-          birth_location: savedRaw.birth_location,
-          utc_offset: savedRaw.utc_offset ?? 0,
-        };
-        const res = await base44.functions.invoke('chartCalculator', {
-          chart_type: 'synastry',
-          chart1,
-          chart2,
-          house_system: natalRaw.house_system || 'whole_sign',
+        // PF-02: cached per (user, partner); recalculates only when either
+        // chart's birth data changes.
+        const data = await getSynastry({
+          userId: user?.id,
+          natalRaw,
+          savedChart,
+          houseSystem: natalRaw.house_system || 'whole_sign',
         });
         if (!cancelled) {
-          setSynastryData(res.data);
+          setSynastryData(data);
           setLoading(false);
           // Lift overlay data to parent so the evergreen natal chart wheel can render the partner's planets
           // Include angles (ASC/DC/MC/IC) and nodes (NN/SN) so cross-aspects to them render on the wheel
-          const c2 = res.data.chart2 || {};
+          const c2 = data.chart2 || {};
           const overlayPlanets = filterHiddenPlanets([...(c2.planets || [])], hidden);
           if (c2.angles) {
             if (c2.angles.ascendant) overlayPlanets.push({ name: 'Ascendant', ...c2.angles.ascendant, house: 1 });
@@ -173,7 +163,7 @@ export default function SynastryView({ userChart, savedChart, user, onSynastryDa
             planets: overlayPlanets,
             partnerHouses: c2.houses || [],
             partnerAscSign: c2.angles?.ascendant?.sign || '',
-            transit_aspects: (res.data.cross_aspects || []).map(a => ({
+            transit_aspects: (data.cross_aspects || []).map(a => ({
               transit_planet: a.person2_planet,
               natal_planet: a.person1_planet,
               aspect: a.aspect,

@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { usePermissions } from '@/lib/permissions';
 import { base44 } from '@/api/base44Client';
 import PaywallModal from '@/components/paywall/PaywallModal';
+import { warmChartPointsForToggle } from '@/lib/chartPointWarmup';
 
 /**
  * Chart Display preferences — grouped by point type.
@@ -12,9 +13,9 @@ import PaywallModal from '@/components/paywall/PaywallModal';
  * auth context so every chart wheel (which derives the same flags from the
  * user) updates across natal and transit views.
  */
-export default function ChartDisplaySettings() {
+export default function ChartDisplaySettings({ chart = null }) {
   const { user, reloadUser } = useAuth();
-  const { canViewLilith, canViewAsteroids } = usePermissions(user);
+  const { canViewLilith, canViewAsteroids, canViewNatalInterpretations } = usePermissions(user);
   const [paywall, setPaywall] = useState(null);
   // UX-02: all five default OFF — a new chart starts clean and the user
   // adds the points they want.
@@ -27,6 +28,12 @@ export default function ChartDisplaySettings() {
   const save = async (key, val) => {
     await base44.auth.updateMe({ [key]: val });
     reloadUser();
+    // PF-01: switching a point ON used to mean waiting for an interpretation
+    // the first time each of its cards was tapped. Generate them now instead.
+    // Fire-and-forget — the toggle must not wait on the LLM.
+    if (val === true) {
+      warmChartPointsForToggle({ toggleKey: key, chart, canInterpret: canViewNatalInterpretations });
+    }
   };
 
   const Row = ({ label, desc, checked, onChange, locked, onLockClick }) => (

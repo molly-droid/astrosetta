@@ -599,6 +599,7 @@ export default function Planner() {
         <SavedChartManager
           user={user}
           charts={savedCharts}
+          natalChart={chart}
           onRefresh={loadSavedCharts}
           onClose={() => setShowManager(false)}
         />

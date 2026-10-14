@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { base44, supabase } from '@/api/base44Client';
 import { pickBestProgress } from '@/lib/userProgress';
 import { initPurchases, resetPurchases } from '@/lib/purchases';
@@ -15,6 +15,15 @@ export const AuthProvider = ({ children }) => {
   const [authChecked, setAuthChecked] = useState(false);
   const [appPublicSettings, setAppPublicSettings] = useState(null); // Base44-era concept; kept for interface compatibility
   const [progressRecord, setProgressRecord] = useState(null); // Fetched in parallel with auth.me() to avoid a waterfall
+  // True once a user has been loaded. Read inside the auth listener, which
+  // closes over its first render, so it must be a ref and not state.
+  const hasLoadedUserRef = useRef(false);
+  // Serialized copy of the last user we published, so an unchanged re-read
+  // keeps the SAME object. Several pages depend on `[user]` rather than
+  // `[user?.id]`, and a fresh object identity re-runs their loaders — which
+  // flips a page-level `loading` flag, unmounts the content and drops the
+  // scroll position. Identity stability is what keeps a quiet refresh quiet.
+  const lastUserJsonRef = useRef(null);
 
   useEffect(() => {
     checkAppState();
@@ -22,9 +31,18 @@ export const AuthProvider = ({ children }) => {
     // Re-check when the Supabase session changes (magic-link return,
     // password reset completion, sign-out in another tab).
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') checkUserAuth();
+      // supabase-js emits SIGNED_IN on every visibilitychange, not just on a
+      // real sign-in: its visibility handler calls _recoverAndRefresh(), which
+      // notifies SIGNED_IN even when the session is unchanged. Re-running the
+      // full check then flips isLoadingAuth, and App.jsx swaps the whole
+      // routed tree for a spinner — so every tab refocus unmounted the current
+      // page and threw away its state (the open chart tab, the planner's date,
+      // scroll position). Refresh quietly once a user is already loaded.
+      if (event === 'SIGNED_IN') checkUserAuth({ silent: hasLoadedUserRef.current });
       if (event === 'SIGNED_OUT') {
         resetPurchases().catch(() => {});
+        hasLoadedUserRef.current = false;
+        lastUserJsonRef.current = null;
         setRealUser(null);
         setImpersonatedUser(null);
         setIsAuthenticated(false);
@@ -51,10 +69,12 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const checkUserAuth = async () => {
+  const checkUserAuth = async ({ silent = false } = {}) => {
     try {
-      // Now check if the user is authenticated
-      setIsLoadingAuth(true);
+      // Now check if the user is authenticated.
+      // `silent` re-reads the user without tearing the app down (see the
+      // SIGNED_IN note in the auth listener).
+      if (!silent) setIsLoadingAuth(true);
       // Fire auth.me() and the UserProgress fetch in parallel — both use the
       // auth token, and UserProgress.list is RLS-scoped to the current user,
       // so neither depends on the other's result. This shaves a serial
@@ -77,8 +97,16 @@ export const AuthProvider = ({ children }) => {
         await base44.auth.updateMe(updates);
       }
 
-      setRealUser(currentUser);
-      setProgressRecord(pickBestProgress(progRecords));
+      hasLoadedUserRef.current = true;
+      const userJson = JSON.stringify(currentUser);
+      if (userJson !== lastUserJsonRef.current) {
+        lastUserJsonRef.current = userJson;
+        setRealUser(currentUser);
+      }
+      setProgressRecord((prev) => {
+        const next = pickBestProgress(progRecords);
+        return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+      });
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
       setAuthChecked(true);
@@ -100,6 +128,13 @@ export const AuthProvider = ({ children }) => {
       } catch { /* storage may be unavailable */ }
     } catch (error) {
       console.error('User auth check failed:', error);
+      // A silent re-check runs on every tab refocus. A transient network
+      // failure there must not tear down a working session — only an actual
+      // auth rejection may change the signed-in state.
+      if (silent && error.status !== 401 && error.status !== 403) {
+        setIsLoadingAuth(false);
+        return;
+      }
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);
@@ -132,6 +167,9 @@ export const AuthProvider = ({ children }) => {
 
   const reloadUser = async () => {
     const currentUser = await base44.auth.me();
+    // Keep the identity-stability ref in step, so the next quiet refresh
+    // compares against what consumers are actually holding.
+    lastUserJsonRef.current = JSON.stringify(currentUser);
     setRealUser(currentUser);
     if (!impersonatedUser) return currentUser;
     return currentUser;
@@ -161,6 +199,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = (shouldRedirect = true) => {
+    hasLoadedUserRef.current = false;
+    lastUserJsonRef.current = null;
     setRealUser(null);
     setImpersonatedUser(null);
     setIsAuthenticated(false);

@@ -8,6 +8,14 @@ Update this file as items move. Cutover mechanics live in
 _Completion-pass update: 2026-10-08. Historical notes below describe Tony's
 earlier hosted setup._
 
+_2026-10-14: **TestFlight build 1.0 (7) UPLOADED** (same xcodebuild path as 6).
+Carries PF-01/PF-02 plus the tab-refocus fix: chart points generate when their
+Chart Display toggle is switched on; synastry calculations AND the LLM
+relationship reading are cached per partner and warmed on save; returning to
+the app no longer unmounts the page, resets the tab or jumps the scroll. All
+verified live against tony.tamer21@gmail.com — see FEEDBACK_ROUND1.md §H/§I.
+Round 1 now 42/44: B-13, C-01 and E-02 are blocked on Molly._
+
 _2026-10-13: **TestFlight build 1.0 (6) UPLOADED** (archive + export via
 xcodebuild, ASC key 5W8QPDGB55, issuer 8f6d7d87-…; ExportOptions keeps
 `manageAppVersionAndBuildNumber: true`, which is why the repo sat at

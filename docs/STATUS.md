@@ -8,6 +8,25 @@ Update this file as items move. Cutover mechanics live in
 _Completion-pass update: 2026-10-08. Historical notes below describe Tony's
 earlier hosted setup._
 
+_2026-10-14: **First Android release bundle built** (`app-release.aab`, 44MB,
+versionCode 1 / versionName 1.0). Toolchain: JDK 21 bundled with Android
+Studio (no system Java on this machine), SDK android-36; targetSdk 36 already
+meets Play's floor. Merged manifest confirmed to carry
+`com.android.vending.BILLING` from the RevenueCat plugin, plus the
+astrosetta:// deep links and the Share FileProvider. Signing: 4096-bit RSA
+UPLOAD key at `~/.astrosetta-keys/astrosetta-upload.jks` (dir 700, file 600),
+credentials in the gitignored `apps/web/android/keystore.properties`;
+`app/build.gradle` falls back to unsigned when that file is absent so a fresh
+clone still builds. Upload-key SHA1
+`FC:3D:55:C4:73:06:7D:08:4C:32:21:FD:FA:B8:EC:6C:50:57:4B:2D` — NOTE this is
+the upload cert, NOT the app-signing cert; anything needing a SHA1 (Google
+Sign-In on Android, app links assetlinks.json) must use the Play App Signing
+fingerprint from Play Console AFTER the first upload. **Handover item: the
+upload key is under silexdev and transfers to Molly at cutover, same as the
+astrosetta-revenuecat GCP project.** NOT yet uploaded to Play — that first
+upload is what registers `com.astrosetta.app` and clears RevenueCat's
+"package name not found" warning blocking the Play products._
+
 _2026-10-14: **TestFlight build 1.0 (7) UPLOADED** (same xcodebuild path as 6).
 Carries PF-01/PF-02 plus the tab-refocus fix: chart points generate when their
 Chart Display toggle is switched on; synastry calculations AND the LLM

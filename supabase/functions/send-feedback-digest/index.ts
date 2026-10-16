@@ -1,5 +1,5 @@
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions } from '../_shared/edge.ts';
+import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
 
 const ADMIN_EMAIL = 'hello@astrosetta.com';
 const APP_URL = 'https://astrosetta.com';
@@ -11,8 +11,15 @@ Deno.serve(async (req) => {
     const base44 = compatClient(req);
     const body = await req.json().catch(() => ({}));
 
-    // Allow manual trigger (admin) or scheduled trigger
-    if (!body.scheduled) {
+    // Allow manual trigger (admin) or scheduled trigger.
+    //
+    // `scheduled` is caller-supplied, so it authenticates nothing: passing it
+    // used to skip the admin check entirely on an endpoint with
+    // verify_jwt = false. The scheduled path now has to present the service
+    // key that pg_cron already sends.
+    if (body.scheduled) {
+      if (!isServiceRole(req)) return json({ error: 'Unauthorized' }, { status: 401 });
+    } else {
       const user = await base44.auth.me();
       if (!user || user.role !== 'admin') {
         return json({ error: 'Forbidden: admin only' }, { status: 403 });

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
-import { getEffectiveTier } from '@/lib/permissions';
+import { getEffectiveTier, hasFoundingRate } from '@/lib/permissions';
 import { getPlatform } from '@/lib/platform';
 import { ArrowLeft, Lock, Clock } from 'lucide-react';
 import { track, EVENTS } from '@/lib/analytics';
@@ -24,7 +24,7 @@ export default function Subscribe() {
   // All current beta users are founding members — at launch, new signups
   // within 30 days of launch date will also qualify; after that window closes,
   // is_founding_member will be false for new users.
-  const isFoundingMember = !!user?.is_founding_member;
+  const isFoundingMember = hasFoundingRate(user);
 
   useEffect(() => {
     track(EVENTS.SUBSCRIBE_VIEWED, { current_tier: effectiveTier, is_founding_member: isFoundingMember });
@@ -60,7 +60,7 @@ export default function Subscribe() {
             <Lock size={13} className="text-gold-accent shrink-0 mt-0.5" />
             <p className="font-body text-xs text-white/70 leading-relaxed">
               <span className="text-gold-accent font-semibold">You're a founding member. </span>
-              Your rate is locked in forever — choose a plan below to subscribe and keep it for life.
+              Your rate is held for as long as your subscription stays active, so choose a plan below and keep it.
             </p>
           </div>
         ) : (

@@ -1,5 +1,5 @@
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions } from '../_shared/edge.ts';
+import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
 import { insertGlyphs } from '../_shared/emailGlyphs.ts';
 import { fetchKnowledgeDepth, densityInstruction } from '../_shared/knowledgeDensity.ts';
 import { generateDaySynthesis, classifyCalculatorTransits } from '../_shared/daySynthesisGenerator.ts';
@@ -715,16 +715,17 @@ function renderEmailHtml({ user, prettyDate, llm, personal, collective, moon, ph
     `<li style="font-family:Georgia,serif;font-size:14px;line-height:1.5;color:${TEXT};margin-bottom:6px;padding-left:4px;">• ${highlightAstro(b)}</li>`
   ).join('');
 
+  // E-02 (Molly, 2026-10-16): the "✨ Your Daily Synthesis" block — overview
+  // paragraph and best-area chips — was removed from the paid email. It
+  // restates the in-app Daily Reading, whose formatting she prefers. The
+  // labelled Personal Reading, Maximize/Focus/Watch and Collective Reading
+  // sections below stay: they are the email's own payload.
+  //
+  // `synthesis_overview` and `synthesis_best_areas` are still generated. The
+  // PERSONALIZATION LOCK in the prompt names synthesis_overview to force the
+  // model to anchor prose to this chart, so dropping it from the schema would
+  // change the tone of everything else. Unrendered, not unused.
   const synthesisSection = isPaid ? `
-    <!-- Full Daily Synthesis -->
-    <tr><td style="padding:6px 28px 6px;">
-      <div style="font-family:Georgia,serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};margin-bottom:10px;">✨ Your Daily Synthesis</div>
-    </td></tr>
-    <tr><td style="padding:0 28px 6px;">
-      <p style="font-family:Georgia,serif;font-size:15px;line-height:1.6;color:${GOLD2};font-style:italic;margin:0 0 14px;border-left:2px solid ${GOLD}55;padding-left:14px;">${highlightAstro(llm.synthesis_overview || '')}</p>
-      ${(llm.synthesis_best_areas || []).length ? `<div style="margin-bottom:14px;">${llm.synthesis_best_areas.map(a => `<span style="display:inline-block;font-family:Georgia,serif;font-size:11px;color:${GOLD2};border:1px solid ${GOLD}44;border-radius:999px;padding:3px 10px;margin:0 4px 4px 0;">${a}</span>`).join('')}</div>` : ''}
-    </td></tr>
-
     <!-- Personal reading -->
     <tr><td style="padding:6px 28px 4px;">
       <div style="font-family:Georgia,serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:${GOLD2};margin-bottom:8px;">Personal Reading</div>
@@ -954,6 +955,13 @@ Deno.serve(async (req) => {
 
     // SCHEDULED MODE — triggered by automation, no user context
     if (body.scheduled) {
+      // `scheduled` is a flag in the request body, not a credential. With
+      // verify_jwt = false (needed for webhooks and the ICS feed) this branch
+      // was reachable by anyone who knew the URL, who could then trigger a
+      // send to every user on the list. pg_cron calls through
+      // invoke_edge_function with the vault service key, so requiring it here
+      // keeps the scheduled run working and closes the hole.
+      if (!isServiceRole(req)) return json({ error: 'Unauthorized' }, { status: 401 });
       const charts = await base44.asServiceRole.entities.Chart.list('-created_date', 500);
       let userIds = [...new Set(charts.map(c => c.user_id).filter(Boolean))];
       // Optional batch support: when user_ids is passed, only process those users

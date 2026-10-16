@@ -121,13 +121,19 @@ export async function getTierPackage(tier, period = 'monthly') {
     const offerings = await getOfferings();
     const userId = await sessionUserId();
     if (!userId) return null;
-    const { data: profile, error } = await supabase.from('users').select('is_founding_member').eq('id', userId).maybeSingle();
+    const { data: profile, error } = await supabase.from('users')
+      .select('is_founding_member, founding_rate_forfeited_at').eq('id', userId).maybeSingle();
     if (error || !profile) return null;
     const base = TIER_OFFERINGS[tier];
     // Annual rates are shared; monthly standard offerings must be configured
     // separately before ending the founding window. Never fall back to a
     // founding monthly product for a non-founding customer.
-    const offeringId = period === 'monthly' && !profile.is_founding_member ? `${base}_standard` : base;
+    //
+    // Read the forfeiture stamp, not the cohort flag: a founding member who
+    // let a subscription lapse resubscribes at standard rates (Molly,
+    // 2026-10-16). Mirrors `hasFoundingRate` in lib/permissions.js.
+    const foundingRate = profile.is_founding_member === true && !profile.founding_rate_forfeited_at;
+    const offeringId = period === 'monthly' && !foundingRate ? `${base}_standard` : base;
     const offering = offerings?.all?.[offeringId];
     if (!offering) return null;
     const packageKey = PERIOD_PACKAGES[period] || PERIOD_PACKAGES.monthly;

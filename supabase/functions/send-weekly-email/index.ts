@@ -1,5 +1,5 @@
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions } from '../_shared/edge.ts';
+import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
 import { insertGlyphs } from '../_shared/emailGlyphs.ts';
 import { fetchKnowledgeDepth, densityInstruction } from '../_shared/knowledgeDensity.ts';
 import { getActiveEmailHighlight } from '../_shared/featureSchedule.ts';
@@ -601,6 +601,13 @@ Deno.serve(async (req) => {
     const appUrl = body.appUrl || 'https://astrosetta.com';
 
     if (body.scheduled) {
+      // `scheduled` is a flag in the request body, not a credential. With
+      // verify_jwt = false (needed for webhooks and the ICS feed) this branch
+      // was reachable by anyone who knew the URL, who could then trigger a
+      // send to every user on the list. pg_cron calls through
+      // invoke_edge_function with the vault service key, so requiring it here
+      // keeps the scheduled run working and closes the hole.
+      if (!isServiceRole(req)) return json({ error: 'Unauthorized' }, { status: 401 });
       const charts = await base44.asServiceRole.entities.Chart.list('-created_date', 500);
       const userIds = [...new Set(charts.map(c => c.user_id).filter(Boolean))];
       let sent = 0, skipped = 0, optedOut = 0, failed = 0;

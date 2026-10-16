@@ -27,6 +27,19 @@ export function getEffectiveTier(user) {
 }
 
 /**
+ * Founding RATE eligibility, which is not the same thing as founding
+ * membership. The cohort flag `is_founding_member` is permanent — it drives
+ * the Founding Patron badge and survives everything. The discounted rate does
+ * not: Molly's 2026-10-16 ruling is that a founding member who cancels and
+ * later resubscribes comes back at standard prices, so the billing projection
+ * stamps `founding_rate_forfeited_at` the moment a paid subscription lapses
+ * to free. Pricing and "locked in" copy must read THIS, never the raw flag.
+ */
+export function hasFoundingRate(user) {
+  return !!user?.is_founding_member && !user?.founding_rate_forfeited_at;
+}
+
+/**
  * Returns a permissions object for a given user.
  */
 export function getPermissions(user) {

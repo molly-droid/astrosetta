@@ -188,7 +188,12 @@ async function syncCalendar(base44, user, body) {
     const res = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ summary: evt.summary, description: evt.description, start: { dateTime: evt.dateTime, timeZone: userTz }, end: { dateTime: endTime, timeZone: userTz }, colorId: evt.colorId }),
+      // extendedProperties.private is how the cleanup action finds these
+      // again. The old marker was the "Added by Astrosetta" line in the
+      // description, which is a free-text match on the user's whole calendar
+      // and would happily delete an event of their own that mentions us.
+      // Events written before this tag still fall back to that text check.
+      body: JSON.stringify({ summary: evt.summary, description: evt.description, start: { dateTime: evt.dateTime, timeZone: userTz }, end: { dateTime: endTime, timeZone: userTz }, colorId: evt.colorId, extendedProperties: { private: { astrosetta: 'v1' } } }),
     });
     if (!res.ok) throw new Error('Google Calendar could not save every event. Reconnect and try again.');
     events_created++;

@@ -14,9 +14,14 @@ Deno.serve(async (req) => {
     const db = serviceClient();
     const { error: refreshError } = await db.rpc('refresh_billing_access', { p_user_id: user.id });
     if (refreshError) throw refreshError;
-    const { data: profile, error: profileError } = await db.from('users').select('is_founding_member').eq('id', user.id).single();
+    const { data: profile, error: profileError } = await db.from('users')
+      .select('is_founding_member, founding_rate_forfeited_at').eq('id', user.id).single();
     if (profileError) throw profileError;
     user.is_founding_member = profile.is_founding_member;
+    // The founding DISCOUNT, not the cohort flag. refresh_billing_access ran
+    // above, so a subscription that lapsed is already stamped by the time we
+    // read this — a founder who cancelled and came back prices as standard.
+    const foundingRate = profile.is_founding_member === true && !profile.founding_rate_forfeited_at;
 
     const { tier, period = 'monthly', successUrl, cancelUrl, eventSignup } = await req.json();
 
@@ -24,7 +29,7 @@ Deno.serve(async (req) => {
       return json({ error: 'Invalid tier' }, { status: 400 });
     }
 
-    const priceId = checkoutPrice(tier, period, user.is_founding_member === true, key => Deno.env.get(key));
+    const priceId = checkoutPrice(tier, period, foundingRate, key => Deno.env.get(key));
 
     const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY'));
 
@@ -64,7 +69,7 @@ Deno.serve(async (req) => {
       cancel_url: cancelUrl,
       allow_promotion_codes: true,
       subscription_data: {
-        metadata: { base44_user_id: user.id, tier, period, founding: user.is_founding_member ? 'true' : 'false' },
+        metadata: { base44_user_id: user.id, tier, period, founding: foundingRate ? 'true' : 'false' },
       },
       metadata: { base44_user_id: user.id, tier, period, ...eventMeta },
     });

@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
   ${buildHouseSection(chartData, CARD, GOLD, GOLD2, TEXT, MUTED)}
 
   <tr><td style="padding:0 28px 20px;">
-    <p style="font-family:Georgia,serif;font-size:15px;line-height:1.7;color:${TEXT};margin:0 0 14px;">You've just taken the first step toward reading your own chart — not someone else's interpretation, but your own living understanding of the sky.</p>
+    <p style="font-family:Georgia,serif;font-size:15px;line-height:1.7;color:${TEXT};margin:0 0 14px;">You've just taken the first step toward reading your own chart, not someone else's interpretation, but your own living understanding of the sky.</p>
     <p style="font-family:Georgia,serif;font-size:15px;line-height:1.7;color:${MUTED};margin:0 0 14px;">Here's what you can do right now:</p>
   </td></tr>
 
@@ -156,7 +156,7 @@ Deno.serve(async (req) => {
   </td></tr>
 
   <tr><td style="padding:20px 28px 8px;text-align:center;">
-    <p style="font-family:Georgia,serif;font-size:12px;color:${MUTED};line-height:1.6;margin:0;">Welcome to Astrosetta — the sky is happening right now.<br>Your feedback shapes what we build next.</p>
+    <p style="font-family:Georgia,serif;font-size:12px;color:${MUTED};line-height:1.6;margin:0;">Welcome to Astrosetta. The sky is happening right now.<br>Your feedback shapes what we build next.</p>
   </td></tr>
 
   <tr><td style="padding:16px 28px;text-align:center;">
@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
     await base44.asServiceRole.integrations.Core.SendEmail({
       to: user.email,
       from_name: 'Astrosetta',
-      subject: '✦ Welcome to Astrosetta — Your Chart Awaits',
+      subject: '✦ Welcome to Astrosetta: Your Chart Awaits',
       body: html,
     });
 

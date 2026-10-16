@@ -33,7 +33,12 @@ blocks store submission or the demo).
   $5.49/$7.49 so iOS is cheaper-or-equal and display $5.55/$7.77 web-only;
   (3) her wording but iOS keeps real prices. Yearly ($55/$77) matches
   everywhere already.
-- **E-02:** placeholder — Molly's Daily Digest notes still to come.
+- **E-02 ✅** (2026-10-16) Her note: remove "Daily Synthesis", it repeats the
+  in-app Daily Reading and she prefers that formatting. The
+  `✨ Your Daily Synthesis` overview block is out of the paid daily email;
+  Personal Reading, Maximize/Focus/Watch and Collective Reading stay, or a
+  paid subscriber would receive an email containing no reading. See
+  STATUS.md 2026-10-16 if she meant the whole block.
 - **Free trial question (F-01):** her call; none implemented.
 - **Onboarding emails name points the app now hides (new, found 2026-10-13).**
   UX-02 made Angles, Lunar Nodes, Black Moon Lilith, Arabic Lots and Asteroids
@@ -46,7 +51,8 @@ blocks store submission or the demo).
   ten classic planets (recommended, ~2 lines per function, one deploy each);
   (2) keep as-is as a teaser for what the toggles unlock; (3) filter the
   welcome email only and leave the recap exhaustive. Her copy, her call.
-- **Em dashes in static email copy (new, found 2026-10-13).** AI-04 strips
+- **Em dashes in static email copy ✅** (resolved 2026-10-16: yes, remove them.
+  All three in the welcome email are gone.) AI-04 strips
   dashes from AI output only. The welcome email's subject, body and footer
   carry three em dashes that are verbatim Base44 copy she wrote herself.
   Ask whether the no-dash rule extends to hand-written copy; if yes it's a

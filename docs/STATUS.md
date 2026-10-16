@@ -545,6 +545,120 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-16 (Tony): **Launch flag found: `BETA_ALL_PAID`.** `send-daily-email`
+line 234 hardcodes `const BETA_ALL_PAID = true`, so EVERY recipient gets the
+paid digest regardless of tier and the free teaser branch is unreachable.
+This is a third beta flag to flip at launch, alongside `GATING_ADMIN_ONLY` in
+`apps/web/src/lib/permissions.js` and `_shared/llm_tasks/core.ts` — CLAUDE.md
+documents those two as a pair and does not mention this one. Failure mode if
+missed: free users receive paid digests forever. Consequence for testing: the
+free email branch cannot be exercised in this environment; it was verified
+textually instead (the E-02 diff touches zero lines inside it)._
+
+_2026-10-16 (Tony): **SECURITY — four scheduled endpoints were unauthenticated.**
+Found while testing the E-02 email change, not reported by anyone.
+
+`send-daily-email`, `send-weekly-email`, `send-monthly-email` and
+`send-feedback-digest` treated `scheduled: true` — a flag the CALLER puts in
+the request body — as authorisation. Every function runs `verify_jwt = false`
+(required: webhooks, the ICS feed and email links cannot present a user JWT),
+so nothing else gated them. Proven against production with no Authorization
+header at all, scoped to a non-existent UUID so nothing was sent:
+`HTTP 200 {"success":true,"sent":0}`. An unauthenticated caller who knew the
+URL could have triggered a digest to all 500 chart-owning users — inbox spam,
+LLM spend per recipient, and Resend domain reputation damage.
+`send-feedback-digest` was the plainest case: its own comment said "admin or
+scheduled", and `if (!body.scheduled)` skipped the admin check outright.
+
+**Not a porting error.** Base44's original has the identical shape
+(`sendDailyEmail/entry.ts:953`), so the code is faithful; the exposure came
+from the platform change. Base44 gated invocation before the handler ran, and
+`verify_jwt = false` does not.
+
+Fixed by requiring `isServiceRole(req)` inside each scheduled branch. pg_cron
+already authenticates through `invoke_edge_function` with the vault's
+`edge_service_key`, so the scheduled runs are unaffected **provided that key
+equals the runtime `SUPABASE_SERVICE_ROLE_KEY`** — verify before deploying, or
+the digests start failing 401 silently and only test accounts would notice.
+
+**Key format note.** The vault's `edge_service_key` is 41 chars, i.e. the new
+`sb_secret_…` format. The legacy 219-char `service_role` JWT shown under
+Settings → API does NOT match and fails `isServiceRole`'s exact comparison.
+Use the key from Settings → API Keys for any manual service-role call._
+
+_2026-10-16 (Tony): **Molly answered five open items.** All four code
+decisions are implemented; none are deployed. Round 1 is now **43/44** —
+E-02 closed, B-13 (needs her repro) and C-01 (pricing) remain.
+
+- **E-02 Daily Digest (closed).** "Remove Daily Synthesis, it is largely
+  repeated in the Daily Reading and I prefer the formatting there." The
+  `✨ Your Daily Synthesis` block — overview paragraph and best-area chips —
+  is gone from the paid daily email. The labelled Personal Reading,
+  Maximize/Focus/Watch and Collective Reading sections stay, because removing
+  those too would leave a paid subscriber an email with no reading in it.
+  **If she meant the whole personalised block, say so and it is a two-line
+  change.** `synthesis_overview` is still generated: the PERSONALIZATION LOCK
+  in the prompt names that field to force chart-specific prose, so dropping it
+  from the schema would change the tone of everything else in the email.
+- **Welcome email em dashes (closed).** All three were in copy, not comments:
+  "your own chart, not someone else's"; "Welcome to Astrosetta. The sky is
+  happening right now."; subject "✦ Welcome to Astrosetta: Your Chart Awaits".
+  Comma / full stop / colon respectively — her copy, so her call to reword.
+- **Calendar cleanup action (closed, built).** New `cleanup` action on
+  `calendar-connection` plus a two-click "Remove synced events" button beside
+  Sync and Disconnect. Deletion is irreversible, so it matches twice: Google's
+  `q=Astrosetta` narrows the calendar, then each candidate must ALSO carry our
+  `extendedProperties.private.astrosetta` tag or end with the "Added by
+  Astrosetta" footer, so a user's own event that merely names the app
+  survives. `sync-astro-to-calendar` now writes that tag; events written
+  before today match on the footer text only. The sweep runs under a 45s
+  budget and reports `more`, and the client re-runs until a pass finds
+  nothing. **It must be used before disconnecting** — revoking the token first
+  removes the access needed to delete anything, and the UI says so.
+- **Lapse-rejoin policy (closed).** "If founding members cancel and later
+  subscribe, they would lose founding rates." Cohort membership is permanent
+  (the Founding Patron badge is unchanged); the discount is not. Migration
+  `20261016000001` adds `users.founding_rate_forfeited_at`, stamped inside
+  `project_billing_access` — the single place a tier can fall to free, and it
+  already holds the row locked and knows the old tier. Stamping in a webhook
+  handler instead would miss lapse-by-expiry, which is how most lapses happen.
+  Forfeiture additionally requires `subscription_expires <= now()`: a provider
+  can send an empty entitlement array as a tombstone, and this stamp is
+  irreversible, so a webhook glitch must not burn a paying member's rate.
+  Pricing now reads `hasFoundingRate(user)` (`lib/permissions.js`), mirrored
+  server-side in `create-checkout-session` and in `purchases.js` offering
+  selection. Only MONTHLY prices differ by cohort; annual is $55/$77 for
+  everyone, so forfeiture changes nothing for annual subscribers.
+  **Verified 2026-10-16** against the live DB in a self-rolling-back DO block
+  (`scratchpad/forfeit_test.sql`): a real lapse stamps; an empty-entitlement
+  tombstone arriving while the paid window is still open does NOT; an existing
+  stamp is never moved; a non-founder is never stamped. Rollback confirmed
+  afterwards — 0 of 4 users stamped, the test account's tier, expiry and
+  billing snapshot all untouched. Note the tombstone case still drops
+  `subscription_tier` to free until the next good snapshot; that is existing
+  `project_billing_access` behaviour and is reversible. The guard protects only
+  the part that is not.
+- **Copy conflict this created, needs her eye.** Three places promised the
+  founding rate "locked in **forever**" / "stays with you **for life**"
+  (`Subscribe.jsx`, `SubscriptionSection.jsx`, `PlanSelection.jsx`). That is
+  now false. Changed to "for as long as your subscription stays active" so we
+  are not shipping a promise the billing code breaks. Wording is hers to
+  adjust; the claim it replaces cannot come back.
+
+**Authorized domains (her question).** Answer: `astrosetta.com` only, and
+**do not remove the Base44 entries yet.** Google auto-adds the domains of
+authorized redirect URIs and JavaScript origins, so the Supabase callback host
+never needs listing — which is just as well, since authorized domains must be
+ownership-verified in Search Console by an owner/editor on the GCP project and
+she does not own `supabase.co`. The Base44 entries matter because the consent
+screen is shared by every OAuth client in that project, including the one
+serving the LIVE site: pulling them before DNS moves risks breaking Google
+sign-in in production for no gain (the cap is 10 domains and she is nowhere
+near it). Remove them at DEPLOYMENT.md §4, once astrosetta.com points at
+Vercel and Base44 is decommissioned. The App domain fields on the Branding
+page — home page, privacy policy, terms — should be the astrosetta.com URLs
+now (`/privacy` and `/terms` both exist); those are what verification reviews._
+
 ## Waiting on Molly (consolidated ask list)
 
 _Rebuilt 2026-10-16. Ordered by what it blocks, not by size._
@@ -553,7 +667,7 @@ _Rebuilt 2026-10-16. Ordered by what it blocks, not by size._
 
 | Ask | Why it can't wait | Blocks |
 |---|---|---|
-| **Attach a Google Payments merchant profile** to the Play developer account (her account, owner-only; verification takes days) | Nothing on Android can be priced or tested until it clears | Play subscriptions → RevenueCat Play products → Android purchase QA |
+| **Confirm the Google Payments merchant profile cleared verification** — she reported creating it 2026-10-16, but Google verifies over several days and nothing can be priced until it shows Approved in Play Console → Settings → Payments profile | Nothing on Android can be priced or tested until it clears | Play subscriptions → RevenueCat Play products → Android purchase QA |
 | **Complete the Branding page** in Google Auth Platform (app name, logo, support email, home page, privacy policy + terms URLs, authorised domain), then **submit the consent screen for verification** | "Publish app" is disabled until Branding is done, and `calendar.events` is a sensitive scope, so review takes weeks | Calendar sync for real users. While in Testing: every refresh token dies after **7 days**, 100-user lifetime cap, and testers see an "unverified app" warning |
 | **C-01 pricing decision** — $5.55/$7.77 display vs the real store prices ($5.59/$7.79) | Gates the plan page copy and the web/Stripe price | Plan page, Stripe products. Three options in FEEDBACK_ROUND1.md §B |
 
@@ -561,14 +675,10 @@ _Rebuilt 2026-10-16. Ordered by what it blocks, not by size._
 
 | Ask | Note |
 |---|---|
-| **E-02 Daily Digest notes** | Her own placeholder; the Oct 11 digest notes never arrived |
 | **Free trial (F-01): yes or no?** | None implemented |
 | **Sidereal: ship or hold?** | Her "Tropical only at launch" predates knowing the engine supports sidereal. `HIDE_SIDEREAL` ready either way |
 | **Onboarding emails name points the app now hides** | UX-02 defaulted Lots/asteroids/Lilith OFF, but the welcome and chart-recap emails still list them. Her copy, her call |
-| **Em dashes in her own static email copy** | AI-04 strips AI output only. Does the no-dash rule extend to copy she wrote? |
 | **Calendar sync event volume** (new 2026-10-16) | One event per day per in-orb transit — a 28-day sync wrote ~200 events on a test account. **Identical in her Base44 app**, so this is existing, apparently deliberate behaviour, not a defect. Keep, or emit each transit once on its peak day? |
-| **"Remove Astrosetta events" cleanup action** (new 2026-10-16) | Disconnect deliberately leaves events behind with no bulk removal. Cheap to add (every description ends "Added by Astrosetta") but it is new scope |
-| **Lapse-rejoin policy** | What happens to a founding member who lets a subscription lapse? (The "You're on this plan" beta quirk this used to be bundled with was **fixed in 3a8a60a under B-19** on 2026-10-12 — `isCurrent`/`currentIndex` come from `realTier`, not the effective tier, in both `SubscriptionSection.jsx:105` and `PlanSelection.jsx:86`. Not an open item.) |
 | **Old "Astrosetta Pro" RevenueCat entitlement** | Left untouched; confirm before archiving |
 
 ### 3. Information we need from her

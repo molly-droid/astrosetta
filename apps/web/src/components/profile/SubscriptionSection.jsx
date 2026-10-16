@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
-import { getEffectiveTier } from '@/lib/permissions';
+import { getEffectiveTier, hasFoundingRate } from '@/lib/permissions';
 import { Sparkles, CalendarDays, Check, Zap, Scroll, ArrowRight, Lock, AlertCircle, Loader2, CreditCard } from 'lucide-react';
 import { publicAppOrigin, openExternalUrl, subscriptionManagementUrl } from '@/lib/appUrls';
 import { Button } from '@/components/ui/button';
@@ -108,7 +108,9 @@ export default function SubscriptionSection() {
   // upgrade targets come from realTier — during beta effectiveTier is
   // 'calendar' for every non-admin, which made the Plan tab a dead end.
   const currentIndex = TIER_ORDER.indexOf(realTier);
-  const isFoundingMember = !!user?.is_founding_member;
+  // Founding RATE, not cohort membership (Molly, 2026-10-16): the badge
+  // survives a lapse, the discount does not.
+  const isFoundingMember = hasFoundingRate(user);
   const preference = PREFERENCE_MAP[user?.founding_tier_preference];
 
   const [paywall, setPaywall] = useState(null);
@@ -186,7 +188,7 @@ export default function SubscriptionSection() {
             <p className="font-display text-sm font-bold text-gold-accent">You're a founding member</p>
           </div>
           <p className="font-body text-xs text-white/70 leading-relaxed">
-            Lock in your founding rate — {foundingPrice('interpret')} for Core or {foundingPrice('calendar')} for Premium — forever. Your rate stays with you for life.
+            Lock in your founding rate, {foundingPrice('interpret')} for Core or {foundingPrice('calendar')} for Premium. It stays with you for as long as your subscription stays active.
           </p>
           {preference && (
             <button

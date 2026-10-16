@@ -16,6 +16,8 @@ export default function GoogleCalendarConnect() {
   const [configured, setConfigured] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
+  // Two-click arm for the destructive action: the first click only warns.
+  const [confirmCleanup, setConfirmCleanup] = useState(false);
   const { user } = useAuth();
   const location = useLocation();
 
@@ -45,10 +47,25 @@ export default function GoogleCalendarConnect() {
   const manageConnection = async (action) => {
     setBusy(true);
     setNotice('');
+    setConfirmCleanup(false);
     try {
       if (action === 'sync') {
         const { data } = await base44.functions.invoke('syncAstroToCalendar', { days_ahead: 28 });
         setNotice(`Calendar synced: ${data.events_created} events added.`);
+      } else if (action === 'cleanup') {
+        // The server deletes under a time budget and deleting reshuffles the
+        // result pages, so it reports `more` and we re-run until a pass finds
+        // nothing. The `deleted` guard stops the loop if the server ever
+        // claims more work without doing any.
+        let removed = 0;
+        for (let pass = 0; pass < 20; pass++) {
+          const { data } = await base44.functions.invoke('calendarConnection', { action: 'cleanup' });
+          removed += data.deleted;
+          if (!data.more || data.deleted === 0) break;
+        }
+        setNotice(removed
+          ? `Removed ${removed} Astrosetta event${removed === 1 ? '' : 's'} from your Google Calendar.`
+          : 'No Astrosetta events found in your Google Calendar.');
       } else {
         const { data } = await base44.functions.invoke('calendarConnection', { action, native: isNativePlatform() });
         if (data.url) await openExternalUrl(data.url);
@@ -158,9 +175,23 @@ export default function GoogleCalendarConnect() {
           <div className="flex flex-wrap gap-2">
             <Button size="sm" disabled={busy} onClick={() => manageConnection('sync')}>{busy ? 'Syncing…' : 'Sync Google Calendar'}</Button>
             <Button size="sm" variant="outline" disabled={busy} onClick={() => manageConnection('disconnect')}>Disconnect Google Calendar</Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={busy}
+              onClick={() => (confirmCleanup ? manageConnection('cleanup') : setConfirmCleanup(true))}
+              className={confirmCleanup ? 'border-red-400/50 text-red-300' : undefined}
+            >
+              {busy ? 'Removing…' : confirmCleanup ? 'Tap again to remove' : 'Remove synced events'}
+            </Button>
           </div>
         ) : (
           <Button size="sm" disabled={busy || !configured} onClick={() => manageConnection('authorize')}>{busy ? 'Opening Google…' : 'Connect Google Calendar'}</Button>
+        )}
+        {connected && (
+          <p className="font-body text-[0.625rem] text-brass/50 leading-relaxed">
+            “Remove synced events” deletes only the events Astrosetta added. Do it before disconnecting, since removing them needs calendar access.
+          </p>
         )}
         {!configured && <p className="font-body text-xs text-brass/70">Direct Google sync isn’t configured yet. You can use the calendar feed above.</p>}
         {notice && <p role="status" className="font-body text-xs text-brass">{notice}</p>}

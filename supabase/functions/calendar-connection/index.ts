@@ -1,5 +1,5 @@
 import { getAuthUser, serviceClient, json, handleOptions } from '../_shared/edge.ts';
-import { CALENDAR_SCOPE, calendarCallbackUrl, calendarAllowed, googleCredentials, googleToken, sha256, pkceChallenge } from '../_shared/googleCalendar.ts';
+import { CALENDAR_SCOPE, calendarCallbackUrl, calendarAllowed, googleCredentials, googleToken, sha256, pkceChallenge, googleAccessToken } from '../_shared/googleCalendar.ts';
 
 const randomToken = () => crypto.randomUUID().replaceAll('-', '') + crypto.randomUUID().replaceAll('-', '');
 
@@ -55,6 +55,48 @@ Deno.serve(async req => {
       const { error: stateError } = await db.from('google_calendar_states').delete().eq('user_id', user.id);
       if (stateError) throw stateError;
       return json({ connected: false });
+    }
+    // Bulk-remove events this app wrote (Molly, 2026-10-16). Disconnecting
+    // deliberately leaves events behind, which left users with hundreds of
+    // entries and no way out, so this is the way out. It must run while the
+    // connection still exists: revoking the token first would strip the
+    // access needed to delete anything.
+    //
+    // Two-stage match, because deletion is irreversible: `q` narrows the
+    // calendar to events mentioning Astrosetta, then every candidate must
+    // ALSO carry our private extendedProperty or end with the "Added by
+    // Astrosetta" footer. A user's own event that merely names the app
+    // survives both checks.
+    if (body.action === 'cleanup') {
+      const accessToken = await googleAccessToken(db, user.id);
+      if (!accessToken) return json({ error: 'Connect Google Calendar before removing events.' }, { status: 400 });
+      const deadline = Date.now() + 45000;
+      let deleted = 0, scanned = 0, pageToken = '', more = false;
+      do {
+        const query = new URLSearchParams({ q: 'Astrosetta', maxResults: '250', showDeleted: 'false', ...(pageToken ? { pageToken } : {}) });
+        const listRes = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${query}`, {
+          headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(15000),
+        });
+        if (!listRes.ok) throw new Error('Unable to read Google Calendar.');
+        const page = await listRes.json();
+        for (const evt of page.items || []) {
+          scanned++;
+          const ours = evt.extendedProperties?.private?.astrosetta
+            || (evt.description || '').includes('Added by Astrosetta');
+          if (!ours || !evt.id) continue;
+          const del = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(evt.id)}`, {
+            method: 'DELETE', headers: { Authorization: `Bearer ${accessToken}` }, signal: AbortSignal.timeout(15000),
+          });
+          // 404/410 mean it is already gone, which is the outcome we wanted.
+          if (!del.ok && del.status !== 404 && del.status !== 410) throw new Error('Google Calendar could not remove every event.');
+          deleted++;
+          if (Date.now() > deadline) { more = true; break; }
+        }
+        pageToken = more ? '' : (page.nextPageToken || '');
+      } while (pageToken);
+      // Deleting shifts the result pages under us, so the client re-runs this
+      // until a pass finds nothing left rather than trusting one sweep.
+      return json({ deleted, scanned, more: more || deleted > 0 });
     }
     if (!await calendarAllowed(db, user.id)) return json({ error: 'Calendar sync requires Core or Premium', code: 'upgrade_required' }, { status: 403 });
     if (body.action === 'feed') {

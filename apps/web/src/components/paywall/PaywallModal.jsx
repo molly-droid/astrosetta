@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { getPlatform } from '@/lib/platform';
 import { useAuth } from '@/lib/AuthContext';
+import { hasFoundingRate } from '@/lib/permissions';
 import { restorePurchases } from '@/lib/restorePurchases';
 import { purchasesEnabled, purchaseTier, getNativePriceString } from '@/lib/purchases';
 
@@ -121,8 +122,11 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
 
   // On native, the store's localized price is authoritative (Apple price
   // points differ slightly from the web's Stripe prices).
-  const corePrice = isNative ? nativePrices.interpret || 'Price unavailable' : user?.is_founding_member ? '$5.55' : '$8';
-  const premiumPrice = isNative ? nativePrices.calendar || 'Price unavailable' : user?.is_founding_member ? '$7.77' : '$10';
+  // Founding RATE, not cohort membership — a lapsed founder sees standard
+  // prices here (Molly, 2026-10-16).
+  const foundingRate = hasFoundingRate(user);
+  const corePrice = isNative ? nativePrices.interpret || 'Price unavailable' : foundingRate ? '$5.55' : '$8';
+  const premiumPrice = isNative ? nativePrices.calendar || 'Price unavailable' : foundingRate ? '$7.77' : '$10';
 
   const config = isCalendarUpgrade ? {
     icon: <CalendarDays size={22} className="text-gold-accent" />,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { hasFoundingRate } from '@/lib/permissions';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { getPlatform } from '@/lib/platform';
@@ -84,7 +85,9 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
   const { user, reloadUser } = useAuth();
   const isOnboarding = variant === 'onboarding';
   const realTier = user?.subscription_tier || 'free';
-  const isFoundingMember = !!user?.is_founding_member;
+  // Founding RATE, not cohort membership: a founder who lapsed and came
+  // back pays standard prices (Molly, 2026-10-16).
+  const isFoundingMember = hasFoundingRate(user);
   // Billing period is controllable from the parent (the Subscribe page shares
   // it with the event gift panel); standalone it manages its own state.
   const [billingState, setBillingState] = useState('monthly');
@@ -307,7 +310,7 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
             {isFoundingMember && !isNative && (
               <div className="flex items-center gap-1 mb-3">
                 <Lock size={9} className="text-gold-accent" />
-                <p className="font-body text-[0.625rem] text-gold-accent/70">Your founding rate · locked in forever</p>
+                <p className="font-body text-[0.625rem] text-gold-accent/70">Your founding rate · yours while your subscription stays active</p>
               </div>
             )}
 

@@ -23,9 +23,32 @@ the upload cert, NOT the app-signing cert; anything needing a SHA1 (Google
 Sign-In on Android, app links assetlinks.json) must use the Play App Signing
 fingerprint from Play Console AFTER the first upload. **Handover item: the
 upload key is under silexdev and transfers to Molly at cutover, same as the
-astrosetta-revenuecat GCP project.** NOT yet uploaded to Play — that first
-upload is what registers `com.astrosetta.app` and clears RevenueCat's
-"package name not found" warning blocking the Play products._
+astrosetta-revenuecat GCP project.** Uploaded to Play internal testing
+2026-10-14; Play App Signing enrolled, and Google generated its own app
+signing key distinct from our upload key.
+
+**Play APP SIGNING certificate** (public values, safe in the repo; this is
+what external services must be given, NOT the upload-key fingerprint above):
+- SHA-1:   `07:37:B0:69:73:F0:DF:8B:AC:15:2A:63:89:08:8D:D2:C9:B9:56:60`
+- SHA-256: `A9:24:61:B3:A9:4C:42:C6:3E:7A:55:5B:36:F7:E9:5C:C0:29:81:1F:DA:E0:FA:2A:6E:AE:5C:4F:68:04:DB:BB`
+
+Uses: SHA-256 goes in `assetlinks.json` at cutover (Digital Asset Links takes
+SHA-256 only). SHA-1 is needed ONLY if Android moves to the native Google
+Sign-In SDK; today's auth path is @capacitor/browser plus an astrosetta://
+deep link, which is the WEB OAuth client flow and uses no fingerprint.
+
+assetlinks.json to serve at https://astrosetta.com/.well-known/assetlinks.json
+at cutover, alongside adding the https app-link intent-filter to the manifest:
+
+    [{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.astrosetta.app",
+        "sha256_cert_fingerprints": ["A9:24:61:B3:A9:4C:42:C6:3E:7A:55:5B:36:F7:E9:5C:C0:29:81:1F:DA:E0:FA:2A:6E:AE:5C:4F:68:04:DB:BB"]
+      }
+    }]
+_
 
 _2026-10-14: **TestFlight build 1.0 (7) UPLOADED** (same xcodebuild path as 6).
 Carries PF-01/PF-02 plus the tab-refocus fix: chart points generate when their
@@ -56,10 +79,58 @@ read empty until cutover; only test users exist so no user impact).
 `REVENUECAT_SECRET_API_KEY` set (v1 key) and the new reconciliation verified
 end-to-end: webhook auth → RC /v1/subscribers fetch → snapshot → tier
 projection (expired sandbox sub correctly projects to free). Still
-unconfigured: `GOOGLE_CALENDAR_CLIENT_ID/SECRET` (calendar features fail
-closed; needs Calendar API + redirect URI in the Google project that owns
-the OAuth client), optional `AI_MODEL_RATES_JSON`, and the standard-monthly
-Stripe/RevenueCat products (fail closed until the founding window ends)._
+unconfigured: optional `AI_MODEL_RATES_JSON`, and the standard-monthly
+Stripe/RevenueCat products (fail closed until the founding window ends).
+(`GOOGLE_CALENDAR_CLIENT_ID/SECRET` were set 2026-10-15 — see below.)_
+
+_2026-10-16 (Tony): **Google Calendar OAuth configured and verified end to
+end.** Molly granted access to her `Astrosetta` Google Cloud project via
+Workspace customer ID C042spbhq. Calendar API was already enabled. Created a
+**new Web-application OAuth client** there rather than reusing the existing
+one, which serves Base44 production — verification is per consent screen, not
+per client, so a second client costs nothing and keeps the live site isolated.
+Redirect URI `https://sqdpawyqvgqadflezxxk.supabase.co/functions/v1/calendar-connection`;
+both secrets set on Supabase 2026-10-15 14:07 UTC.
+
+Verified on 2026-10-16 against the live DB, not by eye: authorize → consent →
+callback stored a 102-char **refresh token** (offline access granted) →
+`Sync Google Calendar` wrote real events → disconnect revoked at Google and
+left `google_calendar_connections` and `google_calendar_states` empty.
+`calendar_feed_keys` correctly survives a disconnect (the ICS path is
+independent of OAuth).
+
+Two fixes this took (both in this commit):
+- `sync-astro-to-calendar` referenced `PLANET_GLYPHS`, which the v3
+  engine rewrite never carried over from `calendar-icsfeed`. Base44's
+  original defines it (`entry.ts:91`), so this was **our regression**. Edge
+  deploys don't type-check, so it shipped and threw `ReferenceError` at the
+  first in-orb transit — the sync aborted after fetching engine data and
+  before posting a single event. Restored the map.
+- `GoogleCalendarConnect` rendered its status line at the top of the panel
+  while the buttons sit at the bottom, so every success AND error message was
+  off-screen. Moved it under the buttons; buttons now show "Syncing…" /
+  "Opening Google…" while busy.
+
+**Open, needs Molly:**
+- **Branding page must be completed** before the consent screen can leave
+  Testing ("Publish app" is disabled until it is), and verification must
+  follow — `calendar.events` is a sensitive scope. While in Testing, every
+  user's refresh token **expires after 7 days** and there is a 100-user
+  lifetime cap. If calendar sync must work at launch, this review needs to
+  start now; it takes weeks.
+- **Transit event volume is a product question, not a bug.** Both this
+  function and the ICS feed emit one event per day for every transit in orb,
+  and slow planets stay in orb for weeks — a 28-day sync created ~200 events
+  on one test account. The per-day `seen` scoping and the date-keyed
+  idempotency key are identical in Base44's original, so this is her app's
+  existing, apparently deliberate behaviour. Changing it would be a parity
+  deviation. Ask before touching it.
+- Disconnect deliberately leaves events in the calendar and there is no
+  bulk removal. Every description ends "Added by Astrosetta", so a cleanup
+  action is cheap to add — proposed, not built (new scope).
+
+**Deferred, do not lose:** the Google client secret was exposed in a session
+transcript on 2026-10-15 and must be **rotated**; Tony's call to defer._
 
 _2026-10-09 (Tony): Molly ACKNOWLEDGED the iOS prices ($5.59/$7.79 monthly,
 $55/$77 yearly) — pricing is settled. AI daily limits stay at the implemented
@@ -464,17 +535,77 @@ opted-in beta users — expected, but know it's live.
     independent); delete orphaned V2 functions from the Supabase project
     (test-ephemeris, calculate-chart, generate-synthesis)
 
+_2026-10-14 (Tony, decided): **Play prices match Apple** — Core $5.59/mo
+$55/yr, Premium $7.79/mo $77/yr. Play could hit $5.55/$7.77 exactly, but
+matching keeps both native stores consistent and lets the existing
+"show the store's real localized price" path behave the same on Android as
+iOS. Does not resolve C-01: Molly's $5.55/$7.77 remains open for the WEB
+(Stripe) price and for the displayed copy. BLOCKED until Molly attaches a
+Google Payments merchant profile to the Play developer account (her account,
+owner-only action, verification takes days) — no Play subscriptions, no
+RevenueCat Play products, and no Android purchase QA until it clears._
+
 ## Waiting on Molly (consolidated ask list)
 
-| Item | Unblocks |
+_Rebuilt 2026-10-16. Ordered by what it blocks, not by size._
+
+### 1. Blocks the Nov 13 demo or launch — needs to start now
+
+| Ask | Why it can't wait | Blocks |
+|---|---|---|
+| **Attach a Google Payments merchant profile** to the Play developer account (her account, owner-only; verification takes days) | Nothing on Android can be priced or tested until it clears | Play subscriptions → RevenueCat Play products → Android purchase QA |
+| **Complete the Branding page** in Google Auth Platform (app name, logo, support email, home page, privacy policy + terms URLs, authorised domain), then **submit the consent screen for verification** | "Publish app" is disabled until Branding is done, and `calendar.events` is a sensitive scope, so review takes weeks | Calendar sync for real users. While in Testing: every refresh token dies after **7 days**, 100-user lifetime cap, and testers see an "unverified app" warning |
+| **C-01 pricing decision** — $5.55/$7.77 display vs the real store prices ($5.59/$7.79) | Gates the plan page copy and the web/Stripe price | Plan page, Stripe products. Three options in FEEDBACK_ROUND1.md §B |
+
+### 2. Decisions — each one is small, each one blocks a change
+
+| Ask | Note |
 |---|---|
-| ~~Launch pricing confirmation~~ **DECIDED 2026-10-07 (Tony): go with app-displayed prices** — Core $5.55/mo $55/yr, Premium $7.77/mo $77/yr; the $9/$14 Stripe products treated as old leftovers. Molly asked; flag if she answers differently. | unblocked ASC step 4 + RevenueCat products |
-| Google Play + RevenueCat accounts (Apple done 2026-10-05) | Phases 3–4 |
-| DNS access (or willingness to paste records) | DNS cutover |
-| Vercel access (or new project under her account) | Phase 5 |
-| Sign-off: AI daily limits + tier-gate map | closes the LLM-tasks item |
+| **E-02 Daily Digest notes** | Her own placeholder; the Oct 11 digest notes never arrived |
+| **Free trial (F-01): yes or no?** | None implemented |
+| **Sidereal: ship or hold?** | Her "Tropical only at launch" predates knowing the engine supports sidereal. `HIDE_SIDEREAL` ready either way |
+| **Onboarding emails name points the app now hides** | UX-02 defaulted Lots/asteroids/Lilith OFF, but the welcome and chart-recap emails still list them. Her copy, her call |
+| **Em dashes in her own static email copy** | AI-04 strips AI output only. Does the no-dash rule extend to copy she wrote? |
+| **Calendar sync event volume** (new 2026-10-16) | One event per day per in-orb transit — a 28-day sync wrote ~200 events on a test account. **Identical in her Base44 app**, so this is existing, apparently deliberate behaviour, not a defect. Keep, or emit each transit once on its peak day? |
+| **"Remove Astrosetta events" cleanup action** (new 2026-10-16) | Disconnect deliberately leaves events behind with no bulk removal. Cheap to add (every description ends "Added by Astrosetta") but it is new scope |
+| **Lapse-rejoin policy** | What happens to a founding member who lets a subscription lapse? (The "You're on this plan" beta quirk this used to be bundled with was **fixed in 3a8a60a under B-19** on 2026-10-12 — `isCurrent`/`currentIndex` come from `realTier`, not the effective tier, in both `SubscriptionSection.jsx:105` and `PlanSelection.jsx:86`. Not an open item.) |
+| **Old "Astrosetta Pro" RevenueCat entitlement** | Left untouched; confirm before archiving |
+
+### 3. Information we need from her
+
+| Ask | Note |
+|---|---|
+| **B-13 repro** — planner transit card blank on the right | Renders full-width in code and her doc has no screenshot. Need: which card, portrait or landscape, which device. Last unresolved Round 1 bug |
+| **Flag any Base44 changes she makes**, and agree a change freeze | Every post-export change to the live app has to be re-ported by hand |
+
+### 4. Access and accounts
+
+| Ask | Unblocks |
+|---|---|
+| DNS access, or willingness to paste records | DNS cutover |
+| Vercel access, or a new project under her account | Phase 5 |
 | At cutover: fresh Base44 export + interpretations export + active-subscriber list | Phase 5 |
 
-Resolved: GitHub invite (push/merge done), Stripe team invite (sandbox configured
-2026-10-01), Astrology-API.io key (2026-09-29), Google OAuth creds (verified
-2026-10-01), Apple account + shared secret (2026-10-05).
+### 5. Ownership handoffs (one conversation, three items)
+
+Things built under silexdev that should end up hers:
+
+- **GCP project `astrosetta-revenuecat`** — holds the service account Play Console uses for RevenueCat. Add her as Owner or migrate the project.
+- **Android upload keystore** — currently ours; transfers at cutover. Play App Signing means a lost upload key is recoverable, but she should own it.
+- **Play merchant account** — hers already, pending setup (see §1).
+
+Resolved and no longer needed: GitHub invite, Stripe team invite (sandbox
+configured 2026-10-01), Astrology-API.io key (2026-09-29), Google OAuth creds
+(2026-10-01), Apple account + shared secret (2026-10-05), Google Play +
+RevenueCat accounts, Google Cloud project access (2026-10-15, via Workspace
+customer ID C042spbhq), launch pricing confirmation (decided 2026-10-07), AI
+daily-limit sign-off (closed by Tony's call 2026-10-09 — no further gate).
+
+### Scope conversation worth having alongside this
+
+Round 1 mixes migration parity fixes (ours under the fixed scope) with new
+product work — F-01 onboarding checkout, UX-01 redesign, AI prompt changes,
+E-01, F-02/03, and B-14/B-18 fixing things that were broken in Base44 too.
+About a third of the round is new product work. Worth a friendly line
+distinguishing "migration fixes" from "Round 1 product improvements" before
+absorbing it silently.

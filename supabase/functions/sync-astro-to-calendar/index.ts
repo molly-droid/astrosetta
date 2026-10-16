@@ -14,6 +14,15 @@ const TRANSIT_ORB = 2.0; // degrees — same threshold the old in-file math used
 
 const ASPECT_EMOJIS = { conjunction: '☌', opposition: '☍', trine: '△', square: '□', sextile: '⚹' };
 
+// The v3 engine rewrite started titling events with glyphs but never carried
+// this map over from calendar-icsfeed, so the first in-orb transit or station
+// threw a ReferenceError and the whole sync aborted before posting anything.
+const PLANET_GLYPHS = {
+  Sun: '☉', Moon: '☽', Jupiter: '♃', Saturn: '♄', Uranus: '♅',
+  Neptune: '♆', Pluto: '♇', Mars: '♂', Venus: '♀', Mercury: '☿',
+  Chiron: '⚷', 'North Node': '☊',
+};
+
 const DAILY_MOTIONS = {
   Sun: 1.0, Moon: 12.0, Mercury: 1.2, Venus: 1.0, Mars: 0.5,
   Jupiter: 0.08, Saturn: 0.03, Uranus: 0.01, Neptune: 0.006, Pluto: 0.004,

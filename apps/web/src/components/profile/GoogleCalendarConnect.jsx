@@ -93,7 +93,6 @@ export default function GoogleCalendarConnect() {
       </div>
 
       <div className="space-y-1.5">
-        <p role="status" className="font-body text-xs text-brass">{notice}</p>
         <p className="font-body text-xs text-brass/70 leading-relaxed">
           Subscribe to your personal astrology calendar feed. New Moons, Full Moons, natal transits (major &amp; minor), sky aspects, retrogrades, planner journal entries, and <strong className="text-gold-primary/80">weekly &amp; monthly synthesis plus topic outlooks</strong> — all auto-updated.
         </p>
@@ -157,13 +156,14 @@ export default function GoogleCalendarConnect() {
         <p className="font-body text-xs text-brass">Or connect Google Calendar to add events directly.</p>
         {connected ? (
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" disabled={busy} onClick={() => manageConnection('sync')}>Sync Google Calendar</Button>
+            <Button size="sm" disabled={busy} onClick={() => manageConnection('sync')}>{busy ? 'Syncing…' : 'Sync Google Calendar'}</Button>
             <Button size="sm" variant="outline" disabled={busy} onClick={() => manageConnection('disconnect')}>Disconnect Google Calendar</Button>
           </div>
         ) : (
-          <Button size="sm" disabled={busy || !configured} onClick={() => manageConnection('authorize')}>Connect Google Calendar</Button>
+          <Button size="sm" disabled={busy || !configured} onClick={() => manageConnection('authorize')}>{busy ? 'Opening Google…' : 'Connect Google Calendar'}</Button>
         )}
         {!configured && <p className="font-body text-xs text-brass/70">Direct Google sync isn’t configured yet. You can use the calendar feed above.</p>}
+        {notice && <p role="status" className="font-body text-xs text-brass">{notice}</p>}
       </div>
 
       {/* Instructions */}

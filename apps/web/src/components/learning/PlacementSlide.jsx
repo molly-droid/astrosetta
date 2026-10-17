@@ -156,12 +156,21 @@ export function extractPlacementData(chart, subjectKey) {
   // Generic fallback — show the Big Three as a chart anchor for any other module
   const sun = planets.find(p => p.name === 'Sun');
   const moon = planets.find(p => p.name === 'Moon');
-  if (sun || moon || raw.ascendant_sign) {
+  // B-07 (round 2): this card read ONLY raw.ascendant_sign and rendered a dash
+  // when it was absent, which is the case for charts whose ascendant lives in
+  // raw.angles or in the chart column — Molly's is Sagittarius in both, and
+  // null here. The round-1 fix added this fallback chain to DaySynthesis but
+  // missed the curriculum, which is a second, separate surface.
+  // unknown_time still means no rising sign at all, same as everywhere else.
+  const ascendantSign = raw.unknown_time
+    ? null
+    : (raw.ascendant_sign || raw.angles?.ascendant?.sign || chart.ascendant_sign || null);
+  if (sun || moon || ascendantSign) {
     return {
       type: 'big3',
       sun: sun ? { sign: sun.sign, signGlyph: SIGN_GLYPHS[sun.sign] || '', house: sun.house } : null,
       moon: moon ? { sign: moon.sign, signGlyph: SIGN_GLYPHS[moon.sign] || '', house: moon.house } : null,
-      ascendant: raw.ascendant_sign || null,
+      ascendant: ascendantSign,
     };
   }
 

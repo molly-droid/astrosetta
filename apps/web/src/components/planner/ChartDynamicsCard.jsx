@@ -49,11 +49,11 @@ function InterpretBlock({ reading, loading }) {
       {entries.map(([key, val]) => (
         <div key={key} className="space-y-1">
           {typeof val === 'string' ? (
-            <InterpretationMarkdown text={val} className="font-body text-xs text-white/90 leading-snug" />
+            <InterpretationMarkdown text={val} className="font-body text-sm text-white/90 leading-snug" />
             ) : Array.isArray(val) ? (
              <ul className="space-y-1">
                {val.map((item, i) => (
-                 <li key={i} className="font-body text-xs text-white/90 leading-snug">{highlightSynthesisText(typeof item === 'string' ? item : item.text || JSON.stringify(item), null, 'text-gold-accent')}</li>
+                 <li key={i} className="font-body text-sm text-white/90 leading-snug">{highlightSynthesisText(typeof item === 'string' ? item : item.text || JSON.stringify(item), null, 'text-gold-accent')}</li>
                ))}
              </ul>
             ) : null}

@@ -545,6 +545,38 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-16 (Tony): **Molly's round 2 landed — see `docs/FEEDBACK_ROUND2.md`.**
+Her doc was updated Oct 16 8:00 PM against build 1.0 (7): 14 round-1 items
+verified fixed, 3 reported still failing, 10 new (B-21–B-26, UX-09, PF-05,
+PF-06, AI-05). Triaged in full in that file; the three retests were all
+investigated and closed the same day.
+
+- **B-07 was genuinely still broken and our ✅ was premature.** The round-1
+  fix went into `DaySynthesis.jsx` only; the Learn curriculum
+  (`PlacementSlide.jsx`) is a separate surface with the same single-source
+  read. Every chart in this project has `raw_data.ascendant_sign` null — the
+  value lives in `raw_data.angles.ascendant.sign` and the `chart` column — so
+  the Big Three card showed a dash for EVERY user. Fixed and verified on
+  device.
+- **B-13 + B-21 are one component**, as she guessed. `PillShell`'s
+  `✦ Interpret` / `✕` column was a `shrink-0` flex sibling reserving ~90px
+  down the full card height. Floated it; verified at 393px.
+- **B-11 was not a bug.** The rem conversion is sound. Her `font_scale` is
+  1.1, and 10% of 11px is invisible. Base size was the problem: six
+  interpretation bodies raised 11px → 14px. **14px is a proposal — Molly
+  signs off before it is settled.**
+
+**The item that matters most is PF-06**, her top concern: app-wide slowness
+*after* PF-01/PF-02 caching shipped in build 7. That is a verdict on work
+already done, so the next performance pass starts with measurement. Nothing
+in the loading cluster (PF-05, B-23, PF-04) should be touched until a profile
+says where the time goes.
+
+Two accounts to note: a fifth user `molly.sharp2@gmail.com` appeared today,
+and the digest cron sends to every opted-in account — check its opt-in before
+the next 12:00 UTC run. Also still committed and stale:
+`DaySynthesis.jsx.orig`, `MonthSynthesis.jsx.orig`, `WeekSynthesis.jsx.orig`._
+
 _2026-10-16 (Tony): **Launch flag found: `BETA_ALL_PAID`.** `send-daily-email`
 line 234 hardcodes `const BETA_ALL_PAID = true`, so EVERY recipient gets the
 paid digest regardless of tier and the free teaser branch is unreachable.

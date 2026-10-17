@@ -17,12 +17,22 @@ function PillShell({ children, borderColor = 'rgba(212,175,133,0.25)', onClose, 
   return (
     <div className="w-full mt-2 animate-fade-up">
       <div className="rounded-xl border overflow-hidden" style={{ background: 'rgba(15,26,46,0.96)', borderColor }}>
-        <div className="px-3 py-2.5 flex items-start justify-between gap-3">
-          {children}
-          <div className="flex flex-col items-end gap-1.5 shrink-0">
+        {/* B-13 / B-21: the action column used to be a flex sibling with
+            shrink-0, so it reserved its width down the ENTIRE height of the
+            card. Every line of a ten-line interpretation stopped ~90px short
+            of the right edge to leave room for a button occupying the top
+            40px — the blank right-hand gutter Molly reported in both Planner
+            (B-13) and My Chart (B-21); they are this one component.
+            Floating it takes it out of flow, so the first lines wrap around
+            the buttons and the rest of the paragraph runs full width. */}
+        <div className="px-3 py-2.5">
+          <div className="float-right flex flex-col items-end gap-1.5 ml-3">
             {onInterpret && <button onClick={() => onInterpret(children)} className="font-body text-[0.625rem] text-gold-accent hover:text-gold-primary transition-colors">✦ Interpret</button>}
             <button onClick={onClose} className="font-body text-[0.5625rem] text-brass/30 hover:text-brass transition-colors">✕</button>
           </div>
+          {children}
+          {/* Contains the float so a short card still gets full height. */}
+          <div className="clear-both" />
         </div>
       </div>
     </div>

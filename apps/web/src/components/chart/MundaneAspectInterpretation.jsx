@@ -62,7 +62,7 @@ export default function MundaneAspectInterpretation({ item, transitPlanets = nul
 
   return (
     <div className="mt-1.5">
-      <InterpretationMarkdown text={text} className="font-body text-[0.6875rem] text-white/80 leading-snug" />
+      <InterpretationMarkdown text={text} className="font-body text-sm text-white/80 leading-snug" />
       <Eli5Button context={eli5Context} />
     </div>
   );

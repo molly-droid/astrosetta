@@ -151,10 +151,15 @@ Root causes, several different from what the report assumed:
   `reloadProgress()` to AuthContext, pushed quiz results into the shared
   record, and refresh on Home. Labels now say "quiz days", not "quizzes",
   which is what the counter actually measures.
-- **B-07 ✅** the curriculum summary read only `raw.ascendant_sign` and
+- **B-07 ✅✅** the curriculum summary read only `raw.ascendant_sign` and
   silently degraded to "your rising sign"; now falls back through
   `chart.ascendant_sign` / `angles.ascendant.sign` (and shows none when the
   birth time is unknown).
+  **Reopened and re-fixed 2026-10-16:** that fix landed in `DaySynthesis.jsx`
+  only. The Learn curriculum (`PlacementSlide.jsx`) is a second surface with
+  the same single-source read, and rendered a DASH for the rising sign on
+  every chart in the project. Molly was right to call this still failing.
+  See FEEDBACK_ROUND2.md §B.
 - **B-08 ✅** the starfield canvas sized its bitmap from `window.innerWidth`,
   which diverges from the visual viewport on iOS and doesn't fire `resize` —
   the uncovered strip showed the parent's flat navy as a dark column. Now
@@ -163,6 +168,11 @@ Root causes, several different from what the report assumed:
   written in px-literal Tailwind classes (`text-[10px]` ×416, etc.) which
   ignore it. Converted every px text/leading literal to rem across 132 files,
   so the text-size setting now reaches interpretation cards and planner text.
+  **Reported still failing 2026-10-16; investigated and the conversion is
+  sound** — no px literals remain in the interpretation chain and the root
+  scales correctly. Her `font_scale` is 1.1, and 10% of an 11px body is
+  1.1px, i.e. invisible. The real problem was the base size, so the six
+  interpretation bodies went to 14px. See FEEDBACK_ROUND2.md §B.
 - **B-12 ✅** most interpretation surfaces rendered LLM markdown as one plain
   `<p>`, so "### 🔍 Themes to Explore" showed as body text. New shared
   `InterpretationMarkdown` (markdown + gold astro-term highlighting) now used
@@ -182,9 +192,13 @@ Root causes, several different from what the report assumed:
   own aspect name ("Trine — flowing harmony…") so the answer announced itself;
   options are now meanings only, plus a `leaksSubject()` guard that drops any
   question whose choices contain the term being asked about.
-- **B-13** — still unresolved: the planner transit card renders full-width in
-  code and Molly's doc has no screenshot for it. Need her repro (which card,
-  portrait/landscape, device) — added to the follow-up ask list.
+- **B-13 ✅** (resolved 2026-10-16, unblocked by her round-2 screenshot).
+  She reported the same defect on the My Chart aspect card as **B-21** and
+  guessed it was one shared component. It is: Planner and My Chart both reach
+  `ChartSelectionInfo` through `ChartWheel`. `PillShell`'s action column was a
+  `shrink-0` flex sibling, reserving ~90px down the whole card height for a
+  button occupying the top 40px. Floated it; one fix closed both.
+  See FEEDBACK_ROUND2.md §B.
 
 ## E-old. (superseded by the DONE block above)
 

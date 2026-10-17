@@ -286,7 +286,7 @@ function AspectRow({ a, chart, date, transitPlanets, natalPlanets, canViewInterp
             </div>
           ) : (
             <>
-              <InterpretationMarkdown text={text} onHighlightTransit={onHighlightTransit} highlightClass="text-gold-primary" className="font-body text-xs text-white/90 leading-snug" />
+              <InterpretationMarkdown text={text} onHighlightTransit={onHighlightTransit} highlightClass="text-gold-primary" className="font-body text-sm text-white/90 leading-snug" />
               <Eli5Button context={eli5Context} />
             </>
           )}

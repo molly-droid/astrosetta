@@ -19,7 +19,6 @@ const daySynthesis: LLMTaskDef = {
     properties: {
       overview: { type: 'string' },
       personal_reading: strArray,
-      personal_reading_core: strArray,
       collective_reading: strArray,
       collective_highlight: { type: 'string' },
       maximize: { type: 'string' },
@@ -89,7 +88,6 @@ Rules:
 - If PERSONAL transits say "None today," return an empty personal_reading array. Do NOT fill it with natal pattern descriptions.
 - One bullet per transit. Do NOT combine multiple transits into one bullet.
 - COVERAGE & ORDER LOCK: personal_reading MUST contain EXACTLY ONE bullet for EVERY transit listed in the PERSONAL section above, in the exact order they appear. Do not skip, add, or reorder any transit. Knowledge Density changes only the prose depth and vocabulary of each bullet — never which transits are covered.
-- personal_reading_core is a SUBSET of personal_reading: include ONLY the bullets for transits whose natal target is the Sun, Moon, or Ascendant (the "Big Three"). Use the exact same label and interpretation as in personal_reading. If none of today's personal transits hit the Big Three, return an empty personal_reading_core array.
 - After the label, write 2-3 sentences explaining the astrological mechanic in depth — name what the transiting planet represents (its drive/domain), how the sign it's in colors that energy, what the aspect does (flow/friction/merger), what the natal placement means in its sign and house, and the real-world life area activated. Teach the reader how the symbols combine so they learn to make their own interpretations. E.g. "Mercury in Cancer conjunction natal Chiron in Aries in your 8th house — Mercury is the mind and communication; in Cancer it speaks with emotional sensitivity and memory. A conjunction merges its energy with your natal Chiron wound in Aries (the wound to your sense of self and courage), sitting in the 8th house of shared resources and intimacy. Today, conversations can surface old pain around self-assertion within intimate or financial bonds — and naming it gently is what begins to heal it."
 - Use ONLY the transit data listed above. Do NOT mention any aspects, ingresses, stations, or lunar events not listed. If a category says "None today," do NOT invent any.
 - CRITICAL: Use ONLY the signs from AUTHORITATIVE TRANSIT POSITIONS above. Do NOT rely on your own knowledge of where planets currently are. Every time you mention a transiting planet, use the exact sign listed there.
@@ -108,7 +106,6 @@ Return JSON:
 {
   "overview": "3-4 sentences synthesizing the WHOLE of what is happening for this person today — weave the day's personal transits and the collective sky into one coherent narrative. Name the key transit configurations and how they interact (which life areas are lit up, what the overall tone is). Speak directly to the user and name their natal reference points (e.g. "your Virgo Midheaven") where relevant. This is the headline the user reads first.",
   "personal_reading": ["TransitLabel — 2-3 sentence deep interpretation of the astrological mechanic", "..."],
-  "personal_reading_core": ["Same format as personal_reading, but ONLY for transits to the natal Sun, Moon, or Ascendant. If none hit those three today, return an empty array."],
   "collective_reading": ["PlanetName in Sign aspectName PlanetName — 1 sentence on collective meaning", "..."],
   "collective_highlight": "1 sentence on single most significant mundane transit",
   "maximize": "1 action sentence tied to a specific transit",

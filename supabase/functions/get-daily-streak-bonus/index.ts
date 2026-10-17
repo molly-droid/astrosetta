@@ -38,8 +38,26 @@ Deno.serve(async (req) => {
       return json({ content: cached[0] });
     }
 
+    // B-24/AI-05: the LLM used to be told to pick "the most active or
+    // meaningful" transit itself — from a list of OUTER planets, which barely
+    // changes day to day. It chose Saturn Rx every single day (five
+    // consecutive generation days in StreakBonusContent, near-identical
+    // headlines). The subject is now chosen HERE, rotating deterministically
+    // and excluding the last week's subjects, and recent headlines ride along
+    // in the prompt as don't-repeat context. Her proposal, implemented as
+    // written.
+    let recentRows = [];
+    try {
+      recentRows = (await base44.asServiceRole.entities.StreakBonusContent.filter({}))
+        .sort((a, b) => String(b.date_key).localeCompare(String(a.date_key)))
+        .slice(0, 7);
+    } catch (_e) { /* no history yet */ }
+    const recentSubjects = recentRows.map(r => r.transit_subject).filter(Boolean);
+    const recentHeadlines = recentRows.map(r => r.headline).filter(Boolean);
+
     // Generate today's practitioner lens
     let transitContext = '';
+    let candidates = [];
     try {
       const transitRes = await base44.functions.invoke('astroEngine', {
         chart_type: 'transit',
@@ -52,12 +70,25 @@ Deno.serve(async (req) => {
         transit_date: dateKey
       });
       const tPlanets = transitRes?.data?.transit_planets || [];
-      transitContext = tPlanets
+      candidates = tPlanets
         .filter(p => ['Saturn','Jupiter','Pluto','Neptune','Uranus','Chiron'].includes(p.name))
-        .map(p => `${p.name} in ${p.sign}${p.retrograde ? ' (Rx)' : ''}`)
-        .join(', ');
+        .map(p => `${p.name} in ${p.sign}${p.retrograde ? ' (Rx)' : ''}`);
+      transitContext = candidates.join(', ');
     } catch (e) {
       transitContext = 'current celestial transits';
+    }
+
+    // Rotate: drop anything covered in the last week, then pick by day number
+    // so the same date always regenerates the same choice. When a week of
+    // tips has covered everything (six outers, seven days), fall back to the
+    // full list rather than failing — the headline instruction still forces a
+    // fresh angle.
+    let subject = '';
+    if (candidates.length) {
+      const pool = candidates.filter(c => !recentSubjects.includes(c));
+      const usable = pool.length ? pool : candidates;
+      const dayNum = Math.floor(Date.parse(`${dateKey}T00:00:00Z`) / 86400000);
+      subject = usable[((dayNum % usable.length) + usable.length) % usable.length];
     }
 
     let result = null;
@@ -67,11 +98,18 @@ Deno.serve(async (req) => {
 
 Today's major transits: ${transitContext}
 Date: ${dateKey}
+${subject ? `
+TODAY'S ASSIGNED TRANSIT: ${subject}
+Write about THIS transit and no other. It was chosen by rotation so readers get a different lens each day — do not substitute a transit you find more interesting.` : `
+Write a Practitioner's Lens entry for ONE transit from the list above.`}
+${recentHeadlines.length ? `
+RECENT ENTRIES (do NOT repeat these topics, headlines, or angles):
+${recentHeadlines.map(h => `- ${h}`).join('\n')}` : ''}
 
-Write a Practitioner's Lens entry for this ONE transit (the most active or meaningful today). This is a "cheat-code" — the practical tip astrologers reach for when reading this transit, framed as a relatable scenario.
+This is a "cheat-code" — the practical tip astrologers reach for when reading this transit, framed as a relatable scenario.
 
 Produce:
-- transit_subject: the transit, e.g. "Saturn in Pisces" (must match a position listed above)
+- transit_subject: the transit${subject ? ` — exactly "${subject}"` : ', e.g. "Saturn in Pisces" (must match a position listed above)'}
 - scenario: ONE relatable sentence framing it as a real-world question someone would ask, e.g. "A friend asks: 'Saturn's in Pisces right now — what should I watch for in my own chart?'" Use the actual transit subject from the list above.
 - headline: a short cheat-code hook (5-8 words), e.g. "The Saturn-in-Pisces Cheat-Code"
 - content: the cheat-code itself — 2-3 sentences of specific, actionable practitioner guidance. Use tip language like "Watch for...", "The move is...", "A tell-tale sign is...". No generic affirmations or horoscope-style reassurance.
@@ -94,7 +132,7 @@ Return JSON with: transit_subject (string), scenario (string), headline (string)
     }
 
     // Fallback insight if the LLM call failed or returned nothing usable
-    const fallbackSubject = transitContext ? transitContext.split(',')[0] : 'the current sky';
+    const fallbackSubject = subject || (transitContext ? transitContext.split(',')[0] : 'the current sky');
     const headline = result?.headline || "Today's Cheat-Code";
     const transit_subject = result?.transit_subject || fallbackSubject;
     const scenario = result?.scenario || `A friend asks: "${fallbackSubject} is active right now — what should I watch for?"`;

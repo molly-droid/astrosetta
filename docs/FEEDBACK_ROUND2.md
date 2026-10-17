@@ -62,14 +62,20 @@ reported: tags ran four days, not two; the Sun ingress was three days early.
 **B-21 — My Chart aspect card text stops short of the right edge.**
 → **FIXED Oct 16.** Same component as B-13, exactly as she guessed. See §B.
 
-**B-24 — Practitioner's Lens repeats the same tip after every quiz**
-("The Saturn-Rx-in-Aries Audit Cheat-Code").
-**AI-05 — the prompt-side pair:** tie each tip to the quiz just taken, rotate
-through today's transits, pass recent tip titles in with "don't repeat these".
-→ Lives in `components/learning/MasteryChallenge.jsx`. Treat as one fix, not
-two: whether the repeat is a cache being reused or a deterministic pick has
-to be established first, and that determines whether AI-05's prompt change is
-needed at all.
+**B-24 + AI-05 ✅ (fixed and verified 2026-10-17)** — Practitioner's Lens
+repeated the same tip after every quiz.
+→ Not MasteryChallenge and not a stale cache: `get-daily-streak-bonus`
+generates one tip per day (global `StreakBonusContent` cache) but told the
+MODEL to pick "the most active or meaningful" transit from the outer-planet
+list — which barely changes day to day, so it picked Saturn Rx on all five
+generation days on record (Oct 10/12/13/16/17, near-identical headlines).
+Molly's AI-05 proposal implemented as written: the server now assigns the
+subject, rotating deterministically by date and excluding the last 7 days'
+subjects, and recent headlines ride along in the prompt as don't-repeat
+context. Verified same-day: cleared the Oct 17 cache row and regenerated —
+"Pluto in Aquarius / The Pluto-in-Aquarius House Flashlight" replaced the
+Saturn tip, on screen and in the table. Server-side and DEPLOYED, so this is
+the one round-2 fix Molly sees before build 8.
 
 **B-25 — Apple purchase sheet shows no app icon / product image.**
 → Almost certainly **not code**. The image on the StoreKit sheet comes from

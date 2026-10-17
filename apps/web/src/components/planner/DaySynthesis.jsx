@@ -396,6 +396,19 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
         moonSign: t?.eclipseMoonSign || t?.moonSign || '',
       };
     }
+    // PF-06 (speed lever 2): the model no longer writes personal_reading_core
+    // (it was a word-for-word duplicate of the Big Three bullets). Derive it
+    // here before the result is cached, so CalendarSynthesis rows keep the
+    // same shape and the free-tier email branch keeps working. The ORDER LOCK
+    // aligns bullets 1:1 with the personal transit list; on a miscount, an
+    // empty core falls back (in the email) to the full reading.
+    if (result && Array.isArray(result.personal_reading) && !Array.isArray(result.personal_reading_core)) {
+      const CORE3 = new Set(['Sun', 'Moon', 'Ascendant']);
+      const corePersonal = (t?.natalAspects || []).filter(keepAspect);
+      result.personal_reading_core = result.personal_reading.length === corePersonal.length
+        ? result.personal_reading.filter((_, i) => CORE3.has(corePersonal[i]?.natal_planet))
+        : [];
+    }
     if (cacheKey) synthesisCache[cacheKey] = result;
     setSynthesis(result);
     onSynthesis?.(result);

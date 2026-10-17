@@ -545,6 +545,27 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-17 (Tony): **Copy decisions settled without further asks to Molly.**
+- **Founding-rate wording ACCEPTED by Tony as-is**: "for as long as your
+  subscription stays active" (Subscribe page, Plan tab banner, plan cards).
+  No longer pending her sign-off; if she rewords later it is a copy tweak,
+  not a reopened item.
+- **Parked deliberately, DO NOT ask her** (Tony's call — but keep this
+  context handy if she raises either herself):
+  1. *E-02 scope*: we removed only the "✨ Your Daily Synthesis" overview
+     block from the paid daily email and kept Personal Reading,
+     Maximize/Focus/Watch and Collective Reading. If she ever says the daily
+     email still shows "the synthesis", she means the whole personalised
+     block — removing the rest is a two-line change in
+     send-daily-email's `synthesisSection`.
+  2. *Onboarding emails name hidden points*: welcome + chart-recap emails
+     still list Lots/asteroids/Lilith, which UX-02 hides by default for new
+     users. If she reports "my welcome email mentions things I can't find",
+     the ready fix is filtering both house sections to the ten classic
+     planets (~2 lines per function).
+Also sent to her today: the B-26 buried-or-missing question and the
+pre-generate-the-week decision (PF-05 / PF-06 lever 3 / B-23 latency)._
+
 _2026-10-17 (Tony): **Round 2 engineering day — B-22 ✅, UX-09 ✅, B-23 hang
 ✅, PF-06 measured + streaming shipped, B-26 cannot-reproduce.** Details and
 verification evidence in FEEDBACK_ROUND2.md (updated in place). Highlights:
@@ -728,7 +749,7 @@ _Rebuilt 2026-10-16. Ordered by what it blocks, not by size._
 |---|---|
 | **Free trial (F-01): yes or no?** | None implemented |
 | **Sidereal: ship or hold?** | Her "Tropical only at launch" predates knowing the engine supports sidereal. `HIDE_SIDEREAL` ready either way |
-| **Onboarding emails name points the app now hides** | UX-02 defaulted Lots/asteroids/Lilith OFF, but the welcome and chart-recap emails still list them. Her copy, her call |
+| ~~Onboarding emails name points the app now hides~~ | PARKED 2026-10-17 by Tony — deliberately not asking her. Context and ready fix recorded in the 2026-10-17 copy-decisions entry above |
 | **Calendar sync event volume** (new 2026-10-16) | One event per day per in-orb transit — a 28-day sync wrote ~200 events on a test account. **Identical in her Base44 app**, so this is existing, apparently deliberate behaviour, not a defect. Keep, or emit each transit once on its peak day? |
 | **Old "Astrosetta Pro" RevenueCat entitlement** | Left untouched; confirm before archiving |
 

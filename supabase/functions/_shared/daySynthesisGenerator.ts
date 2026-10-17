@@ -371,7 +371,6 @@ Rules:
 - COVERAGE & ORDER LOCK: personal_reading MUST contain EXACTLY ONE bullet for EVERY transit listed in the PERSONAL section above, in the exact order they appear. Do not skip, add, or reorder any transit. Knowledge Density changes only the prose depth and vocabulary of each bullet — never which transits are covered.
 - If PERSONAL transits say "None today," return an empty personal_reading array. Do NOT fill it with natal pattern descriptions.
 - After the label, write 2-3 sentences explaining the astrological mechanic in depth — name what the transiting planet represents (its drive/domain), how the sign it's in colors that energy, what the aspect does (flow/friction/merger), what the natal placement means in its sign and house, and the real-world life area activated. Teach the reader how the symbols combine so they learn to make their own interpretations.
-- personal_reading_core is a SUBSET of personal_reading: include ONLY the bullets for transits whose natal target is the Sun, Moon, or Ascendant (the "Big Three"). Use the exact same label and interpretation as in personal_reading. If none hit the Big Three, return an empty personal_reading_core array.
 - Use ONLY the transit data listed above. Do NOT mention or reference any planetary aspects, ingresses, stations, or lunar events that are not explicitly listed. If a category says "None today," do NOT invent any.
 - CRITICAL: Use ONLY the signs from AUTHORITATIVE TRANSIT POSITIONS above. Do NOT rely on your own knowledge of where planets currently are. Every time you mention a transiting planet, you MUST use the exact sign listed there.
 ${unknownTime ? '- BIRTH TIME UNKNOWN: Their exact birth time is unknown, so the Ascendant (rising sign), angles, and houses CANNOT be determined. NEVER mention houses, house numbers, rising, the Ascendant, Midheaven, IC, Descendant, or angles anywhere in your output. Interpret by planet, sign, and aspect only. Anchor interpretations to the natal planet and its sign.' : ''}
@@ -388,7 +387,6 @@ Return JSON:
 {
   "overview": "3-4 sentences synthesizing the WHOLE of what is happening today — weave the personal transits and collective sky into one coherent narrative naming the key configurations and which life areas are lit up. Speak directly to the reader and name their natal reference points (e.g. \"your Virgo Midheaven\") where relevant",
   "personal_reading": ["TransitLabel — 2-3 sentence deep interpretation of the astrological mechanic", "..."],
-  "personal_reading_core": ["Same format as personal_reading, but ONLY for transits to the natal Sun, Moon, or Ascendant. Empty array if none."],
   "collective_reading": ["Each bullet MUST start with 'PlanetName aspectName PlanetName' (e.g. 'Jupiter trine Sun') then the collective meaning", "..."],
   "collective_highlight": "1 sentence on single most significant mundane transit",
   "maximize": "1 action sentence",
@@ -406,7 +404,6 @@ Return JSON:
       properties: {
         overview: { type: 'string' },
         personal_reading: { type: 'array', items: { type: 'string' } },
-        personal_reading_core: { type: 'array', items: { type: 'string' } },
         collective_reading: { type: 'array', items: { type: 'string' } },
         collective_highlight: { type: 'string' },
         maximize: { type: 'string' },
@@ -419,6 +416,29 @@ Return JSON:
       required: ['overview', 'personal_reading', 'collective_reading', 'maximize', 'focus', 'watch', 'best_areas'],
     },
   });
+
+  // PF-06 (speed lever 2): personal_reading_core used to be MODEL-WRITTEN,
+  // and the prompt required it to be a word-for-word duplicate subset of
+  // personal_reading — the Big Three bullets, paid for twice. It is now
+  // derived. The COVERAGE & ORDER LOCK makes personal_reading align 1:1 with
+  // the PERSONAL transit list, so when the counts agree the subset is exact
+  // by index; if the model ever miscounts, fall back to matching bullets
+  // against the core transits' label prefixes; failing that, empty — the
+  // free-tier email already falls back to the full reading for an empty core.
+  {
+    const CORE3 = new Set(['Sun', 'Moon', 'Ascendant']);
+    const list = transits.natalAspects || [];
+    const bullets = Array.isArray(result.personal_reading) ? result.personal_reading : [];
+    if (bullets.length === list.length) {
+      result.personal_reading_core = bullets.filter((_, i) => CORE3.has(list[i]?.natal_planet));
+    } else {
+      const coreLabels = list
+        .map((a, i) => CORE3.has(a.natal_planet) ? fmtNatal[i] : null)
+        .filter(Boolean)
+        .map(l => l.slice(0, 16));
+      result.personal_reading_core = bullets.filter(b => coreLabels.some(pref => String(b).startsWith(pref)));
+    }
+  }
 
   const dk = dateKey(date);
   return {

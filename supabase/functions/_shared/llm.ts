@@ -67,11 +67,19 @@ export async function invokeLLM({
   response_json_schema,
   model,
   telemetry,
+  onDelta,
 }: {
   prompt: string;
   response_json_schema?: Record<string, unknown>;
   model?: string;
   telemetry?: { userId?: string; task: string };
+  // PF-06: called with each text delta as it arrives. The caller can forward
+  // these to the browser so a reading renders progressively instead of after
+  // the final token. Latency here is output length (measured ~11ms/token, so
+  // day-synthesis at ~4,800 tokens takes ~52s); streaming does not make
+  // generation faster, it removes the wait before the first word appears.
+  // Omitted, behaviour is exactly as before.
+  onDelta?: (text: string) => void;
 }) {
   return withAiTelemetry({
     userId: telemetry?.userId,
@@ -111,6 +119,13 @@ export async function invokeLLM({
     // can run 60s+ (day synthesis), and the Edge runtime cuts idle response
     // bodies — which surfaced as truncated JSON ("Unterminated string").
     const stream = client.messages.stream(request);
+    if (onDelta) {
+      // Fire-and-forget per delta: a slow or throwing consumer must not stall
+      // or abort the generation we are already paying for.
+      stream.on("text", (chunk: string) => {
+        try { onDelta(chunk); } catch { /* consumer gone; keep generating */ }
+      });
+    }
     const response = await stream.finalMessage();
     record({
       model: response.model,

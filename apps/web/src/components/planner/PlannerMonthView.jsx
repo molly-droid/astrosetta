@@ -1,3 +1,4 @@
+import { onDayOnly } from '@/lib/transitEvents';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTransits, processTransits } from './useTransits';
 import PlanetTracker from './PlanetTracker';
@@ -147,9 +148,9 @@ function MonthDayDot({ date, chart, onSelect, sparkleColors = [], tintColor = nu
             <span className="emoji-glyph font-body text-[0.5rem] sm:text-base leading-none text-brass/60">{calendarSign(moonSign)}</span>
           </span>
         )}
-        {data?.stations?.length > 0 && (
+        {onDayOnly(data?.stations).length > 0 && (
           <div className="flex flex-wrap gap-x-0.5 gap-y-0.5 justify-center max-w-full">
-            {data.stations.map((s, i) => (
+            {onDayOnly(data.stations).map((s, i) => (
               <span
                 key={i}
                 title={`${s.planet}${s.sign ? ` in ${s.sign}` : ''} stations ${s.type}`}

@@ -10,6 +10,11 @@ if (!url || !anonKey) {
   );
 }
 
+// Exposed for the streaming llm-task call, which needs raw fetch:
+// supabase.functions.invoke() buffers the whole body before resolving.
+export const SUPABASE_URL = url;
+export const SUPABASE_ANON_KEY = anonKey;
+
 export const supabase = createClient(url, anonKey, {
   auth: {
     autoRefreshToken: true,

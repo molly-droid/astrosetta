@@ -1,3 +1,4 @@
+import { onDayOnly } from '@/lib/transitEvents';
 import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Loader2 } from 'lucide-react';
@@ -35,11 +36,11 @@ export default function PeriodHighlights({ dates, chart }) {
       const ingressMap = new Map();
       results.forEach(res => {
         if (!res) return;
-        (res.stations || []).forEach(s => {
+        onDayOnly(res.stations).forEach(s => {
           const k = `${s.planet}_${s.type}_${s.sign}`;
           if (!stationMap.has(k)) stationMap.set(k, s);
         });
-        (res.ingresses || []).forEach(ing => {
+        onDayOnly(res.ingresses).forEach(ing => {
           const k = `${ing.planet}_${ing.to_sign}_${ing.from_sign}`;
           if (!ingressMap.has(k)) ingressMap.set(k, ing);
         });

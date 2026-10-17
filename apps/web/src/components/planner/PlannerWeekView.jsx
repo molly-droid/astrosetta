@@ -1,3 +1,4 @@
+import { onDayOnly } from '@/lib/transitEvents';
 import React, { useState, useRef, useEffect } from 'react';
 import { useTransits } from './useTransits';
 import { Loader2, Sparkles, RefreshCw, Download, ChevronDown, ChevronRight, CalendarDays } from 'lucide-react';
@@ -78,11 +79,11 @@ function WeekDayCard({ date, chart, daySentence, dayTopics = [], synthLoading, o
 
   // Major transit events for the day — stations and ingresses, listed in gold
   const majorEvents = [
-    ...(data?.stations || []).map(s => ({
+    ...onDayOnly(data?.stations).map(s => ({
       key: `st-${s.planet}-${s.type}`,
       label: `${PLANET_GLYPHS[s.planet] || '✦'} ${s.planet} ${s.type === 'retrograde' ? '℞' : '↗'} ${s.sign}`,
     })),
-    ...(data?.ingresses || []).map(ing => ({
+    ...onDayOnly(data?.ingresses).map(ing => ({
       key: `in-${ing.planet}-${ing.to_sign}`,
       label: `${PLANET_GLYPHS[ing.planet] || '✦'} ${ing.planet} → ${ing.to_sign}`,
     })),
@@ -229,9 +230,9 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
         .filter(a => SLOW.has(a.transit_planet) && a.orb <= 2.5)
         .map(a => formatTransitLabel(a, tPls, natalPls, false));
       const moonInfo = moon ? `Moon in ${moon.sign} at ${moon.degree?.toFixed(1)}°` : '';
-      const fmtStations = (res.stations || []).map(s =>
+      const fmtStations = onDayOnly(res.stations).map(s =>
         `${s.planet} stations ${s.type === 'retrograde' ? 'retrograde' : 'direct'} in ${s.sign}`);
-      const fmtIngresses = (res.ingresses || []).map(ing =>
+      const fmtIngresses = onDayOnly(res.ingresses).map(ing =>
         `${ing.planet} enters ${ing.to_sign} (leaving ${ing.from_sign})`);
       return `${DOW_SHORT[d.getDay()]} ${d.getDate()}: ${moonInfo}. ${fmtAspects.join(', ') || 'no major aspects'}${fmtStations.length ? '. STATION: ' + fmtStations.join(', ') : ''}${fmtIngresses.length ? '. INGRESS: ' + fmtIngresses.join(', ') : ''}`;
     });

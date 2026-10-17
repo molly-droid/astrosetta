@@ -1,3 +1,4 @@
+import { onDayOnly } from '@/lib/transitEvents';
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { invokeLLMTask } from '@/api/llmTasks';
@@ -168,8 +169,8 @@ export default function MonthSynthesis({ date, chart }) {
 
       // Collective context for the shareable rising-sign card
       shareContextRef.current = formatCollectiveContext({
-        ingresses: res1.data?.ingresses || [],
-        stations: res1.data?.stations || [],
+        ingresses: onDayOnly(res1.data?.ingresses),
+        stations: onDayOnly(res1.data?.stations),
         mundaneAspects: [],
         moonSign: planets1.find(p => p.name === 'Moon')?.sign,
         isExactFullMoon: lunarEvents.some(e => e.startsWith('Full Moon')),

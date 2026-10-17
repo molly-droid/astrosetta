@@ -1082,6 +1082,27 @@ export default function ChartWheel({ chartData, transitData = null, transitEndDa
           }
           return lines;
         })()}
+
+        {/* UX-09: a clear-zone over the hub.
+
+            Every aspect hit-line is a chord between points on the R_ASPECT
+            circle, so they all converge through the middle — which made the
+            centre of the wheel the DENSEST selection target in it. Tapping
+            there to dismiss a selection just selected another aspect, and the
+            wheel stayed dimmed; the only reliable escape was the pill's ✕.
+            Reported on relationship charts, but it reproduces on My Chart too.
+
+            Rendered last so it sits above the aspect layers. It carries no
+            cursor:pointer, so the svg's own walk-up treats it as empty space
+            even if this handler is ever removed. Aspects stay tappable along
+            the rest of their length: at r≈0.45·R_ASPECT this only shadows the
+            middle of near-oppositions, which are the easiest lines to hit
+            elsewhere anyway. */}
+        <circle
+          cx={cx} cy={cy} r={Math.round(R_ASPECT * 0.45)}
+          fill="transparent" pointerEvents="all"
+          onClick={() => { setSelected(null); if (onSelect) onSelect(null); }}
+        />
       </svg>
 
       {/* Selection info pill */}

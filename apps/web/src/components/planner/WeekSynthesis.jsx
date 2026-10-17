@@ -1,3 +1,4 @@
+import { onDayOnly } from '@/lib/transitEvents';
 import React, { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
 import { invokeLLMTask } from '@/api/llmTasks';
@@ -186,8 +187,8 @@ export default function WeekSynthesis({ days, chart }) {
 
     // Collective context for the shareable rising-sign card
     shareContextRef.current = formatCollectiveContext({
-      ingresses: results[0]?.ingresses || [],
-      stations: results[0]?.stations || [],
+      ingresses: onDayOnly(results[0]?.ingresses),
+      stations: onDayOnly(results[0]?.stations),
       mundaneAspects: [],
       moonSign: firstDayPlanets.find(p => p.name === 'Moon')?.sign,
       isExactFullMoon: false,

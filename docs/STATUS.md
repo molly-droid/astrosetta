@@ -545,6 +545,25 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-17 (Tony): **Round 2 engineering day — B-22 ✅, UX-09 ✅, B-23 hang
+✅, PF-06 measured + streaming shipped, B-26 cannot-reproduce.** Details and
+verification evidence in FEEDBACK_ROUND2.md (updated in place). Highlights:
+B-22 was NOT the ephemeris — seven Planner sites rendered `approaching`
+stations/ingresses as happening today, including in LLM context; fixed with
+`lib/transitEvents.js` and verified before/after at device width. PF-06 is
+quantified: LLM latency is 10–15ms per output token, day-synthesis = 4,779
+tokens = ~52s, chart math ~400ms and cached; prompt is byte-identical to
+Base44's. Streaming shipped end to end (llm-task `stream: true` → NDJSON;
+Daily Reading renders the overview as it arrives): first text 3.0s vs 52s.
+`llm-task` redeployed with the streaming branch (backward-compatible; only
+clients sending `stream: true` get NDJSON). Remaining PF-06 levers need
+Molly: cut the duplicated `personal_reading_core` (content), pre-generate the
+week (cost; closes B-23/PF-05). B-26: her exact repro passes on web — bonus
+round IS offered after a retake; likely buried below the Practitioner's Lens
+on a phone; ask her. Verification now runs through authenticated puppeteer
+against the dev server (test passwords set on both tony accounts via the
+auth admin API; scripts in the session scratchpad)._
+
 _2026-10-16 (Tony): **Molly's round 2 landed — see `docs/FEEDBACK_ROUND2.md`.**
 Her doc was updated Oct 16 8:00 PM against build 1.0 (7): 14 round-1 items
 verified fixed, 3 reported still failing, 10 new (B-21–B-26, UX-09, PF-05,

@@ -545,6 +545,21 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-18 pm (Tony): **Android purchase flow VERIFIED end to end on real
+hardware.** Premium monthly purchased on a physical Pixel (BrowserStack App
+Live, Play-delivered build, license-tester test card, purchaser
+admin@silexdev.com): Play -> RevenueCat -> revenuecat-webhook ->
+billing_snapshots (entitlement calendar/google) -> users.subscription_tier
+projected to calendar over an older Apple-sandbox interpret entitlement.
+Notes: the license-tester test card took ~16h to appear after the account
+was added (fresh merchant profile; not misconfiguration). Play's price
+dialog had silently rounded all four base plans to suggested price points
+(5.49/54.99/7.99/74.99) — fixed 2026-10-18 by editing each United States
+row directly (the top field only sets the new-countries default), and
+verified live via Play's API: 5.59/55/7.79/77, exact iOS parity. License-tester subs renew every ~5min
+and auto-cancel — the expiry path exercises the webhook for free. Purchase
+QA for Android is CLOSED._
+
 _2026-10-18 (Tony): **iOS build 8 (1.0) uploaded to TestFlight** — the first
 build carrying the round-2 fixes Molly reported on build 7: B-22 transit
 dates, B-23 hang fix + streaming (PF-06 lever 1), UX-09 hub tap-to-clear,

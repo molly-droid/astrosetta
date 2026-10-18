@@ -545,6 +545,19 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-18 (Tony): **iOS build 8 (1.0) uploaded to TestFlight** — the first
+build carrying the round-2 fixes Molly reported on build 7: B-22 transit
+dates, B-23 hang fix + streaming (PF-06 lever 1), UX-09 hub tap-to-clear,
+B-13/B-21 full-width interpretation text, B-11 14px bodies, B-07 Big Three
+ascendant, wheel-skeleton CLS fix. Uploaded via Xcode Organizer; the CLI
+path needs the ASC API key issuer ID (keys exist in
+~/.appstoreconnect/private_keys, team H3Y82CW5LH) — capture the issuer ID to
+make build 9 hands-off. NOTE for future uploads: this Mac's Xcode Organizer
+holds archives of OTHER apps (arcservicepro, caddieai, hisvoiceapp) — verify
+the archive's bundle id is com.astrosetta.app before Distribute; tonight's
+first attempt accidentally pushed an old arcservicepro archive (rejected by
+Apple, no harm done)._
+
 _2026-10-17 night (Tony): **Play billing unblocked and fully configured.**
 Molly's Google Payments merchant profile cleared. Tony created the two Play
 subscriptions — product IDs `interpret` (Core) and `calendar` (Premium),

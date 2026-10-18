@@ -545,6 +545,43 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-17 night (Tony): **Play billing unblocked and fully configured.**
+Molly's Google Payments merchant profile cleared. Tony created the two Play
+subscriptions — product IDs `interpret` (Core) and `calendar` (Premium),
+matching the internal tier IDs — each with `monthly`/`yearly` base plans at
+the STORE prices $5.59/$55 and $7.79/$77. Store prices intentionally differ
+from web/Stripe ($5.55/$7.77): Apple's price points forced 5.59/7.79 on iOS
+and Play copies iOS for store parity. KNOWN COSMETIC GAP: shared components
+hardcode "$5.55/mo" in upsell CTAs that also render natively (DaySynthesis /
+WeekSynthesis / MonthSynthesis, StreakBonusCard, ZodiacHousesSelector,
+UpgradeTab, SubscriptionSection, permissions.js) — PaywallModal already shows
+the live store price on native, so checkout is honest; fix is to drop prices
+from native CTA copy if we care about the 4¢. RevenueCat fully wired (Claude,
+via API): Android products `interpret:monthly|yearly`, `calendar:monthly|yearly`
+created on app appd3e40d25f4, attached to entitlements `interpret`/`calendar`
+and to offerings `core`/`premium` $rc_monthly/$rc_annual packages beside the
+iOS products; Play service-account credentials were already configured.
+Signed AAB (upload key ~/.astrosetta-keys/astrosetta-upload.jks) built as
+versionCode 2 (versionCode 1 was burned by our earlier upload) and rolled out
+to the Internal testing track; tony.tamer21@gmail.com added as tester +
+license tester. NEXT: once the opt-in link propagates (~1h), install from
+Play Store on the Play-image emulator signed into that account, purchase
+Core monthly, verify billing_snapshots + tier projection server-side._
+
+_2026-10-17 evening (Tony): **Android Home "ghosting" closed as an emulator
+artifact — the app is clean on real hardware.** The ghost gauges/tab-row over
+the Home header (originally finding A2) reproduced on two AVDs and both GPU
+modes, but in-WebView CDP captures were pixel-perfect every single time while
+the emulator's displayed frame ghosted/froze — and a real Pixel 7
+(BrowserStack App Live) rendered Home correctly. Verdict: the Intel-Mac
+emulator mangles frame presentation; it is for functional QA only, visual
+sign-off needs a real device. The `LazyChartWheel` skeleton-footprint fix is
+kept on merit (removes mount CLS on all platforms). Full evidence chain in
+ANDROID_QA.md finding A2. BrowserStack free-trial minutes are now exhausted;
+future hardware checks: Samsung Remote Test Lab (free), Firebase Test Lab
+(free, would need a flag-gated QA auto-login APK), or Jacob's phone if he
+has an Android._
+
 _2026-10-17 (Tony): **Copy decisions settled without further asks to Molly.**
 - **Founding-rate wording ACCEPTED by Tony as-is**: "for as long as your
   subscription stays active" (Subscribe page, Plan tab banner, plan cards).

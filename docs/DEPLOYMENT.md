@@ -189,6 +189,15 @@ interpretation dependency remains).
 ## 5. Post-cutover smoke (production)
 
 - Sign in via password reset (migrated account) and via Google.
+- **Apple purchase sheet shows the Astrosetta artwork** (B-25 — Molly asked
+  for this explicitly, and it needs verifying at release regardless): start a
+  subscription purchase on the LIVE App Store build and confirm the sheet
+  shows the app icon / subscription promotional image, not the grey
+  placeholder. TestFlight always shows the placeholder — the sheet pulls
+  imagery from the published App Store listing, so release day is the first
+  moment this can truly pass. Promotional images are uploaded per product in
+  ASC → Monetization → Subscriptions and ride through review with the
+  submission.
 - New signup → onboarding → chart calculation → /home.
 - A planner day view (transit calculation) + one LLM synthesis panel.
 - Navigator conversation round-trip.

@@ -13,6 +13,69 @@ failure needs: screen, what you did, what happened, and a screenshot.
 
 ---
 
+## Results — first pass, 2026-10-17 (emulator)
+
+Pixel 10 AVD, API 37 Play image, x86_64, **4GB RAM** (at the stock 2GB the
+Play image thrashes into "System UI isn't responding" loops — bump the AVD
+before blaming the app). Driven over adb against the debug build containing
+all round-2 fixes. Screenshots in the session scratchpad.
+
+**Passing:** splash (right logo, right #0f1a2e, no white flash) · cold start
+renders · sign-in with email/password end to end · keyboard pushes the login
+form up instead of covering it (§3) · Chart page complete (wheel, Big Three,
+angles, no clipping at 1080×2424) · placement tap → selection pill →
+interpretation generates (§9) · **UX-09 hub-tap clear verified on device** ·
+Planner day view (§9) · hardware back from Planner returns one page (§2) ·
+`astrosetta://home` deep link opens Home signed-in (§6) · background +
+relaunch resumes signed-in, no spinner, no reset (§4, short-gap case) ·
+status-bar icons light-on-dark (§1) · bottom nav clears the gesture pill
+(§1) · custom fonts, starfield to every edge, aspect lines legible (§8).
+
+**FINDINGS:**
+- **A1 — RESOLVED, no code change (2026-10-17 pm).** The per-route style
+  sync in `native.jsx` already exists and is correct; proven live over CDP —
+  `setStyle` flips icon colour under edge-to-edge, and a clean signed-out
+  visit to /login shows dark icons with `getInfo().style === 'LIGHT'`. The
+  light-icons observation came from the first thrashing 2GB boot, where the
+  call was evidently lost in the ANR storm. Transient under extreme memory
+  pressure only; not reproducible on a healthy device.
+- **A2 — EMULATOR ARTIFACT, closed (2026-10-17 late pm).** Ghost copies of
+  the gauges/tab row over the Home hero (plus, in later sessions, a frozen
+  splash over a loaded page, a half-rendered wheel, and stray fragments).
+  The original diagnosis blamed a mount-time layout shift from an
+  undersized `ChartWheelSkeleton`; that shift was real and the fix is KEPT
+  (`LazyChartWheel.jsx` skeleton now reserves the wheel's true
+  `aspect-square` footprint — removes the mount CLS on every platform),
+  but it was NOT the cause. The ghosts came back with the fix installed and
+  layout shift measured at zero (PerformanceObserver: single 0.013 entry).
+  What settled it: `Page.captureScreenshot` from inside the WebView was
+  **pixel-perfect in every scenario** while `adb screencap` of the same
+  moment showed ghosts — on BOTH the API 37 preview AVD and a stable API 35
+  AVD, under BOTH host GPU and `swiftshader_indirect`, with the starfield
+  canvas disabled, through system-process ANRs and multi-minute frame
+  freezes. The app composites correctly; the emulator on this Intel Mac
+  mangles frame presentation. Confirmed on real hardware: Home rendered
+  correctly on a physical Pixel 7 (BrowserStack App Live, visual check,
+  2026-10-17). Do not chase visual artifacts on this machine's emulator —
+  it is for FUNCTIONAL checks only; visual sign-off needs a real device
+  (BrowserStack/Samsung RTL/Firebase Test Lab, or Jacob's phone if he has
+  an Android). Scroll-invalidation and tab-switch top-of-page captures on
+  hardware are still wanted; a QA-only auto-login APK (flag-gated) would
+  make Firebase Test Lab runs hands-free if repeat checks are needed.
+- **A3 — NEW, needs a controlled retest: session may not survive an
+  immediate force-stop.** Signed in via UI, then `adb install -r` +
+  `force-stop` shortly after → app relaunched signed OUT. WebView
+  localStorage flushes asynchronously, so a kill right after sign-in can
+  drop the session. Confounded by the install; retest cleanly: sign in,
+  wait 60s, force-stop, relaunch (§4 kill-from-recents).
+
+**Not yet run:** rotation, system font-size, share card (§5), predictive
+back + back-with-modal (§2), kill-from-recents (§4), Learn module / quiz on
+device, Week/Month planner, performance feel (§10) — the emulator is not
+hardware, so §10 needs a real device or at least a settled emulator session.
+
+---
+
 ## 1. Edge-to-edge and safe areas — HIGHEST RISK
 
 `targetSdk 36`. Android 15 and above **force edge-to-edge** for apps

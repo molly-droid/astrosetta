@@ -531,6 +531,14 @@ opted-in beta users — expected, but know it's live.
 15. Launch flips: `GATING_ADMIN_ONLY` → false in BOTH `permissions.js` and
     `llm_tasks/core.ts`; declare `LAUNCH_DATE` in stamp-founding-member when
     Molly ends the founding window
+    **SEQUENCING (noted 2026-10-19): the client half of this flag is baked
+    into the native binary.** The store-submitted builds (Phase 4) must
+    already carry `GATING_ADMIN_ONLY = false`, or (a) every app user keeps
+    free Premium at launch until an app update clears review, and (b) the
+    App Review demo account can't see the paywalls, so Apple can't locate
+    the subscriptions it is reviewing. Flip the client constant in the
+    release-candidate build; the server-side flip in `llm_tasks/core.ts`
+    can stay a cutover-day deploy.
 16. Decommission Base44 (only after media + interpretations confirmed
     independent); delete orphaned V2 functions from the Supabase project
     (test-ephemeris, calculate-chart, generate-synthesis)
@@ -544,6 +552,19 @@ iOS. Does not resolve C-01: Molly's $5.55/$7.77 remains open for the WEB
 Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
+
+_2026-10-19 later (Tony): **iOS build 9 (1.0) uploaded to TestFlight —
+first fully headless upload.** Carries the B-26 Bonus Round reorder (the
+only client-side change since build 8). Recipe now hands-off end to end:
+`xcodebuild -project apps/web/ios/App/App.xcodeproj` archive (NO workspace —
+SPM layout), export with teamID H3Y82CW5LH, then `xcrun altool --upload-app
+--apiKey 5W8QPDGB55 --apiIssuer 8f6d7d87-2614-4c65-b4d6-d1891124db57` (that
+issuer pairs only with key 5W8QPDGB55; the other .p8 keys on this Mac are
+other teams'). Also created the **Apple review demo account**
+apple.review@silexdev.com (Supabase dashboard Add-user + Auto Confirm — the
+handle_new_user trigger builds the profile row; free tier, learner role,
+founding-stamped, chart Jan 15 1990 New York, Cap/Virgo/Sag) — goes into
+App Review Information at submission; password with Tony/Molly privately._
 
 _2026-10-19 (Tony): **Molly answered B-26 and the pre-generation question;
 both implemented — pre-gen DEPLOYED and VERIFIED, B-26 verified in a local

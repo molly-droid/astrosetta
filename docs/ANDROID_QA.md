@@ -69,6 +69,35 @@ status-bar icons light-on-dark (§1) · bottom nav clears the gesture pill
   drop the session. Confounded by the install; retest cleanly: sign in,
   wait 60s, force-stop, relaunch (§4 kill-from-recents).
 
+**Second pass — 2026-10-18, real hardware (BrowserStack App Live, physical
+Pixel, Play-delivered build):**
+- **Purchases PASS** — Premium monthly bought with the license-tester test
+  card; Play -> RevenueCat -> webhook -> billing_snapshots -> tier projected
+  to calendar. License-tester subs renew every ~5min and self-cancel: the
+  expiry correctly demoted the user (snapshot refreshed, tier recomputed).
+- **Restore Purchases PASS** — restored on a second app account (+b5):
+  RevenueCat transferred the store receipt between app users, webhooks fired
+  for BOTH accounts, projections recomputed. Transfer-on-restore is
+  RevenueCat's default and the intended model (the store account owns the
+  purchase).
+- **Calendar OAuth PASS** — Connect opened Google consent, callback bounced
+  back into the app, google_calendar_connections row stored with access +
+  refresh tokens; Sync created events visible in calendar.google.com;
+  Molly's round-2 "Remove synced events" cleanup removed them all (first
+  on-device run of that feature).
+- Prices: Play's Set-prices dialog silently rounds every country (US
+  included) to suggested price points, and the top field only sets the
+  new-countries default — each United States row was edited directly and
+  verified via Play's API at 5.59/55/7.79/77 (iOS parity).
+
+**Native items still untested** (any BrowserStack session): account
+deletion flow (Apple review requires it — confirm it exists), email
+magic-link/reset flow on a phone (lands in browser, not app — cutover
+experience), A3 controlled retest + kill-from-recents, share card (section 5),
+OS-level font scaling, rotation (or confirm portrait lock), offline/airplane
+grace, long-background resume, section 10 performance feel on a mid-range
+device. iOS at release: B-25 purchase-sheet artwork.
+
 **Not yet run:** rotation, system font-size, share card (§5), predictive
 back + back-with-modal (§2), kill-from-recents (§4), Learn module / quiz on
 device, Week/Month planner, performance feel (§10) — the emulator is not

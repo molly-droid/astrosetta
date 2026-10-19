@@ -404,7 +404,31 @@ Deno.serve(async (req) => {
     const charts = await base44.asServiceRole.entities.Chart.list();
     const today = new Date();
     today.setUTCHours(12, 0, 0, 0);
-    const dk = dateKey(today);
+
+    // Pre-generate today plus the next 3 days (scope confirmed by the client,
+    // 2026-10-19) so near-future Planner days open instantly. Each day's
+    // chartCalculator call also warms ephemeris_cache, so the day's transit
+    // and chart elements render without live computation either.
+    const DAYS_AHEAD = 3;
+    const dayList = Array.from({ length: DAYS_AHEAD + 1 }, (_, i) => {
+      const d = new Date(today);
+      d.setUTCDate(today.getUTCDate() + i);
+      return d;
+    });
+
+    // Which of the in-range days lack a day synthesis at this user's depth
+    const missingDaysFor = async (c) => {
+      const depth = await fetchKnowledgeDepth(base44, c.user_id);
+      const missing = [];
+      for (const d of dayList) {
+        const existing = await base44.asServiceRole.entities.CalendarSynthesis.filter({
+          user_id: c.user_id,
+          period_key: `day-v20-${dateKey(d)}-${depth}`,
+        });
+        if (!existing.length) missing.push(d);
+      }
+      return { depth, missing };
+    };
 
     // Select which chart(s) to process
     let toProcess;
@@ -413,22 +437,18 @@ Deno.serve(async (req) => {
     } else if (process_all) {
       toProcess = charts;
     } else {
-      // Find first chart without today's day synthesis (at the user's current depth)
+      // Find first chart missing any in-range day synthesis
       toProcess = [];
       for (const c of charts) {
         const raw = c.raw_data || {};
         if (!raw.birth_date || !raw.planets?.length) continue;
-        const depth = await fetchKnowledgeDepth(base44, c.user_id);
-        const existing = await base44.asServiceRole.entities.CalendarSynthesis.filter({
-          user_id: c.user_id,
-          period_key: `day-v20-${dk}-${depth}`,
-        });
-        if (!existing.length) { toProcess = [c]; break; }
+        const { missing } = await missingDaysFor(c);
+        if (missing.length) { toProcess = [c]; break; }
       }
     }
 
     if (!toProcess.length) {
-      return json({ status: 'complete', message: 'All charts already have today\'s synthesis', remaining: 0 });
+      return json({ status: 'complete', message: 'All charts already have the in-range day syntheses', remaining: 0 });
     }
 
     // Week starts on Sunday
@@ -450,60 +470,94 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      // Store immediately after each generation (update if exists, create if
+      // not). The runtime hard-kills a worker at its wall clock (~400s) and a
+      // kill between generation and a store-at-the-end loses every reading in
+      // the run — proven 2026-10-19 when a 4-day refresh died after ~7 min
+      // with nothing persisted. Incremental stores keep completed work; the
+      // next scheduled run fills whatever remains.
+      const storeSynthesis = async (synth) => {
+        const existing = await base44.asServiceRole.entities.CalendarSynthesis.filter({
+          user_id: chart.user_id,
+          period_key: synth.period_key,
+        });
+        const payload = { user_id: chart.user_id, ...synth, generated_at: new Date().toISOString() };
+        if (existing[0]) {
+          await base44.asServiceRole.entities.CalendarSynthesis.update(existing[0].id, payload);
+        } else {
+          await base44.asServiceRole.entities.CalendarSynthesis.create(payload);
+        }
+      };
+
       try {
-        // Use chartCalculator for accurate transit data (matching the frontend exactly)
-        // This ensures ingress period_keys match between pre-generation and frontend cache lookups
-        let transits;
-        try {
-          const calcData = await getCalculatorTransits(base44, raw, dk);
-          transits = classifyCalculatorTransits(calcData, raw);
-          console.log(`[preGen] chartCalculator OK for chart ${chart.id}, ingresses: ${transits.ingresses?.length || 0}`);
-        } catch (calcErr) {
-          console.error(`[preGen] chartCalculator failed for chart ${chart.id}: ${calcErr.message}`);
-          // Skip — using simplified fallback math would produce inaccurate transit
-          // data that gets cached and shown to users as if it were real.
-          results.push({ id: chart.id, status: 'skipped', reason: 'chartCalculator unavailable' });
-          continue;
-        }
-        const syntheses = [];
+        const { depth, missing } = await missingDaysFor(chart);
+        // Every path only fills gaps — the LLM is never re-run on a cached
+        // day (to force a day's regeneration, delete its row first). Capped
+        // at 3 day syntheses per invocation (~51s each) to stay inside the
+        // wall clock; the next scheduled run picks up the rest. chart_id /
+        // process_all bypass chart selection and force-refresh week/month.
+        const force = !!(chart_id || process_all);
+        const daysToGen = missing.slice(0, 3);
+        let stored = 0;
+        let calcFailed = false;
 
-        // Day synthesis (generated at the user's current knowledge density)
-        const depth = await fetchKnowledgeDepth(base44, chart.user_id);
-        syntheses.push(await generateDaySynthesis(base44, raw, today, transits, depth));
+        for (const day of daysToGen) {
+          const dkDay = dateKey(day);
+          // Use chartCalculator for accurate transit data (matching the frontend exactly)
+          // This ensures ingress period_keys match between pre-generation and frontend cache lookups
+          let transits;
+          try {
+            const calcData = await getCalculatorTransits(base44, raw, dkDay);
+            transits = classifyCalculatorTransits(calcData, raw);
+            console.log(`[preGen] chartCalculator OK for chart ${chart.id} ${dkDay}, ingresses: ${transits.ingresses?.length || 0}`);
+          } catch (calcErr) {
+            console.error(`[preGen] chartCalculator failed for chart ${chart.id} ${dkDay}: ${calcErr.message}`);
+            calcFailed = true;
+            break;
+          }
 
-        // Lunar event synthesis (if exact new/full moon)
-        if (transits.isExactFullMoon || transits.isExactNewMoon) {
-          const exactPhase = transits.isExactFullMoon ? 'Full Moon' : 'New Moon';
-          syntheses.push(await generateLunarSynthesis(base44, raw, today, transits.moonSign, exactPhase));
-        }
+          // Day synthesis (generated at the user's current knowledge density)
+          await storeSynthesis(await generateDaySynthesis(base44, raw, day, transits, depth));
+          stored++;
 
-        // Ingress syntheses (for each exact ingress today)
-        for (const ing of transits.ingresses) {
-          syntheses.push(await generateIngressSynthesis(base44, raw, today, ing));
-        }
+          // Lunar event synthesis (if exact new/full moon that day)
+          if (transits.isExactFullMoon || transits.isExactNewMoon) {
+            const exactPhase = transits.isExactFullMoon ? 'Full Moon' : 'New Moon';
+            await storeSynthesis(await generateLunarSynthesis(base44, raw, day, transits.moonSign, exactPhase));
+            stored++;
+          }
 
-        // Week synthesis
-        syntheses.push(await generateWeekSynthesis(base44, raw, weekDays));
-
-        // Month synthesis
-        syntheses.push(await generateMonthSynthesis(base44, raw, monthDate));
-
-        // Store all records (update if exists, create if not)
-        const genAt = new Date().toISOString();
-        for (const synth of syntheses) {
-          const existing = await base44.asServiceRole.entities.CalendarSynthesis.filter({
-            user_id: chart.user_id,
-            period_key: synth.period_key,
-          });
-          const payload = { user_id: chart.user_id, ...synth, generated_at: genAt };
-          if (existing[0]) {
-            await base44.asServiceRole.entities.CalendarSynthesis.update(existing[0].id, payload);
-          } else {
-            await base44.asServiceRole.entities.CalendarSynthesis.create(payload);
+          // Ingress syntheses (for each exact ingress that day)
+          for (const ing of transits.ingresses) {
+            await storeSynthesis(await generateIngressSynthesis(base44, raw, day, ing));
+            stored++;
           }
         }
 
-        results.push({ id: chart.id, user_id: chart.user_id, status: 'ok', items: syntheses.length });
+        if (calcFailed) {
+          // Stop — using simplified fallback math would produce inaccurate transit
+          // data that gets cached and shown to users as if it were real.
+          results.push({ id: chart.id, status: 'skipped', reason: 'chartCalculator unavailable', items: stored });
+          continue;
+        }
+
+        // Week and month content is identical whichever day of the period
+        // generates it, so the scheduled path only creates them when absent;
+        // explicit admin calls force a refresh.
+        const hasSynthesis = async (period_key) =>
+          (await base44.asServiceRole.entities.CalendarSynthesis.filter({ user_id: chart.user_id, period_key })).length > 0;
+
+        if (force || !(await hasSynthesis(`week-v9-${dateKey(weekDays[0])}`))) {
+          await storeSynthesis(await generateWeekSynthesis(base44, raw, weekDays));
+          stored++;
+        }
+        const mm = String(monthDate.getUTCMonth() + 1).padStart(2, '0');
+        if (force || !(await hasSynthesis(`month-v9-${monthDate.getUTCFullYear()}-${mm}`))) {
+          await storeSynthesis(await generateMonthSynthesis(base44, raw, monthDate));
+          stored++;
+        }
+
+        results.push({ id: chart.id, user_id: chart.user_id, status: 'ok', items: stored, days_remaining: missing.length - daysToGen.length });
       } catch (err) {
         results.push({ id: chart.id, status: 'error', error: err.message });
       }
@@ -516,12 +570,8 @@ Deno.serve(async (req) => {
         const raw = c.raw_data || {};
         if (!raw.birth_date || !raw.planets?.length) continue;
         if (toProcess.find(p => p.id === c.id)) continue;
-        const depth = await fetchKnowledgeDepth(base44, c.user_id);
-        const existing = await base44.asServiceRole.entities.CalendarSynthesis.filter({
-          user_id: c.user_id,
-          period_key: `day-v20-${dk}-${depth}`,
-        });
-        if (!existing.length) remaining++;
+        const { missing } = await missingDaysFor(c);
+        if (missing.length) remaining++;
       }
     }
 

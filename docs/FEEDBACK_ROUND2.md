@@ -83,16 +83,17 @@ App Store Connect (the subscription's promotional image, and the app icon).
 A config task, and a quick one. Worth confirming before anyone opens an
 editor.
 
-**B-26 ❓ (cannot reproduce, 2026-10-17)** — no route to the bonus round
+**B-26 ✅ (fixed 2026-10-19, pending build)** — no route to the bonus round
 after a quiz retake.
 → Ran her exact repro end to end on the web build: complete quiz → Retake →
 complete again. "Bonus Round" is offered after BOTH passes, and no
-once-per-day rule exists client- or server-side. Most likely she couldn't
-FIND it: after a retake it sits below the full Practitioner's Lens card and
-"Path to Adept" — several phone-screens down (her wording is "no way to GET
-TO"). Ask her, with the screenshot, whether it was absent or buried; if
-buried, the fix is card ordering — her call. iOS-specific behaviour not
-ruled out.
+once-per-day rule exists client- or server-side. She couldn't FIND it: after
+a retake it sits below the full Practitioner's Lens card and "Path to
+Adept" — several phone-screens down. Asked her 2026-10-18; her answer: "I
+don't think I could see bonus round but totally possible it was buried,
+let's move it up." Done: `DailyQuizCard.jsx` renders BonusQuizCard first,
+above the Lens and Path to Adept, in both completed-state branches. Ships in
+the next build.
 
 **UX-09 ✅ (fixed and verified 2026-10-17)** — tapping out didn't clear a
 selection; the wheel stayed dimmed.
@@ -224,7 +225,13 @@ Levers, in order:
    duplicate subset of `personal_reading` — the model writes those bullets
    twice. Derive it by filtering instead. Content change: Molly sees it
    first.
-3. **Pre-generate the week** (extends the existing today-only cron). Closes
-   B-23 and PF-05 properly. Cost/scope decision: Molly.
+3. **Pre-generate ahead — DECIDED, deployed and verified 2026-10-19.**
+   Molly chose 3 days ("generate next 3 days of readings but also
+   all the chart elements if possible"): `pre-generate-synthesis` now covers
+   today through D+3 (day syntheses + lunar/ingress), and each day's
+   chartCalculator call warms `ephemeris_cache` so the chart elements render
+   instantly too. Week/month rows are no longer regenerated daily — only
+   created when missing — which pays for the extra days. Closes B-23's
+   remaining latency and PF-05's day-open path.
 4. Optional: same prompt on a faster model (`LLM_MODEL` env swap),
    quality-checked side by side before committing.

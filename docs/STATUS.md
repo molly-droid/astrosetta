@@ -545,6 +545,37 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-19 (Tony): **Molly answered B-26 and the pre-generation question;
+both implemented — pre-gen DEPLOYED and VERIFIED, B-26 verified in a local
+iOS build (ships in build 9).** B-26: she likely couldn't see the
+Bonus Round because it rendered below the Practitioner's Lens and Path to
+Adept — per her "let's move it up", `DailyQuizCard.jsx` now renders
+BonusQuizCard first in both completed-state branches. Pre-generation: she
+chose **3 days ahead** "but also all the chart elements if possible" —
+`pre-generate-synthesis` now generates day syntheses (plus any lunar/ingress
+readings) for today **through D+3** instead of today only; each day's
+chartCalculator call permanently warms `ephemeris_cache`, so those days'
+transit/chart elements also render instantly (her "chart elements"). The
+scheduled path now only fills missing period_keys — it no longer re-runs
+the LLM daily on existing week/month rows (cost saving funds the extra
+days); explicit `chart_id`/`process_all` calls still force a full refresh.
+Gap-filling capped at 3 day syntheses per invocation (~51s each) to stay
+inside the edge-function wall clock; the 10-min cron picks up the rest. No
+cron or client changes needed — DaySynthesis already looks up
+`day-v20-<date>-<depth>`. HARD LESSON from the first deploy: the inherited
+design stored ALL rows at the END of the run, and the runtime hard-kills a
+worker at ~400s wall clock — a forced 4-day refresh generated ~7 min of
+readings and lost every one. Fixed same day: each synthesis is now stored
+the moment it's generated (a killed run keeps its completed work), and
+`chart_id`/`process_all` no longer force-regenerate days — every path fills
+gaps only (delete a row to force a day's regen); force still refreshes
+week/month. Verified live: targeted run stored D+3 ~1 min after trigger,
+then week + month; cron tick independently filled another chart's 3 days;
+Planner on device opened Oct 20/21/22 instantly, Oct 23 (outside window)
+streamed live. Closes B-23's remaining latency and PF-05/PF-06 lever 3.
+Remaining ship item: web/native build for the B-26 quiz-card reorder (build
+9 / versionCode 3)._
+
 _2026-10-18 pm (Tony): **Android purchase flow VERIFIED end to end on real
 hardware.** Premium monthly purchased on a physical Pixel (BrowserStack App
 Live, Play-delivered build, license-tester test card, purchaser

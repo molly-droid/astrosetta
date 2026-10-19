@@ -310,9 +310,10 @@ export default function DailyQuizCard({ userProgress, onProgressUpdate, transits
           </Button>
         </motion.div>
 
+        {/* B-26: Bonus Round above the Lens so it's reachable after a retake */}
+        <BonusQuizCard userProgress={userProgress} />
         {bonusUnlocked && <StreakBonusCard userProgress={userProgress} />}
         {!tierAdvanced && <TierProgressCard userProgress={userProgress} />}
-        <BonusQuizCard userProgress={userProgress} />
       </div>
     );
   }
@@ -348,9 +349,9 @@ export default function DailyQuizCard({ userProgress, onProgressUpdate, transits
             Retake Quiz
           </Button>
         </div>
+        <BonusQuizCard userProgress={userProgress} />
         {bonusUnlocked && <StreakBonusCard userProgress={userProgress} />}
         <TierProgressCard userProgress={userProgress} />
-        <BonusQuizCard userProgress={userProgress} />
       </div>
     );
   }

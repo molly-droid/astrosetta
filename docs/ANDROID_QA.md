@@ -90,8 +90,10 @@ Pixel, Play-delivered build):**
   new-countries default — each United States row was edited directly and
   verified via Play's API at 5.59/55/7.79/77 (iOS parity).
 
-**Native items still untested** (any BrowserStack session): account
-deletion flow (Apple review requires it — confirm it exists), email
+**Native items still untested** (any BrowserStack session): ~~account
+deletion flow~~ (VERIFIED 2026-10-19 on web, full cascade confirmed in DB —
+same React component serves native; pre-cutover the emailed confirm link
+targets Base44's domain, see the STATUS RC-checklist note), email
 magic-link/reset flow on a phone (lands in browser, not app — cutover
 experience), A3 controlled retest + kill-from-recents, share card (section 5),
 OS-level font scaling, rotation (or confirm portrait lock), offline/airplane

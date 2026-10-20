@@ -539,6 +539,27 @@ opted-in beta users — expected, but know it's live.
     the subscriptions it is reviewing. Flip the client constant in the
     release-candidate build; the server-side flip in `llm_tasks/core.ts`
     can stay a cutover-day deploy.
+    **Second RC-build constraint (verified 2026-10-19): account deletion.**
+    The Apple-required flow is fully built (Profile → Security & Privacy →
+    Delete Account; `account-deletion` function deployed ACTIVE; web
+    `/delete-account` confirm page routed) — but the emailed confirmation
+    link points at the baked `VITE_APP_URL` (`https://astrosetta.com` in
+    every build so far), which is still BASE44's app until DNS cutover. The
+    in-app flow works; the emailed link 404s pre-cutover. The web app must
+    be serving `/delete-account` at the baked URL BEFORE store submission,
+    or a reviewer exercising deletion hits a dead link. Net: Phase 4 store
+    submission needs a mini RC checklist — gating flipped in the binary,
+    deletion link target live, store-price CTAs cleaned.
+    **E2E-verified same day (web, throwaway account):** request → Resend
+    email → token confirm → full cascade (auth.users gone; a sweep of every
+    public table with a user_id column left ONLY the completed
+    account_deletion_request audit row, token stored hashed). Corrections
+    from the live test: (a) VITE_APP_URL overrides the origin on WEB too,
+    not just native — every current build emails deletion links to Base44's
+    domain (the token worked when the same link was opened on our app);
+    (b) copy nit for Molly: the dialog promises nothing user-linkable is
+    kept, but the audit row retains user_email — keep the record, soften
+    the copy, or drop the email column: her call.
 16. Decommission Base44 (only after media + interpretations confirmed
     independent); delete orphaned V2 functions from the Supabase project
     (test-ephemeris, calculate-chart, generate-synthesis)

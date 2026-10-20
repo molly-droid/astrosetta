@@ -1,6 +1,12 @@
 import React from 'react';
+import { base44 } from '@/api/base44Client';
 
 const UserNotRegisteredError = () => {
+  // A session can outlive its account (e.g. right after account deletion).
+  // Without a real sign-out this screen is a dead end until the token
+  // expires, so "logging out" below must be an actual button.
+  const signOut = () => base44.auth.logout('/');
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-white to-slate-50">
       <div className="max-w-md w-full p-8 bg-white rounded-lg shadow-lg border border-slate-100">
@@ -22,6 +28,12 @@ const UserNotRegisteredError = () => {
               <li>Try logging out and back in again</li>
             </ul>
           </div>
+          <button
+            onClick={signOut}
+            className="mt-6 w-full px-4 py-2.5 rounded-md bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 transition-colors"
+          >
+            Log out
+          </button>
         </div>
       </div>
     </div>

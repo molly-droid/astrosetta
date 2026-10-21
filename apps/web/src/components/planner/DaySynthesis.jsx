@@ -11,7 +11,7 @@ import { findNatalHouseForSign } from '@/lib/houseUtils';
 import { analyzeChartDynamics, getActivatedDynamics } from '@/lib/chartDynamics';
 import { analyzeChartDignities, getNotableTransitDignities } from '@/lib/essentialDignities';
 import { getMundanePatterns } from '@/lib/mundanePatterns';
-import { getEffectiveTier } from '@/lib/permissions';
+import { getEffectiveTier, CORE_CTA_LABEL } from '@/lib/permissions';
 import { useAuth } from '@/lib/AuthContext';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
 import { fetchExplanation } from '@/lib/explainIt';
@@ -622,7 +622,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
                         context="daily synthesis"
                         title="Unlock your full daily synthesis"
                         description="Get maximize, focus, and watch guidance — plus chart-dynamics insight — for every day."
-                        ctaLabel="Unlock Core — $5.55/mo"
+                        ctaLabel={CORE_CTA_LABEL}
                       />
                     )}
                     <p className="font-body text-[0.625rem] text-brass/60 italic pt-1">

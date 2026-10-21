@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Lightbulb } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { usePermissions } from '@/lib/permissions';
+import { isNativePlatform } from '@/lib/platform';
 import GatedFeature from '@/components/paywall/GatedFeature';
 
 export default function StreakBonusCard({ userProgress }) {
@@ -27,7 +28,7 @@ export default function StreakBonusCard({ userProgress }) {
         fromTier={tier === 'free' ? 'free' : 'interpret'}
         context="the Practitioner's Lens"
         title="Practitioner's Lens"
-        description="The daily cheat-code transit insight is a Core feature. Unlock it with Core — $5.55/mo."
+        description={`The daily cheat-code transit insight is a Core feature. Unlock it with Core${isNativePlatform() ? '' : ' — $5.55/mo'}.`}
         ctaLabel="Unlock Core"
       />
     );

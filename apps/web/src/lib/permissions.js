@@ -2,6 +2,7 @@
  * Centralized tier permission logic.
  * Import `usePermissions` in any component to gate features.
  */
+import { isNativePlatform } from './platform';
 
 /**
  * Derives effective tier from user data.
@@ -12,9 +13,10 @@ export function getEffectiveTier(user) {
   // BETA: all users treated as paid. Set to false once payments launch.
   const BETA_ALL_PAID = false;
   if (BETA_ALL_PAID) return 'calendar';
-  // Soft-launch preview: only admins see the paywalls/gating when published.
-  // Non-admins get full access until we flip this to false for the real launch.
-  const GATING_ADMIN_ONLY = true;
+  // Launch gating is LIVE (flipped 2026-10-20 for the App Store RC build —
+  // Apple must be able to find the paywalls to review the subscriptions).
+  // The server-side mirror in llm_tasks/core.ts flips at cutover deploy.
+  const GATING_ADMIN_ONLY = false;
   if (GATING_ADMIN_ONLY && user.role !== 'admin') return 'calendar';
   const tier = user.subscription_tier;
   if (!tier || tier === 'free') return 'free';
@@ -79,6 +81,14 @@ export function getPermissions(user) {
 export function usePermissions(user) {
   return getPermissions(user);
 }
+
+// Upsell teaser copy. Native builds must not quote the web price — the
+// stores charge their own price points ($5.59/$7.79), and copy contradicting
+// the purchase sheet is an App Review rejection. Teasers go price-free on
+// native; the paywall itself shows the store's localized price.
+export const CORE_CTA_LABEL = isNativePlatform()
+  ? 'Unlock Core'
+  : 'Unlock Core — $5.55/mo';
 
 export const TIER_LABELS = {
   free: 'Free',

@@ -12,7 +12,7 @@ import ShareSheet from '@/components/share/ShareSheet';
 import { buildRisingSignCardData, formatCollectiveContext } from '@/lib/shareCard';
 import SynthesisCategoryCard from '@/components/planner/SynthesisCategoryCard';
 import { useAuth } from '@/lib/AuthContext';
-import { usePermissions } from '@/lib/permissions';
+import { usePermissions, CORE_CTA_LABEL } from '@/lib/permissions';
 import GatedFeature from '@/components/paywall/GatedFeature';
 
 const DOW_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -121,7 +121,7 @@ export default function WeekSynthesis({ days, chart }) {
         context="weekly synthesis"
         title="Unlock your week-ahead synthesis"
         description="Get a day-by-day forecast with best days, key themes, and maximize, focus, and watch guidance for the week."
-        ctaLabel="Unlock Core — $5.55/mo"
+        ctaLabel={CORE_CTA_LABEL}
       />
     );
   }

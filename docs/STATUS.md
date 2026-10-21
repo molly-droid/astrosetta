@@ -574,6 +574,27 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-20 (Tony): **App Store submission prep — RC build 1.0 (10) built
+and uploaded (headless).** Decision: submit now, release at cutover (ASC
+"Manually release this version"). RC changes in the binary:
+(1) `GATING_ADMIN_ONLY = false` in permissions.js — REAL TIER GATING IS NOW
+IN EVERY BUILD from 10 on; TestFlight testers incl. Molly will see paywalls
+(sandbox purchases restore access — tell her before she updates); server
+mirror in llm_tasks/core.ts stays true until cutover deploy.
+(2) Native price-copy sweep: new `CORE_CTA_LABEL` in permissions.js
+(price-free on native, "$5.55/mo" kept on web) used by Day/Week/Month
+synthesis CTAs + ZodiacHousesSelector; StreakBonusCard description
+conditional; UpgradeTab now fetches store-localized prices on native like
+SubscriptionSection (which was already correct). Web prices untouched.
+TIER_LABELS' prices left as-is (only used by the admin TierTesting page).
+(3) B-26 + the not-registered Log out fix ride along.
+`docs/APP_STORE_SUBMISSION.md` is the submission runbook: ASC checklist
+(manual release, App Privacy answers, review notes with the demo account,
+attach all 4 subscriptions + review screenshots), division of labor —
+Molly owns screenshots/description/keywords (drafts provided), Tony the
+forms. Known-acceptable: web not at astrosetta.com until cutover (approved
+app sits unreleased)._
+
 _2026-10-19 later (Tony): **iOS build 9 (1.0) uploaded to TestFlight —
 first fully headless upload.** Carries the B-26 Bonus Round reorder (the
 only client-side change since build 8). Recipe now hands-off end to end:

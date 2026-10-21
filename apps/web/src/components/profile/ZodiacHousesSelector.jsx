@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Loader2, Check, Lock } from 'lucide-react';
 import { extractPlacementKeys } from '@/lib/chartUtils';
 import { getTradition } from '@/lib/traditions';
-import { usePermissions } from '@/lib/permissions';
+import { usePermissions, CORE_CTA_LABEL } from '@/lib/permissions';
 import { useAuth } from '@/lib/AuthContext';
 import { toast } from 'sonner';
 import PaywallModal from '@/components/paywall/PaywallModal';
@@ -203,7 +203,7 @@ export default function ZodiacHousesSelector({ userProgress, existingChart, onCh
             onClick={() => setShowPaywall(true)}
             className="inline-flex items-center gap-1.5 bg-gold-primary hover:bg-gold-accent text-deep-blue font-body text-xs font-semibold px-4 py-2 rounded-full transition-colors"
           >
-            Unlock Core — $5.55/mo
+            {CORE_CTA_LABEL}
           </button>
         </div>
       )}

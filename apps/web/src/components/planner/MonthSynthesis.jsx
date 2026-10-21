@@ -12,7 +12,7 @@ import ShareSheet from '@/components/share/ShareSheet';
 import { buildRisingSignCardData, formatCollectiveContext } from '@/lib/shareCard';
 import SynthesisCategoryCard from '@/components/planner/SynthesisCategoryCard';
 import { useAuth } from '@/lib/AuthContext';
-import { usePermissions } from '@/lib/permissions';
+import { usePermissions, CORE_CTA_LABEL } from '@/lib/permissions';
 import GatedFeature from '@/components/paywall/GatedFeature';
 
 // Match the Day view's text styling: gold body → white highlights, white body → gold highlights
@@ -82,7 +82,7 @@ export default function MonthSynthesis({ date, chart }) {
         context="monthly synthesis"
         title="Unlock your month-ahead synthesis"
         description="Get a month-at-a-glance forecast with best areas, key themes, and maximize, focus, and watch guidance for the whole month."
-        ctaLabel="Unlock Core — $5.55/mo"
+        ctaLabel={CORE_CTA_LABEL}
       />
     );
   }

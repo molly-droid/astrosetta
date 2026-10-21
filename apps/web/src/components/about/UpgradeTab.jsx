@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Sparkles, CalendarDays, GraduationCap } from 'lucide-react';
+import { isNativePlatform } from '@/lib/platform';
+import { purchasesEnabled, getNativePriceString } from '@/lib/purchases';
 
 const PLANS = [
   {
@@ -55,6 +57,28 @@ const PLANS = [
 ];
 
 export default function UpgradeTab() {
+  // Store-localized prices on native — Apple/Google price points differ from
+  // the web's founding prices, and copy that contradicts the purchase sheet
+  // is an App Review rejection. Until the store answers, show no price.
+  const [nativePrices, setNativePrices] = useState(null);
+  useEffect(() => {
+    if (!isNativePlatform() || !purchasesEnabled()) return;
+    let alive = true;
+    (async () => {
+      const [core, premium] = await Promise.all([
+        getNativePriceString('interpret', 'monthly'),
+        getNativePriceString('calendar', 'monthly'),
+      ]);
+      if (alive && (core || premium)) setNativePrices({ Core: core, Premium: premium });
+    })();
+    return () => { alive = false; };
+  }, []);
+  const planPrice = (plan) => {
+    if (!isNativePlatform() || plan.name === 'Free') return plan.price;
+    const p = nativePrices?.[plan.name];
+    return p ? `${p}/mo` : '';
+  };
+
   return (
     <div className="space-y-4">
       <div className="celestial-card p-4 space-y-3 border border-gold-primary/30 bg-gold-primary/5">
@@ -89,7 +113,7 @@ export default function UpgradeTab() {
                   </span>
                 )}
               </div>
-              <p className="font-display text-lg font-bold text-white">{plan.price}</p>
+              <p className="font-display text-lg font-bold text-white">{planPrice(plan)}</p>
             </div>
             <ul className="space-y-1.5">
               {plan.features.map((f, i) => (

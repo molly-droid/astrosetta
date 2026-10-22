@@ -12,7 +12,23 @@ by Oct 21).
 
 ---
 
-## B-27 (P0) + E-03 (P0) — sign-up email confirmation is broken for new users
+## B-27 ✅ (fixed and E2E-verified 2026-10-22) + E-03 (core fixed; templates for reset/magic-link remain) — sign-up email confirmation
+
+**Shipped:** sign-up confirmation is now an 8-digit code typed in the app
+(`verifyOtp`, mode `verify` in Login.jsx) — no link, no redirect, identical
+on web and native. Auth emails now send via Resend SMTP as
+"Astrosetta <hello@astrosetta.com>" with a branded code template; the
+2/hour Supabase default limit is gone (30/hour); `site_url` corrected from
+`http://localhost:5173` (!) to `https://astrosetta.com` with a dev/deep-link
+allowlist. E2E-verified by Tony as a fresh user: branded email → wrong code
+rejected with friendly copy → correct code lands signed-in in onboarding
+(DB: confirmed flag, profile row, founding stamp all ✓) → Resend button
+verified on a second account → duplicate signup with an existing confirmed
+email correctly says "sign in instead" (anti-enumeration handled).
+**E-03 remainder:** brand the password-reset/magic-link templates and sort
+the reset flow's native return (cutover email pass). Verification found the
+original config was worse than reported: the confirmation link pointed at
+localhost:5173.
 
 "New-email sign-up sends Supabase's default 'Confirm your email address'
 email (sender: Supabase Auth), and the flow can't be completed from it. New

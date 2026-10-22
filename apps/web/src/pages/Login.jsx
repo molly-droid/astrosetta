@@ -31,10 +31,11 @@ export default function Login() {
     return '/home';
   }, []);
 
-  const [mode, setMode] = useState('signin'); // signin | signup | forgot | recovery
+  const [mode, setMode] = useState('signin'); // signin | signup | verify | forgot | recovery
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [notice, setNotice] = useState(null);
@@ -81,13 +82,45 @@ export default function Login() {
         options: { data: fullName ? { full_name: fullName } : {} },
       });
       if (err) throw err;
+      // Anti-enumeration: an already-registered email returns a user with no
+      // identities and sends nothing — don't strand them on the code screen.
+      if (data.user && data.user.identities?.length === 0) {
+        setMode('signin');
+        throw new Error('An account with this email already exists — sign in instead.');
+      }
       if (data.session) {
         await checkUserAuth();
         window.location.assign('/onboarding');
       } else {
-        setNotice('Check your email to confirm your account, then sign in.');
-        setMode('signin');
+        // B-27: confirmation is an 8-digit code typed here — no email link to
+        // follow, so the flow completes identically on web and native.
+        setCode('');
+        setNotice(`We emailed an 8-digit code to ${email}.`);
+        setMode('verify');
       }
+    });
+
+  const verifyCode = () =>
+    run(async () => {
+      const { data, error: err } = await supabase.auth.verifyOtp({
+        email,
+        token: code.trim(),
+        type: 'signup',
+      });
+      if (err) {
+        throw new Error('That code didn\'t match or has expired. Check the latest email or resend the code.');
+      }
+      if (data.session) {
+        await checkUserAuth();
+        window.location.assign('/onboarding');
+      }
+    });
+
+  const resendCode = () =>
+    run(async () => {
+      const { error: err } = await supabase.auth.resend({ type: 'signup', email });
+      if (err) throw err;
+      setNotice(`New code sent to ${email}.`);
     });
 
   const signInWithGoogle = () =>
@@ -135,6 +168,7 @@ export default function Login() {
   const titles = {
     signin: ['Welcome back', 'Sign in to continue your chart journey'],
     signup: ['Create your account', 'Your birth chart is a few steps away'],
+    verify: ['Check your email', 'Enter the 8-digit code we just sent you'],
     forgot: ['Reset your password', "We'll email you a secure link to set a new one"],
     recovery: ['Set a new password', 'Choose a new password for your account'],
   };
@@ -170,6 +204,7 @@ export default function Login() {
           e.preventDefault();
           if (mode === 'signin') signIn();
           else if (mode === 'signup') signUp();
+          else if (mode === 'verify') verifyCode();
           else if (mode === 'forgot') sendReset();
           else setNewPassword();
         }}
@@ -192,14 +227,32 @@ export default function Login() {
           </div>
         )}
 
-        {mode !== 'recovery' && (
+        {mode === 'verify' && (
+          <div className="space-y-1.5">
+            <Label htmlFor="otp_code">8-digit code</Label>
+            <Input
+              id="otp_code"
+              inputMode="numeric"
+              pattern="[0-9]{8}"
+              maxLength={8}
+              required
+              autoComplete="one-time-code"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+              placeholder="12345678"
+              className="text-center text-lg tracking-[0.35em]"
+            />
+          </div>
+        )}
+
+        {mode !== 'recovery' && mode !== 'verify' && (
           <div className="space-y-1.5">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
           </div>
         )}
 
-        {mode !== 'forgot' && (
+        {mode !== 'forgot' && mode !== 'verify' && (
           <div className="space-y-1.5">
             <Label htmlFor="password">{mode === 'recovery' ? 'New password' : 'Password'}</Label>
             <Input
@@ -223,19 +276,21 @@ export default function Login() {
           </div>
         )}
 
-        <Button type="submit" className="w-full" disabled={busy}>
+        <Button type="submit" className="w-full" disabled={busy || (mode === 'verify' && code.length !== 8)}>
           {busy
             ? 'One moment…'
             : mode === 'signin'
               ? 'Sign in'
               : mode === 'signup'
                 ? 'Create account'
-                : mode === 'forgot'
-                  ? 'Send reset link'
-                  : 'Save new password'}
+                : mode === 'verify'
+                  ? 'Verify and continue'
+                  : mode === 'forgot'
+                    ? 'Send reset link'
+                    : 'Save new password'}
         </Button>
 
-        {mode !== 'recovery' && (
+        {mode !== 'recovery' && mode !== 'verify' && (
           <>
             <div className="relative my-2">
               <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
@@ -254,6 +309,13 @@ export default function Login() {
           {mode === 'signup' && (
             <>Already have an account?{' '}
               <button type="button" className="underline underline-offset-2" onClick={() => setMode('signin')}>Sign in</button>
+            </>
+          )}
+          {mode === 'verify' && (
+            <>Didn't get it?{' '}
+              <button type="button" className="underline underline-offset-2" disabled={busy} onClick={resendCode}>Resend code</button>
+              {' · '}
+              <button type="button" className="underline underline-offset-2" onClick={() => { setCode(''); setMode('signup'); }}>Use a different email</button>
             </>
           )}
           {mode === 'forgot' && (

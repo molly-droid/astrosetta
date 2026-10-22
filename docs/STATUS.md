@@ -574,6 +574,24 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-22 evening (Tony): **B-27 FIXED and E2E-verified — sign-up now
+confirms via an 8-digit emailed code typed in the app** (no link, no
+redirect; works identically web/native). Server-side auth config changed
+via management API (NOT in the repo — record): custom SMTP smtp.resend.com
+:465 as "Astrosetta <hello@astrosetta.com>" (Resend send-only key works as
+SMTP pass), rate_limit_email_sent 2→30/hr, `site_url`
+http://localhost:5173 → https://astrosetta.com, uri_allow_list now
+astrosetta://login + localhost:5173/5174 + astrosetta.com, branded
+confirmation template with {{ .Token }} (subject "Your Astrosetta sign-up
+code"). Project OTP length is 8 (mailer_otp_length) — the UI matches.
+Client: Login.jsx gained the `verify` mode (verifyOtp type signup, resend,
+duplicate-email guard). Verified as a fresh user end to end incl. wrong
+code, resend endpoint, duplicate guard; DB trigger chain intact. E-03
+remainder: reset/magic-link template branding + native reset return —
+cutover email pass. Test accounts +newuser1/+newuser2 abandoned at
+onboarding (no charts — no pre-gen cost); delete at leisure. Ships in
+build 11 with the B-28 fix._
+
 _2026-10-22 pm (Tony): **Round 3 triaged from Molly's PDF export —
 docs/FEEDBACK_ROUND3.md.** Four effective new items: B-27+E-03 (P0,
 missed from late Oct 16: sign-up confirmation email is Supabase-default and

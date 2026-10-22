@@ -574,6 +574,35 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-22 pm (Tony): **Round 3 triaged from Molly's PDF export —
+docs/FEEDBACK_ROUND3.md.** Four effective new items: B-27+E-03 (P0,
+missed from late Oct 16: sign-up confirmation email is Supabase-default and
+can't complete — FIX BEFORE STORE SUBMISSION; plan = email OTP + Resend
+SMTP + branded templates), B-28 (P0, Today's reading repeats across days +
+re-types from cache — uninvestigated, suspect client cache/date key),
+B-29 (P0 — root-caused and fixed, see below; residual: pending-state copy
+in PlanSelection), and her C-01 row now requests $5.55/$7.77 on the plan
+page — fine on web, CONFLICTS with store pricing on native; needs a reply,
+not action._
+
+_2026-10-22 (Tony): **Molly's round-3 "upgrade didn't register" diagnosed
+and fixed — ASC subscription group was mis-ranked.** Levels were
+interpret.monthly(1)/interpret.yearly(2)/calendar.monthly(3)/
+calendar.yearly(4), so Apple treated Core→Premium as a DOWNGRADE and
+deferred it to next renewal: Molly bought Core (TestFlight sandbox), tapped
+upgrade to Premium, Apple confirmed — but kept her on Core until the next
+day's renewal (`auto_renewal_status: will_change_product` in RevenueCat).
+Server tier correctly tracked Apple, so the app showed Core gating while
+she believed she was Premium. Fix (via ASC API; the UI reorder was locked
+by the draft review submission's items — emptied the draft first):
+Premium m+y = level 1, Core m+y = level 2. Upgrades now apply immediately
+with proration. Her deferred change completed 07:47Z — she is Premium now.
+Same-level monthly↔yearly switches also un-deferred. NOTE: the four subs
+must be RE-ATTACHED on the version page at submission (their draft items
+were the lock). Round-3 items live in Molly's artifact (shared with
+admin@silexdev.com only — export PDF or share with tony.tamer21@gmail.com
+for direct triage)._
+
 _2026-10-20 (Tony): **App Store submission prep — RC build 1.0 (10) built
 and uploaded (headless).** Decision: submit now, release at cutover (ASC
 "Manually release this version"). RC changes in the binary:

@@ -45,7 +45,15 @@ experience. Admin accounts are unaffected.
       must be LIVE URLs; today they resolve to the Base44 site, which is
       fine (same product, policy pages already exist there — confirm paths)
 - [ ] App Privacy questionnaire — guide in §6
-- [ ] Age rating questionnaire — nothing applies; lands at 4+
+- [ ] Age rating questionnaire — completed 2026-10-21, calculated **9+**
+      (wellness topics Yes, mature themes Infrequent, rest None).
+      **OPEN — BLOCKS SUBMISSION: ToS vs rating.** The Terms require users
+      to be 18+, and Apple requires the rating to align with a EULA age
+      minimum. Molly must choose: override rating to 18+ (reach cost), or
+      lower the Terms' use-minimum to 16/13 (purchase flow keeps its 18+
+      authorization checkbox — that part doesn't drive the rating). Saved
+      as Not Applicable (no override) pending her answer — do not submit
+      before this is resolved.
 - [ ] Category: Lifestyle (primary), Education (secondary)
 - [ ] Price: Free (with in-app purchases)
 - [ ] **App Review Information**: sign-in required ✓,
@@ -55,6 +63,16 @@ experience. Admin accounts are unaffected.
       (display name + description) and a **review screenshot** (B-25: a
       screenshot of the paywall/plan screen is acceptable); subscription
       GROUP also needs a localization ("Astrosetta").
+      **2026-10-22: done once, then deliberately UNDONE — re-add all four
+      at actual submission.** The attach created a draft review submission
+      whose items lock the subscription group's rank order, and the group
+      order was WRONG (Core outranked Premium → Apple treated Core→Premium
+      as a downgrade and deferred it to next renewal — Molly's round-3
+      "upgrade didn't register" report). Fixed via API after emptying the
+      draft: Premium monthly+yearly = level 1, Core monthly+yearly =
+      level 2. Upgrades are now immediate/prorated. Review screenshots and
+      availability survive — only the version-page attachment must be
+      redone.
 
 ## 4. After approval (do NOT release)
 

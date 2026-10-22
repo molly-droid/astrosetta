@@ -574,6 +574,14 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-23 (Tony): **iOS build 11 (1.0) uploaded — the submission
+candidate.** Carries B-27 (OTP sign-up) + B-28 (day rollover) on top of
+build 10's RC state (gating live, store-true prices, B-26). In ASC: swap
+the version's attached build 10 → 11 once processing completes, and
+remember the four subscriptions re-attach at submit. This is also Molly's
+retest build (tell her: density slider regenerates readings by design;
+sign-up now uses an emailed 8-digit code)._
+
 _2026-10-23 (Tony): **B-28 FIXED and E2E-verified — "today" now rolls over
 on native resume.** Root cause: Planner froze `new Date()` in state at
 mount and the long-lived webview (round-1 resume fix) keeps pages mounted

@@ -6,6 +6,7 @@ import { useTabUrl } from '@/hooks/useTabUrl';
 import { base44 } from '@/api/base44Client';
 import { Loader2, BookOpen, ChevronDown, ChevronRight } from 'lucide-react';
 import { useTransits } from '@/components/planner/useTransits';
+import { useToday } from '@/lib/useToday';
 import DaySynthesis from '@/components/planner/DaySynthesis';
 import DailyQuizCard from '@/components/quiz/DailyQuizCard';
 import LazyChartWheel from '@/components/chart/LazyChartWheel';
@@ -85,7 +86,10 @@ export default function Home() {
     });
   }, [setActiveTab]);
 
-  const today = new Date();
+  // B-28: state-backed so the page re-renders with the new day after a
+  // long-backgrounded native resume (a bare `new Date()` only refreshes
+  // when something else happens to re-render Home).
+  const today = useToday();
   const { data: todayTransits } = useTransits(chart ? today : null, chart);
 
   const lunation = (todayTransits?.isExactNewMoon || todayTransits?.isExactFullMoon) ? {

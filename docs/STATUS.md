@@ -574,6 +574,21 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-23 (Tony): **B-28 FIXED and E2E-verified — "today" now rolls over
+on native resume.** Root cause: Planner froze `new Date()` in state at
+mount and the long-lived webview (round-1 resume fix) keeps pages mounted
+for days — reopening the app next morning showed yesterday as Today with
+yesterday's reading. New `lib/useToday.js` (visibility/resume/focus +
+midnight timer, identity changes only on actual day rollover); Planner
+follows the rollover only when the user was on the old today; Home's today
+is state-backed. E2E-verified via puppeteer with a mocked clock against
+the real backend: +24h resume rolled the header and fetched the new day's
+pre-gen row (instant, no typing); a deliberately-picked date survived a
+rollover untouched. The "re-types itself" half was NOT a replay bug: DB
+shows her device generating at technical/essential depths (density-slider
+testing) against insightful pre-gen rows — every (day×depth) first-open
+legitimately generates and streams. Ships in build 11 with B-27._
+
 _2026-10-22 evening (Tony): **B-27 FIXED and E2E-verified — sign-up now
 confirms via an 8-digit emailed code typed in the app** (no link, no
 redirect; works identically web/native). Server-side auth config changed

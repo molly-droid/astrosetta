@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { useToday, isSameCalendarDay } from '@/lib/useToday';
 import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { Loader2, ChevronLeft, ChevronRight, CalendarDays, X, Sparkles } from 'lucide-react';
@@ -42,7 +43,20 @@ export default function Planner() {
   const [chart, setChart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useTabUrl('view', 'Day');
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const today = useToday();
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+  // B-28: the webview survives backgrounding for days, so a mount-time
+  // "today" goes stale overnight and keeps showing yesterday's reading as
+  // Today. When the calendar day rolls over, follow it — but only if the
+  // user was sitting on the old "today", never off a date they chose.
+  const prevTodayRef = useRef(today);
+  useEffect(() => {
+    const prev = prevTodayRef.current;
+    if (!isSameCalendarDay(prev, today)) {
+      setCurrentDate((cur) => (isSameCalendarDay(cur, prev) ? today : cur));
+      prevTodayRef.current = today;
+    }
+  }, [today]);
   const [showSyncModal, setShowSyncModal] = useState(false);
   const [dayTransitData, setDayTransitData] = useState(null);
   const [spotlightDynamics, setSpotlightDynamics] = useState(false);

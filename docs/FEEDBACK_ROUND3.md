@@ -58,23 +58,38 @@ Her two options, assessed:
   Supabase email templates (subject/body) are settable via the management
   API.
 
-## B-28 (P0) — Today's reading repeats day after day, and re-types on every open
+## B-28 ✅ (fixed and E2E-verified 2026-10-23) — Today's reading repeats day after day, and re-types on every open
 
 "Same reading repeats day after day instead of reflecting each day's
 transits. It also re-types itself on screen every time it's opened.
 Calendar sync readings look correctly day-specific."
 
-→ NOT YET INVESTIGATED. Two distinct defects implied:
-1. **Stale content across days** — server data is provably day-specific
-   (pre-gen writes distinct `day-v20-<date>-<depth>` rows per day; her
-   calendar events differ per day), so suspicion falls on the client:
-   the localStorage layer in `synthesisCache.js`, or the Today surface
-   resolving its date once and caching it. Repro per her steps: open
-   Planner → Today on two different days.
-2. **Re-typing animation on cached content** — the PF-06 streaming
-   renderer should only animate a LIVE stream; content served from cache
-   must render instantly. Likely the streaming path runs regardless of
-   cache hit.
+→ Two separate explanations, one code fix:
+1. **The repeat was a frozen calendar, not stale content.** Planner stored
+   "today" in state at MOUNT (`useState(new Date())`), and the native
+   webview survives backgrounding for days (deliberately — the round-1
+   resume fix). Reopen the app the next morning and "Today" is still
+   yesterday, showing yesterday's (correct-for-its-date) reading. Google
+   Calendar has a real clock, hence her "calendar sync readings look
+   correctly day-specific." FIXED with `lib/useToday.js`: the calendar day
+   re-checks on visibility/resume/focus and at a midnight timer; Planner
+   follows the rollover ONLY if the user was sitting on the old today
+   (never yanked off a deliberately-picked date); Home's `today` is now
+   state-backed so a resume re-renders it. Verified end to end in a real
+   browser (clock mocked +24h, visibilitychange fired, real auth + prod
+   backend): header rolled Oct 22→23 and the network fetched
+   `day-v20-2026-10-23` (pre-gen row — instant, no typing); a user parked
+   on Oct 22 stayed there through a second rollover. Planner was the only
+   mount-frozen date in the codebase (swept).
+2. **The re-typing was real generation, not a replay bug.** Server data
+   shows her device generated at depths `technical` then `essential` on
+   Oct 21 morning (she was testing the Knowledge Density slider), while
+   pre-generation had written `insightful` rows — every (day × depth)
+   first-open is a genuine cache miss, generates live, and streams
+   (types). By design: a different density IS a different reading. After
+   the rollover fix, the common path (same depth, new day) hits pre-gen
+   and renders instantly. Note for her reply: changing the density slider
+   regenerates readings at the new depth — the typing she saw was that.
 
 ## B-29 (P0) — Premium purchased but not recognized
 

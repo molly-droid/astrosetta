@@ -14,7 +14,7 @@ export default function TermsOfService() {
       <p>Astrosetta is an astrology learning platform that generates personalized natal charts, daily transit readings, educational content, and AI-powered interpretations. Features may change, be added, or removed at any time.</p>
 
       <h2 className="font-display text-lg font-semibold text-foreground mt-6 mb-2">2. Eligibility</h2>
-      <p>You must be at least <strong>18 years old</strong> to use the Service. By using the Service, you represent that you meet this requirement and are legally able to enter into a binding agreement. The Service is not directed at, and should not be used by, anyone under 18.</p>
+      <p>By using the Service, you represent that you are legally able to enter into a binding agreement, or that you use the Service with the consent of a parent or legal guardian who agrees to these Terms on your behalf. The Service is not directed at children under 13, and we do not knowingly collect personal information from them. You must be at least <strong>18 years old</strong> to purchase a subscription.</p>
 
       <h2 className="font-display text-lg font-semibold text-foreground mt-6 mb-2">3. Your Account</h2>
       <p>You are responsible for maintaining the confidentiality of your account credentials and for all activity under your account. You agree to provide accurate information when creating your account and to keep it updated. You must notify us immediately of any unauthorized use of your account.</p>

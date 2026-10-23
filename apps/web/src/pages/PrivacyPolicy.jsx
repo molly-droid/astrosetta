@@ -73,7 +73,7 @@ export default function PrivacyPolicy() {
       <p>To exercise any of these rights, contact us at the information provided in Section 12. We will respond within the timeframe required by applicable law (generally 30–45 days).</p>
 
       <h2 className="font-display text-lg font-semibold text-foreground mt-6 mb-2">9. Children's Privacy</h2>
-      <p>The Service is not intended for individuals under <strong>18 years of age</strong>. We do not knowingly collect data from anyone under 18. If you believe a minor has provided us with information, please contact us for prompt removal.</p>
+      <p>The Service is not directed at children under <strong>13 years of age</strong>, and we do not knowingly collect personal information from them. If you believe a child under 13 has provided us with information, please contact us for prompt removal. Purchasing a subscription requires being at least 18 years old.</p>
 
       <h2 className="font-display text-lg font-semibold text-foreground mt-6 mb-2">10. International Data Transfers</h2>
       <p>Your data may be processed by our hosting and AI infrastructure providers in locations outside your home country. Where this occurs, we rely on appropriate safeguards such as standard contractual clauses to ensure a level of data protection consistent with applicable law. We will update this section as our infrastructure providers and data-center locations are finalized.</p>

@@ -35,6 +35,23 @@ import DmcaPolicy from './pages/DmcaPolicy';
 import CaliforniaPrivacyNotice from './pages/CaliforniaPrivacyNotice';
 import AccessibilityStatement from './pages/AccessibilityStatement';
 
+// Legal / policy pages are PUBLIC: signed-out users reach them from the
+// login footer, and the App Store privacy-policy link points here — they
+// must never fall through to the Landing catch-all.
+const legalRoutes = (
+  <>
+    <Route path="/legal" element={<Legal />} />
+    <Route path="/privacy" element={<PrivacyPolicy />} />
+    <Route path="/privacy-label" element={<PrivacyNutritionLabel />} />
+    <Route path="/terms" element={<TermsOfService />} />
+    <Route path="/cookie-policy" element={<CookiePolicy />} />
+    <Route path="/refund-policy" element={<RefundPolicy />} />
+    <Route path="/dmca" element={<DmcaPolicy />} />
+    <Route path="/california-privacy-notice" element={<CaliforniaPrivacyNotice />} />
+    <Route path="/accessibility" element={<AccessibilityStatement />} />
+  </>
+);
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, isAuthenticated } = useAuth();
 
@@ -58,6 +75,7 @@ const AuthenticatedApp = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/delete-account" element={<AccountDeletion />} />
+          {legalRoutes}
           <Route path="*" element={<Landing />} />
         </Routes>
       );
@@ -69,6 +87,7 @@ const AuthenticatedApp = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/delete-account" element={<AccountDeletion />} />
+        {legalRoutes}
         <Route path="*" element={<Landing />} />
       </Routes>
     );
@@ -94,16 +113,7 @@ const AuthenticatedApp = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/delete-account" element={<AccountDeletion />} />
 
-      {/* Legal / policy pages */}
-      <Route path="/legal" element={<Legal />} />
-      <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/privacy-label" element={<PrivacyNutritionLabel />} />
-      <Route path="/terms" element={<TermsOfService />} />
-      <Route path="/cookie-policy" element={<CookiePolicy />} />
-      <Route path="/refund-policy" element={<RefundPolicy />} />
-      <Route path="/dmca" element={<DmcaPolicy />} />
-      <Route path="/california-privacy-notice" element={<CaliforniaPrivacyNotice />} />
-      <Route path="/accessibility" element={<AccessibilityStatement />} />
+      {legalRoutes}
 
       <Route path="*" element={<PageNotFound />} />
     </Routes>

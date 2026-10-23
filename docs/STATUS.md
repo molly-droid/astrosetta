@@ -574,6 +574,34 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-23 late (Tony): **Age language settled, legal pages made public,
+interim web deploy live, builds 12–13 uploaded — build 13 is the
+submission candidate.** (1) Terms/Privacy age fix (see
+APP_STORE_SUBMISSION.md): no use-minimum, under-13 COPPA clause, 18+ only
+at purchase — matches the 9+ rating; Molly gets an FYI, not a question.
+(2) REAL BUG found en route: the legal routes existed only in the
+authenticated router — signed-out users (and reviewers tapping Terms on
+the login screen, or the App Store privacy link) got the LANDING page.
+Fixed via shared `legalRoutes` fragment in all three route tables.
+(3) Interim web deploy: **https://astrosetta.vercel.app** — new project
+`astrosetta` under Molly's Vercel scope (her existing projects untouched),
+static prebuilt dist with SPA rewrites; raw deployment URLs stay
+auth-gated, the alias is public; /privacy,/terms,/legal verified
+rendering. ASC privacy URL → vercel.app/privacy, support URL →
+vercel.app/legal (astrosetta.com's were rendering Base44's LANDING page —
+the live site has no legal routes; swap both to astrosetta.com at
+cutover). TODO next redeploy: robots.txt Disallow-all (deploy from a
+staging copy, NOT dist/ — `vercel link` drops .vercel/ + .env.local with
+an OIDC token into the deploy dir, and cap sync nearly baked them into
+build 13; caught pre-upload, build killed, cleaned, rebuilt with an
+in-pipeline leak check; nothing shipped). (4) Builds: 12 (Terms fix) and
+13 (Terms fix + public legal routes) uploaded headlessly; 12 is
+superseded — attach 13 to the version. Threat-model note: abuse surface is
+quota-bounded and prompt-injection-proof (structured llm-task params
+only); optional hardening anytime = flip server-side GATING_ADMIN_ONLY
+early (caps strays at free-tier 50/day; also makes tester quotas
+tier-real)._
+
 _2026-10-23 (Tony): **iOS build 11 (1.0) uploaded — the submission
 candidate.** Carries B-27 (OTP sign-up) + B-28 (day rollover) on top of
 build 10's RC state (gating live, store-true prices, B-26). In ASC: swap

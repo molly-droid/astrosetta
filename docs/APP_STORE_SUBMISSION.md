@@ -54,6 +54,13 @@ experience. Admin accounts are unaffected.
       authorization checkbox — that part doesn't drive the rating). Saved
       as Not Applicable (no override) pending her answer — do not submit
       before this is resolved.
+      **RESOLVED 2026-10-22 (Tony's call, Molly gets FYI):** the 18+
+      use-minimum was OUR boilerplate — the live Base44 app has no legal
+      pages at all, and her actual spec gates only PURCHASES at 18+. Terms
+      now have no use-minimum (guardian-consent formulation + under-13
+      COPPA clause; 18+ kept for purchases); Privacy children's section
+      matches. The 9+ calculated rating stands with no override. Ships in
+      build 13.
 - [ ] Category: Lifestyle (primary), Education (secondary)
 - [ ] Price: Free (with in-app purchases)
 - [ ] **App Review Information**: sign-in required ✓,

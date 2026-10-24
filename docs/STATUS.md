@@ -592,7 +592,20 @@ through it and cross-store guards stop Apple/Google-billed users from opening
 a second subscription on the wrong biller. Classification: F-01 (new product
 work), not a migration regression — the downgrade path was never in the F-01
 spec's implementation. Native UI parts ship in the NEXT builds (iOS 15 /
-Android versionCode 3); not in review build 14._
+Android versionCode 3); not in review build 14. ALSO FOUND during testing, a
+real launch bug: a forfeited founder (lapsed subscriber) got "Store price
+unavailable" and a dead paywall on native — the code routes non-founding
+monthly buyers to `core_standard`/`premium_standard` RevenueCat offerings,
+which were never configured. FIXED permanently as designed: both standard
+offerings created ($rc_monthly, same store products attached — store prices
+are cohort-independent; if post-founding store prices ever change, new store
+products swap into these offerings with no code change). The WEB half of the
+same gap remains deliberately open pending C-01: `STRIPE_*_STANDARD_PRICE_ID`
+don't exist, so a forfeited founder can't web-checkout until Molly settles
+standard pricing ($8/$10 draft). Only lapsed-and-returned founders can hit it
+during the founding window. Stripe webhook endpoint event list fixed in the
+dashboard (customer.subscription.updated was never delivered — upgrades
+projected only via the function's own snapshot refresh until then)._
 
 _2026-10-24 (Tony): **Rejected once (3.1.2) and RESUBMITTED same morning —
 back to WAITING_FOR_REVIEW.** Apple's automated check: subscription apps must

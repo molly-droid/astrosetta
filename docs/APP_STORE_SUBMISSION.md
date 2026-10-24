@@ -5,9 +5,13 @@ App Store Connect supports this directly: choose **"Manually release this
 version"** at submission, and the approved app sits unreleased until we
 press Release on cutover day.
 
-RC build: **1.0 (10)** — gating live (`GATING_ADMIN_ONLY=false` client-side),
-price-free native teaser CTAs / store-priced plan cards, B-26, deletion
-dead-end Log out fix. Built from commit (fill in after commit).
+**SUBMITTED 2026-10-23 (WAITING_FOR_REVIEW).** Final binary: **1.0 (14)** —
+build 10's RC state (gating live, price-free native CTAs, B-26, deletion Log
+out fix) + B-27 OTP sign-up + B-28 day rollover + compliant age language +
+public legal routes + iPhone-only (`TARGETED_DEVICE_FAMILY=1`; Apple required
+iPad screenshots while the binary targeted iPad). Four subscriptions attached,
+manual release set. Everything below is the completed checklist, kept for
+reference and for any rejection round.
 
 ---
 

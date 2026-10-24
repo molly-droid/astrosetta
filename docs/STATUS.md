@@ -574,6 +574,37 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-24 (Tony): **Rejected once (3.1.2) and RESUBMITTED same morning —
+back to WAITING_FOR_REVIEW.** Apple's automated check: subscription apps must
+carry a functional Terms of Use (EULA) link in the App Store metadata. Fix was
+metadata-only (build 14 untouched): appended two lines to the end of the en-US
+App Description — "Terms of Use (EULA): https://astrosetta.vercel.app/terms"
+and "Privacy Policy: https://astrosetta.vercel.app/privacy". The in-app side
+was already compliant (PaywallModal + PlanSelection link /terms and /privacy,
+public routes since build 13). The four subscriptions were not flagged.
+CUTOVER NOTE: these two description URLs swap to astrosetta.com along with the
+privacy/support URL fields. Also 2026-10-23: Jacob is fully off the project —
+Tony owns all tracks. His Oct 17–18 Android work audit: Play subs + prices
+verified, RevenueCat wired, versionCode 2 on Internal testing — but that AAB
+predates the whole RC series (gating flip, price sweep, B-27/B-28, legal/age),
+so Android needs a fresh versionCode 3 before anything ships; also check
+Play upgrade path (purchasePackage has no googleProductChangeInfo — Core→
+Premium on Android could double-subscribe) and Molly's Play account type
+(personal = forced 12-tester/14-day closed test)._
+
+_2026-10-23 night (Tony): **SUBMITTED TO APP REVIEW.** Version 1.0 with
+build **14** (build 13 + `TARGETED_DEVICE_FAMILY=1` — Apple demanded 13-inch
+iPad screenshots because the Capacitor default binary targeted iPad; iPad was
+never tested, so iPhone-only for launch). All four subscriptions attached and
+riding the submission (6 review items total), manual release confirmed —
+approved app parks unreleased until cutover day. ASC state verified via API:
+reviewSubmission WAITING_FOR_REVIEW, submitted 2026-10-23T02:34Z. While
+waiting: Molly's build-14 retest + the three FYI lines (age language, C-01
+CAD-price explanation, 8-digit sign-up code / density-slider-regeneration is
+by design); optional server-side gating flip; next Vercel redeploy adds
+robots.txt from a staging copy. On approval: do NOT release — Phase 5 cutover
+runbook first._
+
 _2026-10-23 late (Tony): **Age language settled, legal pages made public,
 interim web deploy live, builds 12–13 uploaded — build 13 is the
 submission candidate.** (1) Terms/Privacy age fix (see

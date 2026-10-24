@@ -32,6 +32,9 @@ const FREE_FEATURES = [
   'Journal',
 ];
 
+const TIER_LABELS = { free: 'Free', interpret: 'Core', calendar: 'Premium' };
+const switchDate = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
 const PLANS = [
   {
     tier: 'interpret',
@@ -96,6 +99,12 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
   const [loading, setLoading] = useState(null); // tier being purchased | 'restore'
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [checkoutError, setCheckoutError] = useState(null);
+  const [planNotice, setPlanNotice] = useState(null); // informational, not an error
+  const [noticeTier, setNoticeTier] = useState(null); // render the notice under this plan's card
+  // A scheduled web (Stripe) downgrade: { tier, effective_at }. Fetched on
+  // mount so the state survives reloads, kept in sync by the actions below.
+  const [pendingChange, setPendingChange] = useState(null);
+  const showNotice = (text, tier = null) => { setPlanNotice(text); setNoticeTier(tier); };
   const [stalled, setStalled] = useState(false);
   const stallTimer = useRef(null);
   const platform = getPlatform();
@@ -126,12 +135,30 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
     return () => { alive = false; };
   }, [isNative]);
 
+  useEffect(() => {
+    if (isNative || isOnboarding) return;
+    if (realTier === 'free' || user?.subscription_source !== 'stripe') return;
+    let alive = true;
+    base44.functions.invoke('changeSubscription', { action: 'status' })
+      .then((res) => { if (alive) setPendingChange(res.data?.pending || null); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [isNative, isOnboarding, realTier, user?.subscription_source]);
+
   const handleIapSelect = async (tier) => {
     track(EVENTS.SUBSCRIPTION_STARTED, { tier, founding: isFoundingMember, billing, store: platform, source: variant });
     setLoading(tier);
     setCheckoutError(null);
+    showNotice(null);
     const result = await purchaseTier(tier, billing);
     if (result.success) {
+      // Deferred plan change: the store accepted it but the old plan runs to
+      // the end of the paid period. Say so — the tier won't move until then.
+      if (result.deferredUntil && result.tier !== tier) {
+        showNotice(`Done — your plan switches to ${TIER_LABELS[tier]} on ${switchDate(result.deferredUntil)}. You keep ${TIER_LABELS[result.tier]} until then.`, tier);
+        setLoading(null);
+        return;
+      }
       // The authoritative tier update lands via the revenuecat-webhook Edge
       // Function; give it a few beats to reflect on the users row.
       for (let i = 0; i < 5; i++) {
@@ -151,12 +178,78 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
     setLoading(null);
   };
 
+  // Plan CHANGE for an active web (Stripe) subscriber — never a second
+  // checkout, which would open a second subscription alongside the first.
+  const handleStripeChange = async (tier) => {
+    track(EVENTS.SUBSCRIPTION_STARTED, { tier, founding: isFoundingMember, billing, source: variant, change: true });
+    setLoading(tier);
+    setCheckoutError(null);
+    showNotice(null);
+    try {
+      const res = await base44.functions.invoke('changeSubscription', { tier, period: billing });
+      if (res.data?.unchanged || res.data?.reverted) {
+        showNotice(res.data.reverted
+          ? `Your scheduled plan change is canceled — you stay on ${TIER_LABELS[tier]}.`
+          : `You're already on ${TIER_LABELS[tier]}.`, tier);
+        if (res.data.reverted) setPendingChange(null);
+        await reloadUser?.(); // the server just re-projected the tier from Stripe
+      } else if (res.data?.deferred) {
+        showNotice(`Done — your plan switches to ${TIER_LABELS[tier]} on ${switchDate(res.data.effective_at)}. You keep ${TIER_LABELS[realTier]} until then.`, tier);
+        setPendingChange({ tier, effective_at: res.data.effective_at });
+      } else {
+        for (let i = 0; i < 5; i++) {
+          await new Promise(r => setTimeout(r, 1500));
+          const updated = await reloadUser?.();
+          if (updated?.subscription_tier === tier) break;
+        }
+        onPurchased?.(tier);
+        return;
+      }
+    } catch (err) {
+      console.error('Plan change error:', err);
+      if (err?.status === 409) {
+        // No live Stripe subscription after all (lapsed mid-session) — a fresh
+        // checkout is the right flow; fall through to it.
+        setLoading(null);
+        await startCheckout(tier);
+        return;
+      }
+      setCheckoutError("We couldn't change your plan. Please try again, or use Manage billing in your profile.");
+    }
+    setLoading(null);
+  };
+
   const handleSelect = async (tier) => {
     if (!ageConfirmed) return;
+    showNotice(null);
+    const source = user?.subscription_source;
+    const hasPaidPlan = realTier !== 'free';
     if (isNative && purchasesEnabled()) {
+      // An active subscription from ANOTHER biller can't be replaced by this
+      // store — buying here would stack a second subscription on top of it.
+      if (hasPaidPlan && source === 'stripe') {
+        showNotice('Your subscription is billed on the web. To change plans, open astrosetta.com → Profile → Membership.', tier);
+        return;
+      }
+      if (hasPaidPlan && ((platform === 'ios' && source === 'google') || (platform === 'android' && source === 'apple'))) {
+        showNotice(`Your subscription is billed through ${source === 'apple' ? 'the App Store' : 'Google Play'}. Change your plan on the device you subscribed on, or cancel it there first.`, tier);
+        return;
+      }
       await handleIapSelect(tier);
       return;
     }
+    if (hasPaidPlan && (source === 'apple' || source === 'google')) {
+      showNotice(`Your subscription is billed through ${source === 'apple' ? 'the App Store' : 'Google Play'}. Change your plan in the Astrosetta app on your phone, or in your ${source === 'apple' ? 'App Store' : 'Google Play'} subscription settings.`, tier);
+      return;
+    }
+    if (hasPaidPlan && source === 'stripe') {
+      await handleStripeChange(tier);
+      return;
+    }
+    await startCheckout(tier);
+  };
+
+  const startCheckout = async (tier) => {
     track(EVENTS.SUBSCRIPTION_STARTED, { tier, founding: isFoundingMember, billing, source: variant });
     setLoading(tier);
     setCheckoutError(null);
@@ -325,9 +418,29 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
             </ul>
 
             {isCurrent ? (
-              <div className="w-full text-center py-2 font-body text-sm text-brass/60">
-                You're on this plan
-              </div>
+              pendingChange ? (
+                <div className="w-full space-y-2">
+                  <p className="text-center font-body text-xs text-white/80">
+                    Switches to {TIER_LABELS[pendingChange.tier]} on {switchDate(pendingChange.effective_at)}
+                  </p>
+                  <Button
+                    onClick={() => handleStripeChange(plan.tier)}
+                    disabled={!!loading}
+                    variant="outline"
+                    className="w-full border-gold-primary/40 bg-transparent hover:bg-gold-primary/10 text-cream font-display font-bold"
+                  >
+                    {isLoading ? (
+                      <><Loader2 size={16} className="animate-spin mr-2" /> Processing…</>
+                    ) : (
+                      <>Keep {plan.label}</>
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div className="w-full text-center py-2 font-body text-sm text-brass/60">
+                  You're on this plan
+                </div>
+              )
             ) : (
               <>
                 <label className="flex items-start gap-2.5 cursor-pointer mb-3">
@@ -356,6 +469,12 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
                 </Button>
               </>
             )}
+
+            {planNotice && noticeTier === plan.tier && (
+              <div className="mt-3 rounded-lg border border-gold-primary/30 bg-gold-primary/10 p-3 text-center">
+                <p className="font-body text-xs text-white/80">{planNotice}</p>
+              </div>
+            )}
           </div>
         );
       })}
@@ -369,6 +488,12 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
               'Checkout is taking a while — check your connection and try again in a moment.'
             )}
           </p>
+        </div>
+      )}
+
+      {planNotice && !noticeTier && (
+        <div className="rounded-lg border border-gold-primary/30 bg-gold-primary/10 p-3 text-center">
+          <p className="font-body text-xs text-white/80">{planNotice}</p>
         </div>
       )}
 

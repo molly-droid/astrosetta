@@ -154,6 +154,43 @@ export async function getNativePriceString(tier, period = 'monthly') {
 }
 
 /**
+ * Android only: the Google replacement directive for a plan change.
+ *
+ * Play has no subscription groups — without this, buying Premium while Core
+ * is active opens a SECOND subscription and the user pays for both. Mirrors
+ * the Apple group ranking (Premium level 1, Core level 2): upgrades apply
+ * immediately with prorated credit, downgrades defer to the next renewal.
+ * Only a PLAY_STORE entitlement can be replaced; an active sub from another
+ * store (e.g. bought on iPhone) is left alone — the stores can't cross-cancel.
+ */
+async function googleChangeInfoFor(tier, period) {
+  if (getPlatform() !== 'android') return null;
+  try {
+    const { Purchases, PRORATION_MODE } = await import('@revenuecat/purchases-capacitor');
+    const { customerInfo } = await Purchases.getCustomerInfo();
+    const active = customerInfo?.entitlements?.active || {};
+    const current = ['calendar', 'interpret']
+      .map((t) => ({ tier: t, ent: active[t] }))
+      .find((x) => x.ent && x.ent.store === 'PLAY_STORE');
+    if (!current) return null;
+    // Play product ids equal the tier ids; strip any :basePlan suffix.
+    const oldProduct = (current.ent.productIdentifier || '').split(':')[0];
+    if (!oldProduct) return null;
+    const oldPeriod = current.ent.productPlanIdentifier || null;
+    if (oldProduct === tier && oldPeriod === period) return null; // same plan — nothing to replace
+    const RANK = { calendar: 2, interpret: 1 };
+    const isUpgrade = RANK[tier] > RANK[current.tier]
+      || (tier === current.tier && period === 'yearly');
+    return {
+      oldProductIdentifier: oldProduct,
+      prorationMode: isUpgrade ? PRORATION_MODE.IMMEDIATE_WITH_TIME_PRORATION : PRORATION_MODE.DEFERRED,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Runs the store purchase flow for a tier + period.
  * Returns { success, cancelled, tier, error }.
  * The authoritative users-row tier update arrives via the
@@ -165,19 +202,30 @@ export async function purchaseTier(tier, period = 'monthly') {
   const purchasingUser = identifiedUser;
   const pkg = await getTierPackage(tier, period);
   if (!pkg) return { success: false, cancelled: false, error: 'package_not_found' };
+  const googleProductChangeInfo = await googleChangeInfoFor(tier, period);
   try {
     const { Purchases } = await import('@revenuecat/purchases-capacitor');
     const { customerInfo } = await serial(async () => {
       if (purchasingUser !== identifiedUser || purchasingUser !== await sessionUserId()) {
         throw new Error('Account changed. Please try again.');
       }
-      return Purchases.purchasePackage({ aPackage: pkg });
+      return Purchases.purchasePackage(
+        googleProductChangeInfo ? { aPackage: pkg, googleProductChangeInfo } : { aPackage: pkg }
+      );
     });
     if (purchasingUser !== await sessionUserId()) throw new Error('Account changed. Sign in again to check your subscription.');
     // A store success must not become a "failed purchase" if reconciliation
     // is delayed; the webhook will retry. The caller already polls its profile.
     await supabase.functions.invoke('validate-iap-receipt', { body: {} }).catch(() => {});
-    return { success: true, cancelled: false, tier: tierFromCustomerInfo(customerInfo) || tier };
+    // A deferred plan change (iOS group downgrade, Android DEFERRED replacement)
+    // succeeds at the store but leaves the OLD entitlement active until renewal.
+    // Surface when it takes effect so the caller can say so instead of looking
+    // broken while the tier stays put.
+    const resultTier = tierFromCustomerInfo(customerInfo) || tier;
+    const deferredUntil = resultTier !== tier
+      ? (customerInfo?.entitlements?.active?.[resultTier]?.expirationDate || null)
+      : null;
+    return { success: true, cancelled: false, tier: resultTier, deferredUntil };
   } catch (err) {
     const cancelled = !!(err?.userCancelled || `${err?.code}` === '1');
     return { success: false, cancelled, error: err?.message || 'purchase_failed' };

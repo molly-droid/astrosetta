@@ -336,6 +336,18 @@ export default function SubscriptionSection() {
                       <Zap size={11} className="mr-1" /> Upgrade
                     </Button>
                   )}
+                  {/* Downgrades go through the same Subscribe flow; it defers
+                      the switch to the end of the paid period (store or Stripe). */}
+                  {!isCurrent && !isUpgrade && plan.tier !== 'free' && realTier !== 'free' && !isExpired && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => navigate('/subscribe')}
+                      className="h-8 px-3 font-body text-xs border-gold-primary/30 text-brass"
+                    >
+                      Switch to {plan.label}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

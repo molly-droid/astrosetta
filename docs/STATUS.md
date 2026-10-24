@@ -574,6 +574,26 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-24 later (Tony): **B-30 — plan switching for subscribed users (Molly:
+"unable to switch plan types once I'm at premium").** Verified: the Subscribe
+page already showed all three plans with Current marked and tappable buttons,
+and "Manage billing" already opened Apple/Google/Stripe management — but
+Profile → Membership only rendered UPGRADE buttons, so a Premium user had no
+path to a switch, and two real gaps sat behind that: (1) deferred changes
+(iOS group downgrade, Android DEFERRED replacement) succeeded at the store
+with zero feedback while the tier stayed put; (2) web checkout would have
+created a SECOND Stripe subscription for an active subscriber. Fixes: Switch
+buttons on lower paid tiers in SubscriptionSection; purchaseTier returns
+deferredUntil and PlanSelection shows "switches to X on [date]"; NEW edge
+function `change-subscription` (Stripe: upgrade immediate+prorated, downgrade
+via subscription schedule at period end, re-choosing the current plan releases
+a pending schedule = undo); PlanSelection routes active Stripe subscribers
+through it and cross-store guards stop Apple/Google-billed users from opening
+a second subscription on the wrong biller. Classification: F-01 (new product
+work), not a migration regression — the downgrade path was never in the F-01
+spec's implementation. Native UI parts ship in the NEXT builds (iOS 15 /
+Android versionCode 3); not in review build 14._
+
 _2026-10-24 (Tony): **Rejected once (3.1.2) and RESUBMITTED same morning —
 back to WAITING_FOR_REVIEW.** Apple's automated check: subscription apps must
 carry a functional Terms of Use (EULA) link in the App Store metadata. Fix was

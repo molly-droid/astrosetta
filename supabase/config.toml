@@ -54,6 +54,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.calendar-connection]
 verify_jwt = false
+[functions.change-subscription]
+verify_jwt = false
 [functions.chart-calculator]
 verify_jwt = false
 [functions.create-checkout-session]

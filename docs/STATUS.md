@@ -574,6 +574,39 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-26 later (Tony): **Stripe LIVE account audited (read-only key) —
+largely cutover-ready.** Live = the "Astrosetta" account
+(acct_1Tf0OG9W9ZFmhq7a); the sandbox lives under Workforce Energetics LLC.
+Live already has (Jacob's cutover prep, most likely): products
+prod_VPfDzlIMQutDuy (Core) / prod_VPfDJr3dBoB5Yw (Premium); prices
+price_1UOpvK9W9ZFmhq7aJlJPt1zV (Core founding $5.55/mo),
+price_1UOpth9W9ZFmhq7aV5bes9mc (Premium founding $7.77/mo),
+price_1UOpth9W9ZFmhq7aHQHqPCAc (Core yearly $55),
+price_1UOpti9W9ZFmhq7aomX8fKdK (Premium yearly $77); webhook endpoint
+we_1UOpty9W9ZFmhq7a6rsKYwnm → our stripe-webhook with all five events. Zero
+customers/subscriptions — never transacted. STILL NEEDED live: the $8/$10
+standard monthly prices (C-01), and CHECK whether charges are activated
+(dashboard banner — Molly's business verification if not; lead time!). C-01
+standard prices CREATED in sandbox 2026-10-26
+(price_1UUuZg4Bc56AnEaKHrzxNkBW $8 Core / price_1UUuZh4Bc56AnEaKatO5cVkk $10
+Premium), secrets set, $8 checkout verified for a forfeited founder. Cutover
+secret swap: live STRIPE_SECRET_KEY, live webhook signing secret, six live
+price IDs. Access keys (restricted): sandbox Products-write + live read-only
+in ~/.astrosetta-keys/._
+
+_2026-10-26 (Tony): **C-01 RESOLVED — Molly confirmed both pricing questions.**
+(1) The 4¢ web/store gap stands: web keeps founding $5.55/$7.77 while stores
+charge $5.59/$7.79 (Apple price points). (2) Standard (post-founding) monthly
+pricing confirmed at **$8 Core / $10 Premium** (yearly $55/$77 for everyone).
+Follow-through: Tony creates the two standard monthly prices in Stripe TEST
+mode and sets `STRIPE_INTERPRET_STANDARD_PRICE_ID` /
+`STRIPE_CALENDAR_STANDARD_PRICE_ID` — this closes the lapsed-founder web
+checkout failure found 2026-10-23. CUTOVER: repeat in Stripe LIVE mode.
+OPEN FOR LAUNCH DAY (not asked yet, deliberately): whether STORE prices also
+rise post-founding (~$7.99/$9.99 parity) — mechanism ready (new store products
+slot into the `core_standard`/`premium_standard` RevenueCat offerings, no code
+change)._
+
 _2026-10-24 later (Tony): **B-30 — plan switching for subscribed users (Molly:
 "unable to switch plan types once I'm at premium").** Verified: the Subscribe
 page already showed all three plans with Current marked and tappable buttons,

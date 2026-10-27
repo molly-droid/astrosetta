@@ -33,6 +33,7 @@ import CookiePolicy from './pages/CookiePolicy';
 import RefundPolicy from './pages/RefundPolicy';
 import DmcaPolicy from './pages/DmcaPolicy';
 import CaliforniaPrivacyNotice from './pages/CaliforniaPrivacyNotice';
+import AccountDeletionPolicy from './pages/AccountDeletionPolicy';
 import AccessibilityStatement from './pages/AccessibilityStatement';
 
 // Legal / policy pages are PUBLIC: signed-out users reach them from the
@@ -48,6 +49,7 @@ const legalRoutes = (
     <Route path="/refund-policy" element={<RefundPolicy />} />
     <Route path="/dmca" element={<DmcaPolicy />} />
     <Route path="/california-privacy-notice" element={<CaliforniaPrivacyNotice />} />
+    <Route path="/account-deletion" element={<AccountDeletionPolicy />} />
     <Route path="/accessibility" element={<AccessibilityStatement />} />
   </>
 );

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import LegalPageLayout from '@/components/legal/LegalPageLayout';
 import DeleteAccountSection from '@/components/profile/DeleteAccountSection';
-import { Shield, Cookie, RefreshCw, FileText, MapPin, Accessibility, ClipboardList } from 'lucide-react';
+import { Shield, Cookie, RefreshCw, FileText, MapPin, Accessibility, ClipboardList, Trash2 } from 'lucide-react';
 
 const POLICIES = [
   {
@@ -46,6 +46,12 @@ const POLICIES = [
     description: 'Additional privacy rights for California residents under CCPA/CPRA.',
     href: '/california-privacy-notice',
     icon: MapPin,
+  },
+  {
+    title: 'Account Deletion',
+    description: 'How to delete your account, and what data is deleted or kept.',
+    href: '/account-deletion',
+    icon: Trash2,
   },
   {
     title: 'Accessibility Statement',

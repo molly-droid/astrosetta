@@ -14,6 +14,7 @@
 import { compatClient } from '../_shared/base44Compat.ts';
 import { json, handleOptions, serviceClient } from '../_shared/edge.ts';
 import { sendDigestEmail } from '../_shared/resendEmail.ts';
+import Stripe from 'npm:stripe@14';
 
 const TOKEN_TTL_HOURS = 24;
 // Fallback when the client doesn't pass body.origin (APP_URL secret in prod)
@@ -79,6 +80,29 @@ async function handler(req): Promise<Response> {
       const uid = record.user_id;
       const email = record.user_email || '';
       const anonId = 'anon-' + crypto.randomUUID().slice(0, 12);
+
+      // Web billing must not outlive the account: deleting the Stripe customer
+      // cancels every active subscription (and any pending downgrade schedule)
+      // and erases the stored payment method, while invoices/charges remain
+      // for the business records. Store (Apple/Google) subscriptions cannot be
+      // canceled server-side — users are told to cancel those with the store.
+      // Runs BEFORE any wipe so a Stripe outage aborts cleanly: the token stays
+      // pending and the link can be retried.
+      const { data: profile } = await serviceClient()
+        .from('users').select('stripe_customer_id').eq('id', uid).maybeSingle();
+      if (profile?.stripe_customer_id) {
+        const stripeKey = Deno.env.get('STRIPE_SECRET_KEY');
+        if (!stripeKey) throw new Error('Billing cleanup unavailable — account not deleted. Please try again later.');
+        const stripe = new Stripe(stripeKey);
+        try {
+          await stripe.customers.del(profile.stripe_customer_id);
+        } catch (err) {
+          // Already deleted / never existed in this mode = nothing to cancel.
+          if (err?.code !== 'resource_missing') {
+            throw new Error('We could not cancel your subscription — account not deleted. Please try again or contact support.');
+          }
+        }
+      }
 
       // Personal content — permanently deleted
       const wipes = [

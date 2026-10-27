@@ -574,6 +574,36 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-27 (Tony): **Play production submission prep — App content
+declarations done; account deletion now cancels Stripe.** Decision: submit
+Android WITHOUT waiting for Apple's verdict (resubmission still
+WAITING_FOR_REVIEW day 3; Google's first review takes days anyway, and an
+Android update post-approval is cheap). No "Apply for production access"
+task on the Dashboard → no 12-tester/14-day closed-test requirement.
+Declarations completed (Tony clicking, answers supplied): privacy policy
+URL, App access (apple.review@silexdev.com — bumped to Premium via
+`subscription_tier='calendar'` + `subscription_admin_override=true`, which
+`refresh_billing_access` respects, so it sticks), Ads no, content rating
+Everyone/3+, target audience 18+, Government/Financial/Health no,
+Advertising ID no (verified: no AD_ID permission in the versionCode 3 AAB
+manifest). Data safety was mis-declared ("no data collected" — Jacob's
+click-through): REDONE with real types (name, email, user IDs, birth data,
+purchase history, user content, app interactions, device IDs; encrypted in
+transit; deletion available). Google requires a public deletion-steps URL →
+new page `/account-deletion` (AccountDeletionPolicy.jsx, legal routes +
+Legal index). REAL GAP found en route: account deletion never touched
+Stripe — a deleted web subscriber would keep being charged. FIXED:
+account-deletion `confirm` now deletes the Stripe customer (cancels subs +
+pending schedules, erases card) BEFORE wiping, aborts cleanly on Stripe
+failure (token stays usable); store subs can't be canceled server-side —
+page says so. robots.txt (Disallow all) moved into apps/web/public so
+git-built deploys keep it. Vercel: switching from manual prebuilt deploys
+to GitHub auto-deploy (project astrosetta / Molly scope ↔
+molly-droid/astrosetta, root apps/web). CUTOVER ADDITIONS: flip
+robots.txt to allow indexing; confirm hello@astrosetta.com inbox exists
+(all legal pages cite it); Play privacy-policy + deletion URLs swap to
+astrosetta.com alongside the Apple ones._
+
 _2026-10-26 later (Tony): **Stripe LIVE account audited (read-only key) —
 largely cutover-ready.** Live = the "Astrosetta" account
 (acct_1Tf0OG9W9ZFmhq7a); the sandbox lives under Workforce Energetics LLC.
@@ -584,8 +614,10 @@ price_1UOpth9W9ZFmhq7aV5bes9mc (Premium founding $7.77/mo),
 price_1UOpth9W9ZFmhq7aHQHqPCAc (Core yearly $55),
 price_1UOpti9W9ZFmhq7aomX8fKdK (Premium yearly $77); webhook endpoint
 we_1UOpty9W9ZFmhq7a6rsKYwnm → our stripe-webhook with all five events. Zero
-customers/subscriptions — never transacted. STILL NEEDED live: the $8/$10
-standard monthly prices (C-01), and CHECK whether charges are activated
+customers/subscriptions — never transacted. Live standard prices CREATED 2026-10-26:
+price_1UUv039W9ZFmhq7aFRm7aEMC ($8 Core) /
+price_1UUv039W9ZFmhq7apiSHhZyl ($10 Premium) — live Stripe config is now
+COMPLETE except secrets (cutover). STILL CHECK whether charges are activated
 (dashboard banner — Molly's business verification if not; lead time!). C-01
 standard prices CREATED in sandbox 2026-10-26
 (price_1UUuZg4Bc56AnEaKHrzxNkBW $8 Core / price_1UUuZh4Bc56AnEaKatO5cVkk $10

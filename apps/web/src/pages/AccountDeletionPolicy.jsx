@@ -55,13 +55,10 @@ export default function AccountDeletionPolicy() {
 
       <h2 className="font-display text-lg font-semibold text-foreground mt-6 mb-2">Subscriptions</h2>
       <p>
-        Deleting your account does not cancel an active subscription. Cancel it first to stop
-        future charges: subscriptions billed through the App Store or Google Play are canceled in
-        your Apple or Google subscription settings, and subscriptions billed by card on the web
-        are canceled in <strong>Profile → Membership → Manage billing</strong>. If you delete your
-        account with a web subscription still active, email{' '}
-        <a href="mailto:hello@astrosetta.com" className="text-gold-accent underline hover:text-gold-primary">hello@astrosetta.com</a>{' '}
-        and we will cancel it for you.
+        Subscriptions billed by card on the web are canceled automatically when your account is
+        deleted, and your stored payment details are erased. Subscriptions billed through the App
+        Store or Google Play are managed by Apple and Google — we cannot cancel those for you, so
+        cancel them in your Apple or Google subscription settings to stop future charges.
       </p>
 
       <h2 className="font-display text-lg font-semibold text-foreground mt-6 mb-2">Questions</h2>

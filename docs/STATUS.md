@@ -574,6 +574,32 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-10-29 (Tony): **Android SUBMITTED to Play production review; iOS
+resubmitted with build 15; deletion fix E2E-VERIFIED.** Play: store listing
+(Molly's Apple description + 80-char short desc; icon/feature graphic
+generated from brand assets; Apple's 8 screenshots padded to 2:1 +
+7"/10" tablet sets on 9:16 canvases), category Lifestyle + contact
+details, countries ALL + Canada monthly prices aligned to Apple
+(CA$6.99/9.99), versionCode 3 promoted from internal → SUBMITTED. iOS:
+build 14 (no plan switching) pulled from the still-waiting queue, build
+15 attached (needed fresh export-compliance answer), resubmitted — both
+stores now review the same feature set. Vercel now GIT-LINKED
+(molly-droid/astrosetta, root apps/web, env vars in project settings;
+push = deploy; robots.txt Disallow served from public/). TWO BUGS found
+by the deletion E2E test: (1) B-31 — web checkout mid-onboarding returned
+the user to the plan slide with no forward path ("You're already on
+Core" dead end); FIXED: onboarding jumps already-paid users (effective
+tier, not raw) to the confirmation slide. (2) Deletion/portal links
+pointed at astrosetta.com = BASE44'S LIVE SITE pre-cutover (baked
+VITE_APP_URL): Base44's backend ate the deletion token ("link invalid");
+FIXED server-side via DELETION_LINK_ORIGIN secret (set to
+astrosetta.vercel.app, overrides all clients incl. the shipped native
+builds) + web VITE_APP_URL in Vercel env → vercel.app. E2E RESULT: Stripe
+customer deleted + sub canceled one second before the DB wipe, auth+
+profile rows gone, request completed — deletion now provably cancels
+web billing. CUTOVER: set DELETION_LINK_ORIGIN + Vercel VITE_APP_URL
+back to astrosetta.com._
+
 _2026-10-27 (Tony): **Play production submission prep — App content
 declarations done; account deletion now cancels Stripe.** Decision: submit
 Android WITHOUT waiting for Apple's verdict (resubmission still

@@ -35,7 +35,12 @@ async function handler(req): Promise<Response> {
       if (!email) {
         return json({ error: 'Your account has no email on file — contact support to delete it.' }, { status: 400 });
       }
-      const origin = body.origin || WEB_APP_ORIGIN;
+      // DELETION_LINK_ORIGIN overrides every client's idea of the web origin.
+      // Pre-cutover it must be the Vercel URL: native builds bake
+      // VITE_APP_URL=https://astrosetta.com, which still serves the OLD
+      // Base44 app — its backend eats the token and the link "fails".
+      // At cutover, remove the secret (or point it at astrosetta.com).
+      const origin = Deno.env.get('DELETION_LINK_ORIGIN') || body.origin || WEB_APP_ORIGIN;
 
       // Invalidate any previous pending request for this user
       await srv.entities.AccountDeletionRequest.deleteMany({ user_id: user.id, status: 'pending' });

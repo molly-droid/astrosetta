@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import BirthDataForm from '@/components/onboarding/BirthDataForm';
@@ -11,6 +11,7 @@ import { base44 } from '@/api/base44Client';
 import { Mail, Check, ArrowRight, Sparkles } from 'lucide-react';
 import PlanSelection from '@/components/plans/PlanSelection';
 import { depthFromOnboardingLevel } from '@/lib/knowledgeDensity';
+import { getEffectiveTier } from '@/lib/permissions';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
 
 const STEPS = ['age_gate', 'experience', 'referral', 'birth_data', 'chart_summary', 'email_digest', 'plan'];
@@ -64,6 +65,20 @@ export default function Onboarding() {
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [emailOptIn, setEmailOptIn] = useState(true);
   const [purchasedTier, setPurchasedTier] = useState(null);
+
+  // A web checkout mid-onboarding redirects out to Stripe and back; the
+  // router then re-enters onboarding (it isn't finished), which resumes on
+  // the plan slide — where an already-paid user could only dead-end on
+  // "You're already on Core". Land them on the confirmation slide instead.
+  useEffect(() => {
+    if (step !== 'plan') return;
+    const tier = getEffectiveTier(user);
+    if (tier !== 'free') {
+      setPurchasedTier(tier);
+      setStep('plan_confirm');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, user?.subscription_tier, user?.subscription_expires]);
 
   const handleReferralComplete = (referral) => {
     setReferralSource(referral);

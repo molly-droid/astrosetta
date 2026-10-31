@@ -12,6 +12,8 @@
  * be dropped in anywhere a natal `raw_data` is used.
  */
 
+import { isAxisPair } from './axisPairs';
+
 const SIGNS = [
   'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
   'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces',
@@ -54,6 +56,8 @@ function computeAspects(planets) {
     for (let j = i + 1; j < planets.length; j++) {
       const p1 = planets[i];
       const p2 = planets[j];
+      // B-31: composite axis ends (nodes) are midpoint-opposite by construction
+      if (isAxisPair(p1.name, p2.name)) continue;
       let diff = Math.abs(p1.longitude - p2.longitude);
       if (diff > 180) diff = 360 - diff;
       for (const a of ASPECT_DEFS) {

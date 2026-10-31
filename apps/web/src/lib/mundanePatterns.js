@@ -11,6 +11,8 @@
  * Pure computation — no LLM calls. Instant and free.
  */
 
+import { isAxisPair } from '@/lib/axisPairs';
+
 const ASPECT_ANGLES = { conjunction: 0, opposition: 180, trine: 120, square: 90, sextile: 60, quincunx: 150 };
 const ASPECT_ORBS = { conjunction: 8, opposition: 8, trine: 8, square: 8, sextile: 8, quincunx: 3 };
 
@@ -74,6 +76,7 @@ function detectCradles(planets) {
   const cradles = [];
   for (let i = 0; i < planets.length; i++) {
     for (let j = i + 1; j < planets.length; j++) {
+      if (isAxisPair(planets[i].name, planets[j].name)) continue; // B-31: node axis is not an opposition
       if (aspectBetween(planets[i].longitude, planets[j].longitude) !== 'opposition') continue;
       const sideI = [], sideJ = [];
       for (let k = 0; k < planets.length; k++) {

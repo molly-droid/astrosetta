@@ -16,6 +16,7 @@
  */
 
 import { aspectBetween, aspectOrb, SIGN_ELEMENTS } from './mundanePatterns';
+import { isAxisPair } from './axisPairs';
 
 // Planets eligible as formation vertices. Moon excluded from the transit pool
 // (too fast / noisy for day-spanning formations); natal Moon is included.
@@ -34,6 +35,7 @@ function tag(planets, source) {
 
 // Returns { aspect, orb } if the aspect is within orb (tighter for transit legs).
 function leg(p1, p2) {
+  if (isAxisPair(p1.name, p2.name)) return null; // B-31: axis ends are always opposite
   const asp = aspectBetween(p1.longitude, p2.longitude);
   if (!asp) return null;
   const orb = aspectOrb(p1.longitude, p2.longitude, asp);

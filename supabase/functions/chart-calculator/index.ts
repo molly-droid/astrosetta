@@ -18,6 +18,7 @@
  */
 import { json, handleOptions, getAuthUser, isServiceRole } from '../_shared/edge.ts';
 import { trueNode } from '../_shared/lunarNode.ts';
+import { isAxisPair } from '../_shared/axisPairs.ts';
 import { remoteEngineEnabled, fetchRemoteMoment, toUtcParts } from '../_shared/astrologyApiEngine.ts';
 
 const D2R=Math.PI/180,R2D=180/Math.PI;
@@ -401,6 +402,7 @@ Deno.serve(async (req) => {
       for (const tp of tPlanets) {
         const isMoon = tp.name === 'Moon';
         for (const np of natalPlanets) {
+          if (isAxisPair(tp.name, np.name)) continue; // B-31: axis ends are always opposite
           let d = Math.abs(tp.longitude - np.longitude);
           if (d > 180) d = 360 - d;
           const isAngle = ANGLE_NAMES.has(np.name);

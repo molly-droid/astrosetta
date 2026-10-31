@@ -11,6 +11,7 @@
  * (`day-v20-<UTC date>-<knowledge depth>`).
  */
 import { densityInstruction } from './knowledgeDensity.ts';
+import { isAxisPair } from './axisPairs.ts';
 import { STYLE_RULES } from './llm_tasks/core.ts';
 import { TONE_DIRECTIVE } from './toneDirective.ts';
 
@@ -208,6 +209,7 @@ export function processTransits(date, natalRaw) {
     const isSlow = SLOW_SET.has(tp.name);
     const maxOrb = isSlow ? 2.0 : (PLANET_ORBS[tp.name] ?? 2.0);
     for (const np of natalPlanets) {
+      if (isAxisPair(tp.name, np.name)) continue; // B-31: axis ends are always opposite
       const result = checkAspect(tp.longitude, np.longitude);
       if (result && result.orb <= maxOrb) {
         natalAspects.push({ transit_planet: tp.name, natal_planet: np.name, aspect: result.aspect, orb: result.orb, type: 'natal' });
@@ -232,6 +234,7 @@ export function processTransits(date, natalRaw) {
     for (let j = i + 1; j < transitPlanets.length; j++) {
       const p1 = transitPlanets[i], p2 = transitPlanets[j];
       if (p1.name === 'Moon' || p2.name === 'Moon') continue;
+      if (isAxisPair(p1.name, p2.name)) continue; // B-31: axis ends are always opposite
       let diff = Math.abs(p1.longitude - p2.longitude);
       if (diff > 180) diff = 360 - diff;
       for (const [asp, targetOrb] of Object.entries(MUNDANE_ORBS)) {
@@ -496,6 +499,7 @@ export function classifyCalculatorTransits(calcData, natalRaw) {
     for (let j = i + 1; j < transitPlanets.length; j++) {
       const p1 = transitPlanets[i], p2 = transitPlanets[j];
       if (p1.name === 'Moon' || p2.name === 'Moon') continue;
+      if (isAxisPair(p1.name, p2.name)) continue; // B-31: axis ends are always opposite
       let diff = Math.abs(p1.longitude - p2.longitude);
       if (diff > 180) diff = 360 - diff;
       for (const [asp, targetOrb] of Object.entries(MUNDANE_ORBS)) {

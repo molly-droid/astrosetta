@@ -10,6 +10,8 @@
  * dates cheap and shared across users), identical aspects/stations/ingresses.
  */
 
+import { isAxisPair } from './axisPairs.ts';
+
 export interface CalendarDay {
   date: string; // YYYY-MM-DD
   transit_planets: Array<{ name: string; sign: string; degree: number; longitude: number; retrograde?: boolean }>;
@@ -123,6 +125,7 @@ export function mundaneAspectsFromPlanets(
     for (let j = i + 1; j < planets.length; j++) {
       const a = planets[i], b = planets[j];
       if (a.name === 'Moon' || b.name === 'Moon') continue;
+      if (isAxisPair(a.name, b.name)) continue; // B-31: axis ends are always opposite
       if (!include(a.name) || !include(b.name)) continue;
       let diff = Math.abs(a.longitude - b.longitude);
       if (diff > 180) diff = 360 - diff;

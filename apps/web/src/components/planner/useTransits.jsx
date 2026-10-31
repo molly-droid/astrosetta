@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { getMoonPhaseName } from '@/lib/moonPhase';
 import { detectEclipse } from '@/lib/eclipseUtils';
 import { mergeNatalPoints } from '@/lib/transitUtils';
+import { isAxisPair } from '@/lib/axisPairs';
 import { useAuth } from '@/lib/AuthContext';
 import {
   getHiddenChartPoints,
@@ -170,6 +171,7 @@ export function processTransits(result, natalRaw, hiddenPoints) {
     for (let j = i + 1; j < transitPlanets.length; j++) {
       const p1 = transitPlanets[i], p2 = transitPlanets[j];
       if (p1.name === 'Moon' || p2.name === 'Moon') continue; // Moon mundane handled in lunar
+      if (isAxisPair(p1.name, p2.name)) continue; // B-31: axis ends are always opposite
       let diff = Math.abs(p1.longitude - p2.longitude);
       if (diff > 180) diff = 360 - diff;
       for (const [asp, targetOrb] of Object.entries(MUNDANE_ORBS)) {

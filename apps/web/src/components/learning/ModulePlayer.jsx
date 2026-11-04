@@ -21,6 +21,7 @@ function shuffleQuizOptions(block) {
 import { X, ChevronRight, ChevronLeft, CheckCircle2, Sparkles, Compass } from 'lucide-react';
 import ModuleMarkdown from './ModuleMarkdown';
 import { base44 } from '@/api/base44Client';
+import { getMoonPhaseName } from '@/lib/moonPhase';
 import { Button } from '@/components/ui/button';
 import OrnamentDivider from '@/components/ui/OrnamentDivider';
 import PlacementSlide from './PlacementSlide';
@@ -216,7 +217,7 @@ function buildSectionSynthesis(chart, section) {
   return big3;
 }
 
-function buildPersonalSynthesis(chart, subjectKey, section) {
+function buildPersonalSynthesis(chart, subjectKey, section, extra) {
   if (!chart) return null;
 
   const raw = chart.raw_data || {};
@@ -303,6 +304,114 @@ function buildPersonalSynthesis(chart, subjectKey, section) {
     return `You have ${retroPlanets.length} planet${retroPlanets.length > 1 ? 's' : ''} retrograde in your birth chart. ${lines.join(' ')}`;
   }
 
+  // AI-08 Tier 1 — module-specific hooks for subjects that used to fall
+  // through to the generic Big Three card.
+
+  // The Eight Lunar Phases — the phase the user was born under, from the
+  // natal Sun–Moon angle.
+  if (subjectKey === 'moon_phases') {
+    const sun = planets.find(p => p.name === 'Sun');
+    const moon = planets.find(p => p.name === 'Moon');
+    if (sun?.longitude == null || moon?.longitude == null) return buildSectionSynthesis(chart, section);
+    const phase = getMoonPhaseName(moon.longitude, sun.longitude);
+    const angle = Math.round(((moon.longitude - sun.longitude) + 360) % 360);
+    const PHASE_MEANINGS = {
+      'New Moon': 'a beginning-oriented nature — you instinctively plant seeds, start fresh, and act on impulse before the path is fully lit',
+      'Crescent': 'a forward-straining nature — you push away from the familiar toward something new, often against inner resistance',
+      'First Quarter': 'a crisis-of-action nature — you grow through decisive moves, building structures under pressure',
+      'Gibbous': 'a perfecting nature — you analyze, refine, and adjust, always asking how something can work better',
+      'Full Moon': 'a culminating, relational nature — things become conscious for you through encounter, contrast, and visibility',
+      'Disseminating': 'a teaching nature — you digest experience into meaning and feel compelled to share what you have learned',
+      'Last Quarter': 'a crisis-of-consciousness nature — you question inherited structures and turn away from what no longer fits',
+      'Balsamic': 'a closing, distilling nature — you release, complete, and carry the seed of a cycle others cannot yet see',
+    };
+    let text = `You were born under a ${phase} Moon — at your birth the Moon stood ${angle}° ahead of the Sun. In lunation astrology this imprints ${PHASE_MEANINGS[phase] || 'its own rhythm on how you begin and complete things'}.`;
+    text += ` With your Moon in ${moon.sign}${moon.house ? ` in the ${moon.house}${getOrdinalSuffix(moon.house)} house` : ''}, that ${phase} rhythm plays out through ${SIGN_KEYWORDS[moon.sign] ? `${moon.sign}'s ${ELEMENT_MAP[moon.sign]?.toLowerCase() || ''} temperament` : 'your Moon sign'}${moon.house && HOUSE_THEMES[parseInt(moon.house)] ? ` in the sphere of ${HOUSE_THEMES[parseInt(moon.house)]}` : ''}.`;
+    return text;
+  }
+
+  // Element & Modality Balance — tally the ten classic planets.
+  if (subjectKey === 'chart_balance') {
+    const CLASSIC = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
+    const classics = planets.filter(p => CLASSIC.includes(p.name) && p.sign);
+    if (classics.length < 5) return buildSectionSynthesis(chart, section);
+    const el = {}, mo = {};
+    for (const p of classics) {
+      const e = ELEMENT_MAP[p.sign], m = MODALITY_MAP[p.sign];
+      if (e) el[e] = (el[e] || 0) + 1;
+      if (m) mo[m] = (mo[m] || 0) + 1;
+    }
+    const sortDesc = o => Object.entries(o).sort((a, b) => b[1] - a[1]);
+    const els = sortDesc(el), mos = sortDesc(mo);
+    const missingEls = ['Fire', 'Earth', 'Air', 'Water'].filter(e => !el[e]);
+    const ELEMENT_NATURE = { Fire: 'initiative, enthusiasm, and self-expression', Earth: 'practicality, patience, and material grounding', Air: 'ideas, language, and social connection', Water: 'feeling, intuition, and emotional attunement' };
+    const MODALITY_NATURE = { Cardinal: 'initiating — you start things', Fixed: 'sustaining — you hold things steady', Mutable: 'adapting — you adjust and distribute' };
+    let text = `Counting your ten planets: ${els.map(([e, n]) => `${n} in ${e}`).join(', ')}; ${mos.map(([m, n]) => `${n} ${m}`).join(', ')}.`;
+    text += ` Your strongest element is ${els[0][0]} — your chart leads with ${ELEMENT_NATURE[els[0][0]]}.`;
+    if (missingEls.length) text += ` You have no planets in ${missingEls.join(' or ')} — not an absence of ${missingEls.map(e => ELEMENT_NATURE[e].split(',')[0]).join(' or ')}, but a function you tend to develop consciously rather than take for granted.`;
+    text += ` On modality, ${mos[0][1]} of your planets are ${mos[0][0]}: your default mode is ${MODALITY_NATURE[mos[0][0]]}.`;
+    return text;
+  }
+
+  // The Chart Ruler — the planet ruling the Ascendant sign, and where it sits.
+  if (subjectKey === 'chart_ruler') {
+    const ascSign = raw.unknown_time ? null : (raw.ascendant_sign || raw.angles?.ascendant?.sign || chart?.ascendant_sign || null);
+    if (!ascSign) return `Your chart ruler is the planet that rules your Ascendant sign — but your birth time is unknown, so your Ascendant (and with it your chart ruler) can't be determined. If you ever confirm your birth time, this module will point at a specific planet in your chart.`;
+    const rulerName = CHART_RULERS[ascSign];
+    const ruler = planets.find(p => p.name === rulerName);
+    let text = `Your Ascendant is in ${ascSign}, which makes ${rulerName} your chart ruler — the planet that carries your chart's agenda and colors how your whole life story unfolds.`;
+    if (ruler) {
+      text += ` Your ${rulerName} sits in ${ruler.sign}${ruler.house ? ` in your ${ruler.house}${getOrdinalSuffix(ruler.house)} house` : ''}${ruler.retrograde ? ', retrograde' : ''} — so the themes of ${PLANET_THEMES[rulerName] || rulerName}${ruler.house && HOUSE_THEMES[parseInt(ruler.house)] ? `, expressed through ${HOUSE_THEMES[parseInt(ruler.house)]},` : ''} lead the way whenever your chart "acts."`;
+    }
+    return text;
+  }
+
+  // Empty Houses — which of the user's houses hold no planets.
+  if (subjectKey === 'empty_houses') {
+    if (raw.unknown_time || !houses.length) return `House placements need a birth time, and yours is marked unknown — so your chart uses no houses to be empty or full. If you confirm your birth time, this module will name your empty houses specifically.`;
+    const occupied = new Set(planets.filter(p => p.house != null).map(p => parseInt(p.house)));
+    const empty = [1,2,3,4,5,6,7,8,9,10,11,12].filter(n => !occupied.has(n));
+    if (!empty.length) return `Remarkably, every house in your chart holds at least one point — there are no empty houses for you. Each life arena has a resident planet pressing on it directly.`;
+    const emptyList = empty.map(n => `${n}${getOrdinalSuffix(n)}`).join(', ');
+    const example = empty[0];
+    const exSign = houses.find(h => h.number === example)?.sign;
+    let text = `In your chart, ${empty.length} house${empty.length > 1 ? 's are' : ' is'} empty: the ${emptyList}. That's normal — ten planets can't cover twelve houses.`;
+    text += ` An empty house isn't a silent life area: it expresses through the sign on its cusp and that sign's ruler.`;
+    if (exSign && CHART_RULERS[exSign]) {
+      const exRuler = planets.find(p => p.name === CHART_RULERS[exSign]);
+      text += ` Your empty ${example}${getOrdinalSuffix(example)} house, for instance, has ${exSign} on the cusp — so it answers to ${CHART_RULERS[exSign]}${exRuler?.sign ? ` in ${exRuler.sign}${exRuler.house ? `, your ${exRuler.house}${getOrdinalSuffix(exRuler.house)} house` : ''}` : ''}, which manages that life area from where it sits.`;
+    }
+    return text;
+  }
+
+  // Decans — which decan the user's Sun occupies.
+  if (subjectKey === 'decans') {
+    const sun = planets.find(p => p.name === 'Sun');
+    if (!sun?.sign || sun.degree == null) return buildSectionSynthesis(chart, section);
+    const deg = parseFloat(sun.degree);
+    const decan = deg < 10 ? 1 : deg < 20 ? 2 : 3;
+    const ordinal = ['first', 'second', 'third'][decan - 1];
+    const range = ['0°–10°', '10°–20°', '20°–30°'][decan - 1];
+    const FLAVOR = {
+      1: `the sign's purest, most direct expression — ${sun.sign} with no admixture`,
+      2: `the sign's middle face, where its qualities steady and deepen`,
+      3: `the sign's final face, where its qualities ripen and reach outward`,
+    };
+    return `Your Sun sits at ${deg.toFixed(1)}° ${sun.sign} — in the ${ordinal} decan (${range}) of the sign. Decan systems differ on which planet rules each face, but all agree the ${ordinal} decan is ${FLAVOR[decan]}. As you read this module's decan tables, look up the ${ordinal} decan of ${sun.sign} — that's the specific shading your ${sun.sign} Sun carries.`;
+  }
+
+  // The Void of Course Moon — needs the server to step the natal Moon forward
+  // (extra.voc is fetched by ModulePlayer; null means still loading).
+  if (subjectKey === 'void_of_course') {
+    const voc = extra?.voc;
+    if (!voc || voc.error) return buildSectionSynthesis(chart, section);
+    const h = (n) => n == null ? 'some hours' : (n < 1 ? 'less than an hour' : `about ${Math.round(n)} hour${Math.round(n) >= 1.5 ? 's' : ''}`);
+    if (voc.void) {
+      return `You were born under a void of course Moon. Your Moon in ${voc.moon_sign} had already perfected its final aspect — after your birth it made no further major aspects to the classical planets before leaving ${voc.moon_sign} for ${voc.next_sign}, ${h(voc.exits_sign_hours)} later. People born under a void Moon often describe a certain unscripted quality to their emotional life: less reactive to outside prompting, running on an inner rhythm the moment can't dictate. The traditional advice that "nothing will come of" void-Moon beginnings is about elections, not people — but the detached, in-between flavor of the void Moon is a real texture in how your ${voc.moon_sign} Moon operates.`;
+    }
+    return `Your natal Moon was not void of course. At your birth, the Moon in ${voc.moon_sign} was still applying to a ${voc.first_aspect?.aspect || 'major aspect'}${voc.first_aspect ? ` with ${voc.first_aspect.planet}` : ''}, which perfected ${h(voc.first_aspect?.hours_after_birth)} after you were born — the Moon still had business to complete in ${voc.moon_sign}. In the traditional reading, being born with an applying Moon gives your emotional life a sense of forward motion: things develop, engagements complete, the story your feelings are telling is still unfolding. When you watch the transiting Moon go void (the app's planner shows this), you're seeing the opposite condition to the one you were born under.`;
+  }
+
   // Lot & calculated-point modules (Arabic Lots, Lilith, Chiron, Tyche)
   const LOT_INFO = {
     part_of_fortune:   { name: 'Part of Fortune',   theme: 'the Lot of Fortune — a calculated point marking where ease, luck, and material opportunity naturally express in your life' },
@@ -310,6 +419,9 @@ function buildPersonalSynthesis(chart, subjectKey, section) {
     part_of_eros:      { name: 'Part of Eros',       theme: 'the Lot of Eros — where desire, passion, and the creative-erotic drive gather, what stirs you most powerfully' },
     part_of_necessity: { name: 'Part of Necessity', theme: 'the Lot of Necessity — the binding constraints and duties that shape your destiny, what you cannot escape' },
     tyche:             { name: 'Tyche',              theme: 'the lot of fortunate coincidence and providence — where serendipity and unearned grace tend to find you' },
+    juno:              { name: 'Juno',               theme: 'the asteroid of committed partnership — what you need in lasting bonds, and how loyalty, equality, and commitment play out in your closest relationships' },
+    pallas:            { name: 'Pallas',             theme: 'the asteroid of strategic wisdom — how you recognize patterns, solve problems, and fight with intellect and craft rather than force' },
+    vesta:             { name: 'Vesta',              theme: 'the asteroid of sacred focus — where your devotion gathers, the flame you keep lit, and the work you tend as a form of practice' },
     black_moon_lilith: { name: 'Black Moon Lilith',  theme: 'the mean lunar apogee — the repressed, instinctual, and untamed parts of the self seeking integration' },
     chiron:            { name: 'Chiron',             theme: 'the wounded healer — the core wound you carry and the gift of healing that emerges from tending it' },
   };
@@ -450,6 +562,26 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
     setShowWhatsNext(false);
   }, [mod.id]);
 
+  // AI-08: the Void of Course module's end slide needs the server to step the
+  // natal Moon forward (was it void at birth?). Fetched once per chart; until
+  // it arrives the slide shows the section fallback, then upgrades in place.
+  const [vocInfo, setVocInfo] = useState(null);
+  useEffect(() => {
+    if (mod.subject_key !== 'void_of_course') return;
+    const raw = chart?.raw_data;
+    if (!raw?.birth_date || vocInfo) return;
+    let cancelled = false;
+    base44.functions.invoke('chartCalculator', {
+      chart_type: 'natal_voc',
+      birth_date: raw.birth_date,
+      birth_time: raw.birth_time,
+      birth_location: raw.birth_location,
+      utc_offset: typeof raw.utc_offset === 'number' ? raw.utc_offset : parseFloat(raw.utc_offset),
+    }).then(res => { if (!cancelled) setVocInfo(res.data); })
+      .catch(() => { if (!cancelled) setVocInfo({ error: true }); });
+    return () => { cancelled = true; };
+  }, [mod.subject_key, chart?.id]);
+
   const hasSynthesis = !!chart ||
     !!PLANET_NAMES[mod.subject_key] ||
     /^house_\d+$/.test(mod.subject_key) ||
@@ -570,7 +702,7 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
         : block.options?.findIndex(o => o === block.answer))
     : -1;
   const isCorrect = answered && block?.type === 'quiz' && selectedAnswer === correctIdx;
-  const rawSynthesisText = buildPersonalSynthesis(chart, mod.subject_key, mod.section);
+  const rawSynthesisText = buildPersonalSynthesis(chart, mod.subject_key, mod.section, { voc: vocInfo });
   const synthesisText = rawSynthesisText?.replace(/ — /g, ', ').replace(/—/g, ', ');
 
   if (showMastery) {

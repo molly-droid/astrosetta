@@ -57,8 +57,26 @@ export function extractPlacementData(chart, subjectKey) {
     return { type: 'retrograde', planets: retroPlanets };
   }
 
+  // AI-08 Tier 1: subjects whose paragraph is self-contained get no card at
+  // all (per Molly: the Big Three card belongs only on Big Three modules) …
+  if (['chart_balance', 'empty_houses', 'decans'].includes(subjectKey)) return null;
+  // … and subjects about a specific body borrow that body's placement card.
+  let cardSubject = subjectKey;
+  if (subjectKey === 'moon_phases' || subjectKey === 'void_of_course') cardSubject = 'moon';
+  if (subjectKey === 'chart_ruler') {
+    const CHART_RULERS = {
+      Aries: 'Mars', Taurus: 'Venus', Gemini: 'Mercury', Cancer: 'Moon',
+      Leo: 'Sun', Virgo: 'Mercury', Libra: 'Venus', Scorpio: 'Pluto',
+      Sagittarius: 'Jupiter', Capricorn: 'Saturn', Aquarius: 'Uranus', Pisces: 'Neptune',
+    };
+    const ascSign = raw.unknown_time ? null : (raw.ascendant_sign || raw.angles?.ascendant?.sign || chart.ascendant_sign || null);
+    const ruler = ascSign ? CHART_RULERS[ascSign] : null;
+    if (!ruler) return null; // unknown birth time — paragraph explains, no card
+    cardSubject = ruler.toLowerCase();
+  }
+
   // Planet module (e.g. subjectKey = 'sun')
-  const planetName = subjectKey.charAt(0).toUpperCase() + subjectKey.slice(1);
+  const planetName = cardSubject.charAt(0).toUpperCase() + cardSubject.slice(1);
   const planet = planets.find(p => p.name === planetName);
   if (planet) {
     const sign = planet.sign;
@@ -127,8 +145,13 @@ export function extractPlacementData(chart, subjectKey) {
     };
   }
 
-  // Lot modules — Part of Fortune & Tyche (render as a planet-style placement card)
-  const LOT_SUBJECTS = { part_of_fortune: 'Part of Fortune', tyche: 'Tyche' };
+  // Lot & point modules (render as a planet-style placement card)
+  const LOT_SUBJECTS = {
+    part_of_fortune: 'Part of Fortune', tyche: 'Tyche',
+    part_of_spirit: 'Part of Spirit', part_of_eros: 'Part of Eros', part_of_necessity: 'Part of Necessity',
+    juno: 'Juno', pallas: 'Pallas', vesta: 'Vesta',
+    black_moon_lilith: 'Black Moon Lilith', chiron: 'Chiron',
+  };
   const lotName = LOT_SUBJECTS[subjectKey];
   if (lotName) {
     const lot = planets.find(p => p.name === lotName);

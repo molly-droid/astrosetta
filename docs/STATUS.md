@@ -574,6 +574,38 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-11-03 later (Tony): **Cutover data import REHEARSED end to end — clean.**
+Tony exported every Base44 table (dashboard CSVs). New
+`scripts/import/convert-csv-export.py` (CSV → importer JSON, typed from the
+entity schemas, live user ids recovered from ObjectId timestamps, deleted-
+account records dropped: 918 syntheses, 8 charts, 18 progress, 16 XP, etc.),
+then the real importer against a LOCAL stack on the production schema
+(13/13 migrations, matched to prod): 47 accounts, 43 charts, 899 module-
+progress rows, 3,660 syntheses, 392 XP events, content tables — 0 failed
+inserts, 0 orphaned rows; a migrated user signed in and saw only their own
+profile/chart/557 progress rows. Local quirk: macOS mobileactivation was
+holding port 54342; ran on 54352 temporarily, config restored. Cutover-day
+import is now a known-good procedure (README step 0)._
+
+_2026-11-03 (Tony): **Base44 user base audited — NO paying users; cutover
+user plan confirmed.** Source: Molly's dashboard user export
+(~/Downloads/Astrosetta/Astrosetta-users.csv, Nov 3): 47 users (45 user + 2
+admin: Molly + silexdev), 45 founding members, 43 with birth data, signups
+2026-05-07 → 2026-11-02, ~7 active in the last 30 days. Exactly ONE row has
+a Stripe customer id — an ADMIN on `calendar`, no subscription id, expired
+2026-10-05 (admin testing). Every other user is tier blank/free — expected,
+since live Base44 runs GATING_ADMIN_ONLY=true (everyone gets free Premium).
+Live Stripe acct_1Tf0OG9W9ZFmhq7a re-checked same day: 0 customers / 0
+subscriptions / 0 charges. ⇒ No subscriber migration, no comped access, no
+cross-account Stripe move needed. CAVEAT: this CSV has no `id` column, so it
+can't drive the import (charts and progress link by Base44 user id) — the
+cutover still needs the full Base44 DATA export (JSON incl. ids); the CSV is
+the headcount/plan. Users get in via Login → "Forgot password?" (imported
+accounts have no password) or Google; send a "we've moved, here's how to
+sign in" email on cutover day. Also fixed 2026-11-02: the Oct 28 iOS
+resubmission had dropped all 4 subscriptions (Remove from Review removed
+them); re-attached and resubmitted — 6 items, all subs WAITING_FOR_REVIEW._
+
 _2026-10-29 (Tony): **Android SUBMITTED to Play production review; iOS
 resubmitted with build 15; deletion fix E2E-VERIFIED.** Play: store listing
 (Molly's Apple description + 80-char short desc; icon/feature graphic
@@ -586,7 +618,8 @@ build 14 (no plan switching) pulled from the still-waiting queue, build
 stores now review the same feature set. Vercel now GIT-LINKED
 (molly-droid/astrosetta, root apps/web, env vars in project settings;
 push = deploy; robots.txt Disallow served from public/). TWO BUGS found
-by the deletion E2E test: (1) B-31 — web checkout mid-onboarding returned
+by the deletion E2E test: (1) ONB-01 (internal id — Molly's doc later took
+B-31 for the node-axis aspect bug) — web checkout mid-onboarding returned
 the user to the plan slide with no forward path ("You're already on
 Core" dead end); FIXED: onboarding jumps already-paid users (effective
 tier, not raw) to the confirmation slide. (2) Deletion/portal links

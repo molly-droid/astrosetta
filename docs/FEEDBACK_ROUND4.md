@@ -59,7 +59,23 @@ ships on push. Native picks it up in the next binary (client half), but
 the server half fixes AI readings and calendars for the shipped builds
 immediately.
 
-## AI-08 — module-aware "in your chart" end slides (P1, scoped, not started)
+## AI-08 — module-aware "in your chart" end slides (P1, Tier 1 SHIPPED 2026-10-31)
+
+**Tier 1 shipped and E2E-verified** (9 subjects that used to show the generic
+Big Three): `moon_phases` (natal phase from the Sun–Moon angle + Moon
+placement card), `void_of_course` (NEW server branch `chart_type:
+'natal_voc'` in chart-calculator steps the natal Moon at ~7-min resolution
+against Sun–Saturn Ptolemaic aspects; verified against an independent
+fixed-planet cross-check — same aspect, same body, same timeframe),
+`chart_balance` (ten-planet element/modality tallies), `chart_ruler`
+(Ascendant ruler + its placement, honest copy for unknown birth times),
+`empty_houses` (lists them + cusp-ruler explanation), `decans` (Sun's decan,
+method-neutral copy), and `juno`/`pallas`/`vesta` (full placement card +
+aspects via the existing point template). Cards: subjects about a body
+borrow its placement card (Moon for the lunar modules, the ruler for
+chart_ruler); self-contained subjects show no card. Big-Three fallback
+remains for not-yet-tiered modules (better than nothing; shrinks as tiers
+land). Before/after screenshots on Tony's Desktop (ai08-*.png).
 
 **Her report:** every Learn module's end slide repeats the Big Three and
 doesn't connect the lesson to the user's chart. She wants a per-module
@@ -68,9 +84,14 @@ Sun–Moon angle); Void-of-Course → natal Moon void status, sign, house;
 planet modules → that planet's sign/house/aspects; house modules → cusp
 sign + occupants; Big Three only on Big-Three modules.
 
-**Triage:** new product work (F-01 family), not migration parity — needs a
-per-module chart-data mapping across the curriculum plus llm-task prompt
-changes. Flag in the scope conversation with Molly before building.
+**Triage:** new product work (F-01 family), not migration parity. The end
+slide is template-generated (no LLM), so "prompt" changes are template
+branches in ModulePlayer's buildPersonalSynthesis. Remaining tiers for the
+scope conversation: Tier 2 = aspects family (your tightest example of the
+aspect being taught), patterns family (run chartDynamics detectors on the
+natal chart), dignities family (classical tables); Tier 3 = mundane/history
+modules (Great Conjunctions, profections — personalization method needs
+Molly's call).
 
 ## Sequencing
 

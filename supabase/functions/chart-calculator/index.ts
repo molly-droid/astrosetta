@@ -325,6 +325,73 @@ Deno.serve(async (req) => {
       return json({ chart_type: 'natal', birth_date, birth_time: birth_time ?? '12:00:00', unknown_time: !!body.unknown_time, birth_location, utc_offset: tz, house_system: houseSystem, engine: remote ? 'astrology-api' : 'builtin', ...chart });
     }
 
+    // AI-08: was the natal Moon void of course? Classical definition: after
+    // birth, the Moon perfects no further Ptolemaic aspect (0/60/90/120/180)
+    // to a classical body (Sun–Saturn) before leaving its sign. Stepped with
+    // the built-in ephemeris (~7-minute resolution — VOC windows span hours).
+    // Tropical only: matches the app's default tradition.
+    if (ct === 'natal_voc') {
+      const { birth_date, birth_time, birth_location } = body;
+      if (!birth_date) return json({ error: 'Missing birth_date' }, { status: 400 });
+      const tz = typeof body.utc_offset === 'number' ? body.utc_offset : (TZ[birth_location?.timezone] ?? 0);
+      const jde0 = toJDE(birth_date, birth_time, tz);
+      const Tof = (j: number) => (j - 2451545) / 36525;
+      const mLon = (j: number) => n360(pLon('Moon', Tof(j), j));
+      const m0 = mLon(jde0);
+      const moonSign = si(m0);
+      const degreesLeft = 30 - (m0 % 30);
+      const VOC_BODIES = ['Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'];
+      // Signed Moon–body separation in (-180, 180]: a conjunction is a zero
+      // crossing, an opposition a wrap through ±180, the middle aspects a
+      // crossing of |h| through 60/90/120. Absolute separation alone would
+      // never "cross" 0 (it bounces), hiding conjunctions.
+      const rel = (j: number, bodyName: string) => {
+        const d = mLon(j) - n360(pLon(bodyName, Tof(j), j));
+        return ((d + 180) % 360 + 360) % 360 - 180;
+      };
+      const STEP = 0.005; // days (~7.2 min)
+      let travel = 0, prevMoon = m0, exitJde: number | null = null;
+      let firstAspect: { body: string; aspect: string; jde: number } | null = null;
+      const prevRel: Record<string, number> = {};
+      for (const b of VOC_BODIES) prevRel[b] = rel(jde0, b);
+      for (let j = jde0 + STEP; j <= jde0 + 3.5; j += STEP) {
+        const cur = mLon(j);
+        let d = cur - prevMoon; if (d < -180) d += 360; if (d > 180) d -= 360;
+        travel += d; prevMoon = cur;
+        const exited = travel >= degreesLeft;
+        for (const b of VOC_BODIES) {
+          const h = rel(j, b), hp = prevRel[b];
+          let hit: number | null = null;
+          if ((hp > 0) !== (h > 0) && Math.abs(h - hp) < 90) hit = 0;          // conjunction
+          else if (Math.abs(h - hp) > 300) hit = 180;                          // opposition (wrap)
+          else {
+            const s = Math.abs(h), sp = Math.abs(hp);
+            for (const a of [60, 90, 120]) if ((sp - a) * (s - a) < 0) { hit = a; break; }
+          }
+          if (hit != null && !firstAspect) {
+            const names: Record<number, string> = { 0: 'conjunction', 60: 'sextile', 90: 'square', 120: 'trine', 180: 'opposition' };
+            firstAspect = { body: b, aspect: names[hit], jde: j };
+          }
+          prevRel[b] = h;
+        }
+        if (exited) { exitJde = j; break; }
+        if (firstAspect) break;
+      }
+      const hoursTo = (j: number | null) => j == null ? null : Math.round((j - jde0) * 24 * 10) / 10;
+      const isVoid = !firstAspect;
+      return json({
+        chart_type: 'natal_voc',
+        void: isVoid,
+        moon_sign: moonSign.sign,
+        moon_degree: moonSign.degree,
+        next_sign: SIGNS[(SIGNS.indexOf(moonSign.sign) + 1) % 12],
+        // void: hours from birth until the Moon left its sign with no aspect.
+        // not void: the first aspect the Moon perfected after birth.
+        exits_sign_hours: hoursTo(exitJde),
+        first_aspect: firstAspect ? { planet: firstAspect.body, aspect: firstAspect.aspect, hours_after_birth: hoursTo(firstAspect.jde) } : null,
+      });
+    }
+
     if (ct === 'transit') {
       const { birth_date, birth_time, birth_location, transit_date, transit_time, natal_planets_override } = body;
       if (!birth_date || birth_location?.latitude == null) {

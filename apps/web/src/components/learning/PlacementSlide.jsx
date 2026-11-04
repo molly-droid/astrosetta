@@ -59,7 +59,15 @@ export function extractPlacementData(chart, subjectKey) {
 
   // AI-08 Tier 1: subjects whose paragraph is self-contained get no card at
   // all (per Molly: the Big Three card belongs only on Big Three modules) …
-  if (['chart_balance', 'empty_houses', 'decans'].includes(subjectKey)) return null;
+  if ([
+    'chart_balance', 'empty_houses', 'decans',
+    // Tier 2
+    'aspects_intro', 'conjunction', 'square_opposition', 'trine_sextile', 'minor_aspects',
+    'aspect_patterns', 'kite_pattern', 'mystic_rectangle_pattern', 'yod_pattern', 'stelliums',
+    'elements_intro', 'modalities_intro', 'element_balance',
+    'essential_dignities_intro', 'domicile_and_detriment', 'exaltation_and_fall',
+    'peregrine_condition', 'reading_dignity_in_practice', 'sect_day_night', 'cazimi_combust_beams',
+  ].includes(subjectKey)) return null;
   // … and subjects about a specific body borrow that body's placement card.
   let cardSubject = subjectKey;
   if (subjectKey === 'moon_phases' || subjectKey === 'void_of_course') cardSubject = 'moon';

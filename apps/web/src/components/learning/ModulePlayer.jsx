@@ -22,6 +22,8 @@ import { X, ChevronRight, ChevronLeft, CheckCircle2, Sparkles, Compass } from 'l
 import ModuleMarkdown from './ModuleMarkdown';
 import { base44 } from '@/api/base44Client';
 import { getMoonPhaseName } from '@/lib/moonPhase';
+import { analyzeChartDynamics } from '@/lib/chartDynamics';
+import { evaluateDignity } from '@/lib/essentialDignities';
 import { Button } from '@/components/ui/button';
 import OrnamentDivider from '@/components/ui/OrnamentDivider';
 import PlacementSlide from './PlacementSlide';
@@ -316,16 +318,16 @@ function buildPersonalSynthesis(chart, subjectKey, section, extra) {
     const phase = getMoonPhaseName(moon.longitude, sun.longitude);
     const angle = Math.round(((moon.longitude - sun.longitude) + 360) % 360);
     const PHASE_MEANINGS = {
-      'New Moon': 'a beginning-oriented nature — you instinctively plant seeds, start fresh, and act on impulse before the path is fully lit',
-      'Crescent': 'a forward-straining nature — you push away from the familiar toward something new, often against inner resistance',
-      'First Quarter': 'a crisis-of-action nature — you grow through decisive moves, building structures under pressure',
-      'Gibbous': 'a perfecting nature — you analyze, refine, and adjust, always asking how something can work better',
-      'Full Moon': 'a culminating, relational nature — things become conscious for you through encounter, contrast, and visibility',
-      'Disseminating': 'a teaching nature — you digest experience into meaning and feel compelled to share what you have learned',
-      'Last Quarter': 'a crisis-of-consciousness nature — you question inherited structures and turn away from what no longer fits',
-      'Balsamic': 'a closing, distilling nature — you release, complete, and carry the seed of a cycle others cannot yet see',
+      'New Moon': 'a beginning-oriented nature: you instinctively plant seeds, start fresh, and act on impulse before the path is fully lit',
+      'Crescent': 'a forward-straining nature: you push away from the familiar toward something new, often against inner resistance',
+      'First Quarter': 'a crisis-of-action nature: you grow through decisive moves, building structures under pressure',
+      'Gibbous': 'a perfecting nature: you analyze, refine, and adjust, always asking how something can work better',
+      'Full Moon': 'a culminating, relational nature: things become conscious for you through encounter, contrast, and visibility',
+      'Disseminating': 'a teaching nature: you digest experience into meaning and feel compelled to share what you have learned',
+      'Last Quarter': 'a crisis-of-consciousness nature: you question inherited structures and turn away from what no longer fits',
+      'Balsamic': 'a closing, distilling nature: you release, complete, and carry the seed of a cycle others cannot yet see',
     };
-    let text = `You were born under a ${phase} Moon — at your birth the Moon stood ${angle}° ahead of the Sun. In lunation astrology this imprints ${PHASE_MEANINGS[phase] || 'its own rhythm on how you begin and complete things'}.`;
+    let text = `You were born under a ${phase} Moon. At your birth, the Moon stood ${angle}° ahead of the Sun. In lunation astrology this imprints ${PHASE_MEANINGS[phase] || 'its own rhythm on how you begin and complete things'}.`;
     text += ` With your Moon in ${moon.sign}${moon.house ? ` in the ${moon.house}${getOrdinalSuffix(moon.house)} house` : ''}, that ${phase} rhythm plays out through ${SIGN_KEYWORDS[moon.sign] ? `${moon.sign}'s ${ELEMENT_MAP[moon.sign]?.toLowerCase() || ''} temperament` : 'your Moon sign'}${moon.house && HOUSE_THEMES[parseInt(moon.house)] ? ` in the sphere of ${HOUSE_THEMES[parseInt(moon.house)]}` : ''}.`;
     return text;
   }
@@ -345,10 +347,10 @@ function buildPersonalSynthesis(chart, subjectKey, section, extra) {
     const els = sortDesc(el), mos = sortDesc(mo);
     const missingEls = ['Fire', 'Earth', 'Air', 'Water'].filter(e => !el[e]);
     const ELEMENT_NATURE = { Fire: 'initiative, enthusiasm, and self-expression', Earth: 'practicality, patience, and material grounding', Air: 'ideas, language, and social connection', Water: 'feeling, intuition, and emotional attunement' };
-    const MODALITY_NATURE = { Cardinal: 'initiating — you start things', Fixed: 'sustaining — you hold things steady', Mutable: 'adapting — you adjust and distribute' };
+    const MODALITY_NATURE = { Cardinal: 'initiating (you start things)', Fixed: 'sustaining (you hold things steady)', Mutable: 'adapting (you adjust and distribute)' };
     let text = `Counting your ten planets: ${els.map(([e, n]) => `${n} in ${e}`).join(', ')}; ${mos.map(([m, n]) => `${n} ${m}`).join(', ')}.`;
-    text += ` Your strongest element is ${els[0][0]} — your chart leads with ${ELEMENT_NATURE[els[0][0]]}.`;
-    if (missingEls.length) text += ` You have no planets in ${missingEls.join(' or ')} — not an absence of ${missingEls.map(e => ELEMENT_NATURE[e].split(',')[0]).join(' or ')}, but a function you tend to develop consciously rather than take for granted.`;
+    text += ` Your strongest element is ${els[0][0]}, so your chart leads with ${ELEMENT_NATURE[els[0][0]]}.`;
+    if (missingEls.length) text += ` You have no planets in ${missingEls.join(' or ')}. That isn't an absence of ${missingEls.map(e => ELEMENT_NATURE[e].split(',')[0]).join(' or ')}, but a function you tend to develop consciously rather than take for granted.`;
     text += ` On modality, ${mos[0][1]} of your planets are ${mos[0][0]}: your default mode is ${MODALITY_NATURE[mos[0][0]]}.`;
     return text;
   }
@@ -356,30 +358,30 @@ function buildPersonalSynthesis(chart, subjectKey, section, extra) {
   // The Chart Ruler — the planet ruling the Ascendant sign, and where it sits.
   if (subjectKey === 'chart_ruler') {
     const ascSign = raw.unknown_time ? null : (raw.ascendant_sign || raw.angles?.ascendant?.sign || chart?.ascendant_sign || null);
-    if (!ascSign) return `Your chart ruler is the planet that rules your Ascendant sign — but your birth time is unknown, so your Ascendant (and with it your chart ruler) can't be determined. If you ever confirm your birth time, this module will point at a specific planet in your chart.`;
+    if (!ascSign) return `Your chart ruler is the planet that rules your Ascendant sign, but your birth time is unknown, so your Ascendant (and with it your chart ruler) can't be determined. If you ever confirm your birth time, this module will point at a specific planet in your chart.`;
     const rulerName = CHART_RULERS[ascSign];
     const ruler = planets.find(p => p.name === rulerName);
-    let text = `Your Ascendant is in ${ascSign}, which makes ${rulerName} your chart ruler — the planet that carries your chart's agenda and colors how your whole life story unfolds.`;
+    let text = `Your Ascendant is in ${ascSign}, which makes ${rulerName} your chart ruler: the planet that carries your chart's agenda and colors how your whole life story unfolds.`;
     if (ruler) {
-      text += ` Your ${rulerName} sits in ${ruler.sign}${ruler.house ? ` in your ${ruler.house}${getOrdinalSuffix(ruler.house)} house` : ''}${ruler.retrograde ? ', retrograde' : ''} — so the themes of ${PLANET_THEMES[rulerName] || rulerName}${ruler.house && HOUSE_THEMES[parseInt(ruler.house)] ? `, expressed through ${HOUSE_THEMES[parseInt(ruler.house)]},` : ''} lead the way whenever your chart "acts."`;
+      text += ` Your ${rulerName} sits in ${ruler.sign}${ruler.house ? ` in your ${ruler.house}${getOrdinalSuffix(ruler.house)} house` : ''}${ruler.retrograde ? ', retrograde' : ''}, so the themes of ${PLANET_THEMES[rulerName] || rulerName}${ruler.house && HOUSE_THEMES[parseInt(ruler.house)] ? `, expressed through ${HOUSE_THEMES[parseInt(ruler.house)]},` : ''} lead the way whenever your chart "acts."`;
     }
     return text;
   }
 
   // Empty Houses — which of the user's houses hold no planets.
   if (subjectKey === 'empty_houses') {
-    if (raw.unknown_time || !houses.length) return `House placements need a birth time, and yours is marked unknown — so your chart uses no houses to be empty or full. If you confirm your birth time, this module will name your empty houses specifically.`;
+    if (raw.unknown_time || !houses.length) return `House placements need a birth time, and yours is marked unknown, so your chart uses no houses to be empty or full. If you confirm your birth time, this module will name your empty houses specifically.`;
     const occupied = new Set(planets.filter(p => p.house != null).map(p => parseInt(p.house)));
     const empty = [1,2,3,4,5,6,7,8,9,10,11,12].filter(n => !occupied.has(n));
-    if (!empty.length) return `Remarkably, every house in your chart holds at least one point — there are no empty houses for you. Each life arena has a resident planet pressing on it directly.`;
+    if (!empty.length) return `Remarkably, every house in your chart holds at least one point. There are no empty houses for you. Each life arena has a resident planet pressing on it directly.`;
     const emptyList = empty.map(n => `${n}${getOrdinalSuffix(n)}`).join(', ');
     const example = empty[0];
     const exSign = houses.find(h => h.number === example)?.sign;
-    let text = `In your chart, ${empty.length} house${empty.length > 1 ? 's are' : ' is'} empty: the ${emptyList}. That's normal — ten planets can't cover twelve houses.`;
+    let text = `In your chart, ${empty.length} house${empty.length > 1 ? 's are' : ' is'} empty: the ${emptyList}. That's normal: ten planets can't cover twelve houses.`;
     text += ` An empty house isn't a silent life area: it expresses through the sign on its cusp and that sign's ruler.`;
     if (exSign && CHART_RULERS[exSign]) {
       const exRuler = planets.find(p => p.name === CHART_RULERS[exSign]);
-      text += ` Your empty ${example}${getOrdinalSuffix(example)} house, for instance, has ${exSign} on the cusp — so it answers to ${CHART_RULERS[exSign]}${exRuler?.sign ? ` in ${exRuler.sign}${exRuler.house ? `, your ${exRuler.house}${getOrdinalSuffix(exRuler.house)} house` : ''}` : ''}, which manages that life area from where it sits.`;
+      text += ` Your empty ${example}${getOrdinalSuffix(example)} house, for instance, has ${exSign} on the cusp, so it answers to ${CHART_RULERS[exSign]}${exRuler?.sign ? ` in ${exRuler.sign}${exRuler.house ? `, your ${exRuler.house}${getOrdinalSuffix(exRuler.house)} house` : ''}` : ''}, which manages that life area from where it sits.`;
     }
     return text;
   }
@@ -393,11 +395,11 @@ function buildPersonalSynthesis(chart, subjectKey, section, extra) {
     const ordinal = ['first', 'second', 'third'][decan - 1];
     const range = ['0°–10°', '10°–20°', '20°–30°'][decan - 1];
     const FLAVOR = {
-      1: `the sign's purest, most direct expression — ${sun.sign} with no admixture`,
+      1: `the sign's purest, most direct expression, ${sun.sign} with no admixture`,
       2: `the sign's middle face, where its qualities steady and deepen`,
       3: `the sign's final face, where its qualities ripen and reach outward`,
     };
-    return `Your Sun sits at ${deg.toFixed(1)}° ${sun.sign} — in the ${ordinal} decan (${range}) of the sign. Decan systems differ on which planet rules each face, but all agree the ${ordinal} decan is ${FLAVOR[decan]}. As you read this module's decan tables, look up the ${ordinal} decan of ${sun.sign} — that's the specific shading your ${sun.sign} Sun carries.`;
+    return `Your Sun sits at ${deg.toFixed(1)}° ${sun.sign}, in the ${ordinal} decan (${range}) of the sign. Decan systems differ on which planet rules each face, but all agree the ${ordinal} decan is ${FLAVOR[decan]}. As you read this module's decan tables, look up the ${ordinal} decan of ${sun.sign}: that's the specific shading your ${sun.sign} Sun carries.`;
   }
 
   // The Void of Course Moon — needs the server to step the natal Moon forward
@@ -407,10 +409,14 @@ function buildPersonalSynthesis(chart, subjectKey, section, extra) {
     if (!voc || voc.error) return buildSectionSynthesis(chart, section);
     const h = (n) => n == null ? 'some hours' : (n < 1 ? 'less than an hour' : `about ${Math.round(n)} hour${Math.round(n) >= 1.5 ? 's' : ''}`);
     if (voc.void) {
-      return `You were born under a void of course Moon. Your Moon in ${voc.moon_sign} had already perfected its final aspect — after your birth it made no further major aspects to the classical planets before leaving ${voc.moon_sign} for ${voc.next_sign}, ${h(voc.exits_sign_hours)} later. People born under a void Moon often describe a certain unscripted quality to their emotional life: less reactive to outside prompting, running on an inner rhythm the moment can't dictate. The traditional advice that "nothing will come of" void-Moon beginnings is about elections, not people — but the detached, in-between flavor of the void Moon is a real texture in how your ${voc.moon_sign} Moon operates.`;
+      return `You were born under a void of course Moon. Your Moon in ${voc.moon_sign} had already perfected its final aspect. After your birth it made no further major aspects to the classical planets before leaving ${voc.moon_sign} for ${voc.next_sign}, ${h(voc.exits_sign_hours)} later. People born under a void Moon often describe a certain unscripted quality to their emotional life: less reactive to outside prompting, running on an inner rhythm the moment can't dictate. The traditional advice that "nothing will come of" void-Moon beginnings is about elections, not people. Still, the detached, in-between flavor of the void Moon is a real texture in how your ${voc.moon_sign} Moon operates.`;
     }
-    return `Your natal Moon was not void of course. At your birth, the Moon in ${voc.moon_sign} was still applying to a ${voc.first_aspect?.aspect || 'major aspect'}${voc.first_aspect ? ` with ${voc.first_aspect.planet}` : ''}, which perfected ${h(voc.first_aspect?.hours_after_birth)} after you were born — the Moon still had business to complete in ${voc.moon_sign}. In the traditional reading, being born with an applying Moon gives your emotional life a sense of forward motion: things develop, engagements complete, the story your feelings are telling is still unfolding. When you watch the transiting Moon go void (the app's planner shows this), you're seeing the opposite condition to the one you were born under.`;
+    return `Your natal Moon was not void of course. At your birth, the Moon in ${voc.moon_sign} was still applying to a ${voc.first_aspect?.aspect || 'major aspect'}${voc.first_aspect ? ` with ${voc.first_aspect.planet}` : ''}, which perfected ${h(voc.first_aspect?.hours_after_birth)} after you were born. The Moon still had business to complete in ${voc.moon_sign}. In the traditional reading, being born with an applying Moon gives your emotional life a sense of forward motion: things develop, engagements complete, the story your feelings are telling is still unfolding. When you watch the transiting Moon go void (the app's planner shows this), you're seeing the opposite condition to the one you were born under.`;
   }
+
+  // AI-08 Tier 2 — aspects, patterns, dignities and elements families.
+  const tier2 = buildTier2Synthesis(chart, subjectKey, raw, planets);
+  if (tier2) return tier2;
 
   // Lot & calculated-point modules (Arabic Lots, Lilith, Chiron, Tyche)
   const LOT_INFO = {
@@ -497,6 +503,187 @@ function buildPersonalSynthesis(chart, subjectKey, section, extra) {
 
   // Fallback — section-aware "your chart" context for any other module
   return buildSectionSynthesis(chart, section);
+}
+
+// Aspect examples use the ten planets plus Chiron — the same bodies the
+// pattern detector (chartDynamics) uses, so the aspect and pattern modules
+// never contradict each other. The Lots are excluded: they're derived from
+// the Sun, Moon and Ascendant, so a Lot "aspect" would teach the wrong lesson.
+const TEN_PLANETS = new Set(['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']);
+const ASPECT_BODIES = new Set([...TEN_PLANETS, 'Chiron']);
+const CLASSICAL_SEVEN = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn'];
+const MAJOR_ASPECTS = ['conjunction', 'opposition', 'square', 'trine', 'sextile'];
+const MINOR_ASPECTS = ['quincunx', 'semisextile', 'semisquare', 'sesquisquare'];
+const ASPECT_DEGREES = { conjunction: 0, sextile: 60, square: 90, trine: 120, opposition: 180, quincunx: 150, semisextile: 30, semisquare: 45, sesquisquare: 135 };
+const ELEMENT_NATURES = { Fire: 'initiative, enthusiasm, and self-expression', Earth: 'practicality, patience, and material grounding', Air: 'ideas, language, and social connection', Water: 'feeling, intuition, and emotional attunement' };
+const MODALITY_NATURES = { Cardinal: 'initiating (you start things)', Fixed: 'sustaining (you hold things steady)', Mutable: 'adapting (you adjust and distribute)' };
+
+function tallyTenPlanets(planets) {
+  const tens = planets.filter(p => TEN_PLANETS.has(p.name) && p.sign);
+  const el = {}, mo = {};
+  for (const p of tens) {
+    const e = ELEMENT_MAP[p.sign], m = MODALITY_MAP[p.sign];
+    if (e) el[e] = (el[e] || 0) + 1;
+    if (m) mo[m] = (mo[m] || 0) + 1;
+  }
+  const desc = o => Object.entries(o).sort((a, b) => b[1] - a[1]);
+  return { count: tens.length, elements: desc(el), modalities: desc(mo), el, mo };
+}
+
+const themeOf = (name) => PLANET_THEMES[name] || (name === 'Chiron' ? 'where you carry an old wound and learn to heal it' : name);
+const fmtOrb = (orb) => `${Number(orb).toFixed(1)}°`;
+const fmtAsp = (a) => `${a.planet1} ${a.aspect} ${a.planet2} (${fmtOrb(a.orb)} orb)`;
+const placeOf = (planets, name) => {
+  const p = planets.find(x => x.name === name);
+  if (!p?.sign) return name;
+  return `${name} in ${p.sign}${p.house ? ` in your ${p.house}${getOrdinalSuffix(p.house)} house` : ''}`;
+};
+
+function buildTier2Synthesis(chart, subjectKey, raw, planets) {
+  const aspects = (raw.aspects || []).filter(a => ASPECT_BODIES.has(a.planet1) && ASPECT_BODIES.has(a.planet2));
+  const byOrb = (list) => [...list].sort((a, b) => a.orb - b.orb);
+  const ofType = (t) => byOrb(aspects.filter(a => a.aspect === t));
+
+  // ── Aspects family ──────────────────────────────────────────────────────
+  if (subjectKey === 'aspects_intro') {
+    const majors = byOrb(aspects.filter(a => MAJOR_ASPECTS.includes(a.aspect)));
+    if (!majors.length) return null;
+    const counts = MAJOR_ASPECTS.map(t => [t, majors.filter(a => a.aspect === t).length]).filter(([, n]) => n);
+    const tight = majors[0];
+    return `Between your planets there are ${majors.length} major aspects: ${counts.map(([t, n]) => `${n} ${t}${n > 1 ? 's' : ''}`).join(', ')}. The tightest is ${fmtAsp(tight)}. The closer an aspect is to exact, the louder it speaks. Your ${tight.planet1} sits ${ASPECT_DEGREES[tight.aspect]}° from your ${tight.planet2}, so ${themeOf(tight.planet1)} and ${themeOf(tight.planet2)} are in constant conversation in your chart.`;
+  }
+  if (subjectKey === 'conjunction') {
+    const conj = ofType('conjunction');
+    if (!conj.length) return `You have no conjunctions between your planets. Every planet in your chart operates from its own position rather than fusing with another. That spreads your energy across more distinct life themes; when a transit makes a conjunction to one of your planets, you'll feel that fusion temporarily instead.`;
+    const t = conj[0];
+    let text = `Your tightest conjunction is ${t.planet1} and ${t.planet2}, ${fmtOrb(t.orb)} apart${planets.find(p => p.name === t.planet1)?.sign ? ` in ${planets.find(p => p.name === t.planet1).sign}` : ''}. These two drives are fused: ${themeOf(t.planet1)} can't easily act without ${themeOf(t.planet2)} coming along.`;
+    if (conj.length > 1) text += ` You also have ${conj.slice(1).map(a => `${a.planet1}–${a.planet2} (${fmtOrb(a.orb)})`).join(', ')}.`;
+    return text;
+  }
+  if (subjectKey === 'square_opposition') {
+    const sq = ofType('square'), op = ofType('opposition');
+    if (!sq.length && !op.length) return `You have no squares or oppositions between your planets, which makes for an unusually frictionless chart. The growth that tension aspects force tends to come to you through transits and relationships instead of being built in.`;
+    let text = '';
+    if (sq.length) text += `Your tightest square is ${fmtAsp(sq[0])}: ${sq[0].planet1} and ${sq[0].planet2} grind against each other, and that friction is where you build strength.`;
+    if (op.length) text += `${text ? ' ' : ''}Your tightest opposition is ${fmtAsp(op[0])}: you may swing between ${themeOf(op[0].planet1)} and ${themeOf(op[0].planet2)} before learning to hold both.`;
+    else text += ` You have no oppositions between your planets, so your tension runs through ${sq.length === 1 ? 'that square' : `your ${sq.length} squares`} rather than polarities.`;
+    if (sq.length && op.length) text += ` In total: ${sq.length} square${sq.length === 1 ? '' : 's'} and ${op.length} opposition${op.length === 1 ? '' : 's'}.`;
+    if (!sq.length) text = text.trimStart() + ' You have no squares between your planets, so your tension runs through polarities rather than friction.';
+    return text;
+  }
+  if (subjectKey === 'trine_sextile') {
+    const tr = ofType('trine'), sx = ofType('sextile');
+    if (!tr.length && !sx.length) return `You have no trines or sextiles between your planets. Your chart runs on effort rather than ease: what flows for others is something you build deliberately, and it tends to be sturdier for it.`;
+    let text = '';
+    if (tr.length) text += `Your tightest trine is ${fmtAsp(tr[0])}, a natural gift so easy it can go unnoticed.`;
+    if (sx.length) text += `${text ? ' ' : ''}Your tightest sextile is ${fmtAsp(sx[0])}, an opportunity that pays off when you act on it.`;
+    text += ` In total: ${tr.length} trine${tr.length === 1 ? '' : 's'} and ${sx.length} sextile${sx.length === 1 ? '' : 's'}.`;
+    return text;
+  }
+  if (subjectKey === 'minor_aspects') {
+    const minors = byOrb(aspects.filter(a => MINOR_ASPECTS.includes(a.aspect)));
+    if (!minors.length) return `You have no minor aspects between your planets within orb. Your chart's story is told almost entirely by its major aspects.`;
+    const top = minors.slice(0, 3);
+    return `You have ${minors.length} minor aspect${minors.length === 1 ? '' : 's'} between your planets. The tightest: ${top.map(fmtAsp).join('; ')}. Minor aspects are quieter than the majors, but a minor aspect this close to exact can be as noticeable as a wide major one.`;
+  }
+
+  // ── Patterns family (same detector as the Chart Dynamics card) ─────────
+  const PATTERN_KEYS = { aspect_patterns: null, kite_pattern: 'Kite', mystic_rectangle_pattern: 'Mystic Rectangle', yod_pattern: 'Yod' };
+  if (subjectKey in PATTERN_KEYS || subjectKey === 'stelliums') {
+    const dyn = analyzeChartDynamics(raw) || {};
+    const patterns = dyn.aspectPatterns || [];
+    const listPattern = (p) => `a ${p.type} formed by ${p.planets.join(', ')}${p.apex ? ` (apex: ${p.apex})` : ''}`;
+    if (subjectKey === 'stelliums') {
+      const st = dyn.stelliums || [];
+      if (!st.length) return `You don't have a stellium (three or more planets in one sign or house). Your planets are spread out, so no single sign or life area dominates your chart.`;
+      return `You have ${st.length === 1 ? 'a stellium' : `${st.length} stelliums`}: ${st.map(s => `${s.planets.join(', ')} ${s.type === 'sign' ? `in ${s.sign}${s.house ? ` (${s.house}${getOrdinalSuffix(s.house)} house)` : ''}` : `in your ${s.house}${getOrdinalSuffix(s.house)} house`}`).join('; ')}. A stellium concentrates energy, which makes that ${st[0].type === 'sign' ? 'sign' : 'house'} a powerhouse in your chart.`;
+    }
+    if (subjectKey === 'aspect_patterns') {
+      if (!patterns.length) return `Your chart doesn't contain any of the major aspect patterns (Grand Trine, T-Square, Grand Cross, Kite, Mystic Rectangle, or Yod). Most charts don't. Your planets work through individual aspects rather than a single linked structure.`;
+      return `Your chart contains ${patterns.length === 1 ? 'one major aspect pattern' : `${patterns.length} major aspect patterns`}: ${patterns.map(listPattern).join('; ')}. These planets act as a unit: when a transit touches one of them, the whole pattern lights up.`;
+    }
+    const want = PATTERN_KEYS[subjectKey];
+    const mine = patterns.filter(p => p.type === want);
+    if (mine.length) return `You have ${mine.map(listPattern).join('; ')}. This module is describing a structure that actually exists in your chart.`;
+    const others = patterns.filter(p => p.type !== want);
+    return `You don't have a ${want} in your chart. It's a relatively rare pattern.${others.length ? ` You do have ${others.map(listPattern).join('; ')}, which works on a related principle of planets acting as a linked unit.` : ' Your planets work through individual aspects rather than a linked structure, but knowing the shape helps you spot it when transits briefly create one.'}`;
+  }
+
+  // ── Elements family ────────────────────────────────────────────────────
+  if (['elements_intro', 'modalities_intro', 'element_balance'].includes(subjectKey)) {
+    const t = tallyTenPlanets(planets);
+    if (t.count < 5) return null;
+    if (subjectKey === 'modalities_intro') {
+      return `Your ten planets split by modality as ${t.modalities.map(([m, n]) => `${n} ${m}`).join(', ')}. Your dominant mode is ${t.modalities[0][0]}: ${MODALITY_NATURES[t.modalities[0][0]]}.${!t.mo.Cardinal || !t.mo.Fixed || !t.mo.Mutable ? ` You have no ${['Cardinal', 'Fixed', 'Mutable'].filter(m => !t.mo[m]).join(' or ')} planets, so that mode is one you develop consciously.` : ''}`;
+    }
+    const missing = ['Fire', 'Earth', 'Air', 'Water'].filter(e => !t.el[e]);
+    if (subjectKey === 'elements_intro') {
+      const groups = ['Fire', 'Earth', 'Air', 'Water']
+        .map(e => [e, planets.filter(p => TEN_PLANETS.has(p.name) && ELEMENT_MAP[p.sign] === e).map(p => p.name)])
+        .filter(([, names]) => names.length);
+      return `Here's where each of your ten planets falls: ${groups.map(([e, names]) => `${e}: ${names.join(', ')}`).join('. ')}. ${missing.length ? `Nothing in ${missing.join(' or ')}.` : 'Every element is represented.'} Each planet takes on its element's nature, so your ${groups.find(([e]) => e === t.elements[0][0])[1][0]} speaks the language of ${ELEMENT_NATURES[t.elements[0][0]]}.`;
+    }
+    return `Your ten planets split by element as ${t.elements.map(([e, n]) => `${n} ${e}`).join(', ')}. Your strongest element is ${t.elements[0][0]}, so your chart leads with ${ELEMENT_NATURES[t.elements[0][0]]}.${missing.length ? ` You have no planets in ${missing.join(' or ')}, a function you tend to develop consciously rather than take for granted.` : ` All four elements are represented, so no function is missing outright.`}`;
+  }
+
+  // ── Dignities family (classical seven, traditional rulers) ─────────────
+  const DIGNITY_KEYS = ['essential_dignities_intro', 'domicile_and_detriment', 'exaltation_and_fall', 'peregrine_condition', 'reading_dignity_in_practice'];
+  if (DIGNITY_KEYS.includes(subjectKey)) {
+    const rows = CLASSICAL_SEVEN
+      .map(name => planets.find(p => p.name === name))
+      .filter(p => p?.sign)
+      .map(p => ({ name: p.name, sign: p.sign, house: p.house, ...evaluateDignity(p.name, p.sign) }));
+    if (!rows.length) return null;
+    const of = (s) => rows.filter(r => r.status === s);
+    const list = (rs) => rs.map(r => `${r.name} in ${r.sign}`).join(', ');
+    const dom = of('domicile'), exa = of('exaltation'), det = of('detriment'), fal = of('fall'), per = of('peregrine');
+    if (subjectKey === 'domicile_and_detriment') {
+      return `${dom.length ? `In domicile (its home sign): ${list(dom)}, expressing its nature freely.` : 'None of your seven classical planets is in domicile.'} ${det.length ? `In detriment (opposite its home): ${list(det)}, working against the grain of its sign, which often makes it more resourceful.` : 'None of your classical planets is in detriment.'}`;
+    }
+    if (subjectKey === 'exaltation_and_fall') {
+      return `${exa.length ? `Exalted: ${list(exa)}, operating at its most honored expression.` : 'None of your seven classical planets is exalted.'} ${fal.length ? `In fall: ${list(fal)}, humbled, its expression forced to work in an unfamiliar register.` : 'None of your classical planets is in fall.'}`;
+    }
+    if (subjectKey === 'peregrine_condition') {
+      return `By the major dignities (domicile, exaltation, detriment, fall), ${per.length} of your seven classical planets ${per.length === 1 ? 'is' : 'are'} peregrine: ${list(per) || 'none'}. A peregrine planet has no strong footing in its sign, so it leans on its house, its aspects, and the planet ruling its sign to do its work. (Full peregrine status also checks triplicity, term, and face; this summary covers the major dignities.)`;
+    }
+    const strongest = [...rows].sort((a, b) => b.score - a.score)[0];
+    const weakest = [...rows].sort((a, b) => a.score - b.score)[0];
+    if (subjectKey === 'reading_dignity_in_practice') {
+      const strongAspects = (raw.aspects || []).filter(a => (a.planet1 === weakest.name || a.planet2 === weakest.name) && ASPECT_BODIES.has(a.planet1) && ASPECT_BODIES.has(a.planet2) && ['trine', 'sextile', 'conjunction'].includes(a.aspect));
+      return `Putting it together: your best-dignified planet is ${strongest.name} in ${strongest.sign} (${strongest.status}), and your most challenged is ${weakest.name} in ${weakest.sign} (${weakest.status}). Dignity is only the first layer: ${weakest.name}${weakest.house ? ` sits in your ${weakest.house}${getOrdinalSuffix(weakest.house)} house` : ''}${strongAspects.length ? ` and receives support from ${strongAspects.slice(0, 2).map(a => (a.planet1 === weakest.name ? a.planet2 : a.planet1) + ` (${a.aspect})`).join(' and ')}` : ''}, which shapes how well it can do its job in practice.`;
+    }
+    // essential_dignities_intro
+    return `Scoring your seven classical planets by sign: ${rows.map(r => `${r.name} ${r.status === 'peregrine' ? 'peregrine' : r.status} (${r.sign})`).join(', ')}. Your most dignified planet is ${strongest.name}${strongest.score > 0 ? `, at home in ${strongest.sign}` : ''}; your most challenged is ${weakest.name}${weakest.score < 0 ? ` in ${weakest.sign}` : ''}.`;
+  }
+
+  // ── Sect: day or night chart ───────────────────────────────────────────
+  if (subjectKey === 'sect_day_night') {
+    const ascLon = raw.unknown_time ? null : raw.angles?.ascendant?.longitude;
+    const sun = planets.find(p => p.name === 'Sun');
+    if (ascLon == null || sun?.longitude == null) return `Sect depends on whether the Sun was above or below the horizon at your birth, which needs an exact birth time, and yours is marked unknown. Confirm your birth time and this module will tell you whether you have a day or night chart.`;
+    const isDay = ((sun.longitude - ascLon) + 360) % 360 >= 180;
+    const benefic = isDay ? 'Jupiter' : 'Venus';
+    const malefic = isDay ? 'Saturn' : 'Mars';
+    const contrary = isDay ? 'Mars' : 'Saturn';
+    return `You have a ${isDay ? 'day' : 'night'} chart: the Sun was ${isDay ? 'above' : 'below'} the horizon when you were born. That makes ${benefic} your most helpful planet: ${placeOf(planets, benefic)}. ${malefic} is the more manageable of the two difficult planets (${placeOf(planets, malefic)}), and ${contrary} is the one that tends to cause the most friction (${placeOf(planets, contrary)}).`;
+  }
+
+  // ── Cazimi, combust, under the beams ──────────────────────────────────
+  if (subjectKey === 'cazimi_combust_beams') {
+    const sun = planets.find(p => p.name === 'Sun');
+    if (sun?.longitude == null) return null;
+    const near = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn']
+      .map(n => planets.find(p => p.name === n))
+      .filter(p => p?.longitude != null)
+      .map(p => { let d = Math.abs(p.longitude - sun.longitude); if (d > 180) d = 360 - d; return { name: p.name, d }; })
+      .filter(x => x.d <= 17)
+      .sort((a, b) => a.d - b.d);
+    if (!near.length) return `None of your planets is close enough to the Sun to be cazimi, combust, or under the beams. Every planet in your chart operates in its own light.`;
+    const cond = (d) => d <= 17 / 60 ? 'cazimi (in the heart of the Sun, which empowers it)' : d <= 8.5 ? 'combust (burned by the Sun, so hidden or overpowered)' : 'under the beams (dimmed by the Sun)';
+    return `Measured from your Sun: ${near.map(x => `${x.name} is ${fmtOrb(x.d)} away, ${cond(x.d)}`).join('; ')}. ${near[0].d <= 8.5 ? `${near[0].name}'s themes may feel bound up with your identity, hard to see from the outside.` : 'The effect is mild at this distance, but worth knowing.'}`;
+  }
+
+  return null;
 }
 
 function buildAspectInterpretation(aspect, chart) {

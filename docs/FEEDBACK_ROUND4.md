@@ -84,6 +84,33 @@ Sun–Moon angle); Void-of-Course → natal Moon void status, sign, house;
 planet modules → that planet's sign/house/aspects; house modules → cusp
 sign + occupants; Big Three only on Big-Three modules.
 
+**Tier 2 shipped 2026-11-03 (20 modules):** aspects family (intro: counts +
+tightest; conjunction; squares/oppositions; trines/sextiles; minor) using the
+ten planets + Chiron — the SAME bodies chartDynamics uses, so the aspect and
+pattern modules can't contradict each other (caught when a T-Square's
+Uranus–Chiron opposition was missing from "your oppositions"); Lots
+excluded (derived from Sun/Moon/ASC). Patterns family (aspect_patterns,
+kite, mystic rectangle, yod, stelliums) from analyzeChartDynamics — honest
+"you don't have one" copy that points to a related pattern if present.
+Elements (four elements = which planet sits where; modalities; element
+balance). Dignities (intro, domicile/detriment, exaltation/fall, peregrine —
+labelled as major dignities only, dignity in practice) on the classical
+seven with traditional rulers; sect (Sun vs Ascendant longitude, sect
+benefic/malefic/contrary); cazimi/combust/under the beams (17′ / 8.5° / 17°).
+Validation: every claim recomputed independently from raw longitudes for
+Tony's chart (all matched); the real template code compiled into a Node
+harness and run against all 6 prod charts × 20 modules (pattern-present
+wording exercised on two T-Square charts) — no crashes, blanks, undefined,
+em dashes or nested parens. Before/after pairs: ~/Desktop/ai08-tier2/pairs/.
+Copy note: the AI-04 display stripper turns " — " into ", ", so new templates
+avoid em dashes (Tier 1 copy rewritten the same way). Note the "before" was
+not purely generic: Base44 appended a family-level line (same dignity list on
+every classical module, same aspect list incl. Lots on every aspects module).
+Still on the fallback (24): traditions series (13), foundations intros (4),
+chart_synthesis, synastry_basics, antiscia_contrascia, and the Tier 3
+history/mundane modules (great_conjunctions, profections, barbaults_basket,
+mundane_aspect_patterns) awaiting Molly's call on the personal hook.
+
 **Triage:** new product work (F-01 family), not migration parity. The end
 slide is template-generated (no LLM), so "prompt" changes are template
 branches in ModulePlayer's buildPersonalSynthesis. Remaining tiers for the

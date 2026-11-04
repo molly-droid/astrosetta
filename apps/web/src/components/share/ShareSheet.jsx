@@ -3,21 +3,28 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet';
 import { Loader2, Download, Copy, Check, Image as ImageIcon } from 'lucide-react';
-import ShareCard from './ShareCard';
+import ShareCard, { cardSize } from './ShareCard';
 import { captureCardAsPng, copyShareText } from '@/lib/shareCard';
 import { isNativePlatform } from '@/lib/platform';
 
-const PREVIEW_SIZE = 300;
-const PREVIEW_SCALE = PREVIEW_SIZE / 1080;
 
 /**
- * Bottom-sheet share modal. Renders the full 1080×1080 card off-screen for
+ * Bottom-sheet share modal. Renders the full-size card off-screen for
  * html2canvas capture, plus a scaled preview and Download / Copy Text CTAs.
  *
- * Props: { open, onOpenChange, card, filename, textFallback }
+ * Props: { open, onOpenChange, card, filename, textFallback, variants }
+ * F-04: `variants` — [{ key, label, card, textFallback }] — adds a
+ * "Share for everyone" / "Share my reading" choice; the first is the default.
  */
-export default function ShareSheet({ open, onOpenChange, card, filename = 'astrosetta-card', textFallback = '' }) {
+export default function ShareSheet({ open, onOpenChange, card: singleCard, filename = 'astrosetta-card', textFallback: singleText = '', variants = null }) {
   const captureRef = useRef(null);
+  const [variantKey, setVariantKey] = useState(null);
+  const active = variants?.length ? (variants.find(v => v.key === variantKey) || variants[0]) : null;
+  const card = active ? active.card : singleCard;
+  const textFallback = active ? (active.textFallback ?? active.card?.textFallback ?? '') : singleText;
+  const size = cardSize(card);
+  const PREVIEW_WIDTH = card?.format === 'story' ? 190 : 300;
+  const previewScale = PREVIEW_WIDTH / size.width;
   const [downloading, setDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saveError, setSaveError] = useState(null);
@@ -30,7 +37,7 @@ export default function ShareSheet({ open, onOpenChange, card, filename = 'astro
     setDownloading(true);
     setSaveError(null);
     try {
-      await captureCardAsPng(captureRef.current, filename);
+      await captureCardAsPng(captureRef.current, active ? `${filename}-${active.key}` : filename, size);
     } catch (err) {
       // A cancelled native share sheet is a normal outcome, not a failure.
       const msg = String(err?.message || '');
@@ -58,8 +65,8 @@ export default function ShareSheet({ open, onOpenChange, card, filename = 'astro
             position: 'fixed',
             left: -99999,
             top: 0,
-            width: 1080,
-            height: 1080,
+            width: size.width,
+            height: size.height,
             pointerEvents: 'none',
             zIndex: -1,
           }}
@@ -68,7 +75,7 @@ export default function ShareSheet({ open, onOpenChange, card, filename = 'astro
         </div>
       )}
 
-      <Sheet open={open} onOpenChange={onOpenChange}>
+      <Sheet open={open} onOpenChange={(o) => { if (!o) setVariantKey(null); onOpenChange?.(o); }}>
         <SheetContent
           side="bottom"
           className="rounded-t-2xl border-t border-gold-primary/30 bg-[#0f1a2e] px-5 pb-7 pt-4 text-white"
@@ -78,22 +85,40 @@ export default function ShareSheet({ open, onOpenChange, card, filename = 'astro
               Share Card
             </SheetTitle>
             <SheetDescription className="font-body text-[0.6875rem] text-brass/60">
-              Download a 1080×1080 image for Instagram &amp; Pinterest, or copy a text version for X.
+              {card?.format === 'story'
+                ? 'Download a 1080×1920 image sized for Stories, or copy a text version.'
+                : <>Download a 1080×1080 image for Instagram &amp; Pinterest, or copy a text version for X.</>}
             </SheetDescription>
           </SheetHeader>
+
+          {variants?.length > 1 && (
+            <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl border border-gold-primary/25 p-1" role="tablist">
+              {variants.map(v => (
+                <button
+                  key={v.key}
+                  role="tab"
+                  aria-selected={active?.key === v.key}
+                  onClick={() => setVariantKey(v.key)}
+                  className={`rounded-lg py-2 font-body text-[0.6875rem] font-semibold transition ${active?.key === v.key ? 'bg-gold-primary text-[#0f1a2e]' : 'text-gold-accent hover:bg-gold-primary/10'}`}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Scaled preview */}
           <div className="flex justify-center my-4">
             <div
               style={{
-                width: PREVIEW_SIZE,
-                height: PREVIEW_SIZE,
+                width: PREVIEW_WIDTH,
+                height: size.height * previewScale,
                 overflow: 'hidden',
                 borderRadius: 16,
                 boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
               }}
             >
-              <div style={{ transform: `scale(${PREVIEW_SCALE})`, transformOrigin: 'top left', width: 1080, height: 1080 }}>
+              <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top left', width: size.width, height: size.height }}>
                 {card && <ShareCard card={card} />}
               </div>
             </div>

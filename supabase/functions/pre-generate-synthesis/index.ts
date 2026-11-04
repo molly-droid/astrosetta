@@ -423,7 +423,7 @@ Deno.serve(async (req) => {
       for (const d of dayList) {
         const existing = await base44.asServiceRole.entities.CalendarSynthesis.filter({
           user_id: c.user_id,
-          period_key: `day-v20-${dateKey(d)}-${depth}`,
+          period_key: `day-v24-${dateKey(d)}-${depth}`,
         });
         if (!existing.length) missing.push(d);
       }
@@ -489,6 +489,12 @@ Deno.serve(async (req) => {
         }
       };
 
+      // E-04: generate with the owner's visible chart points only — the stored
+      // reading is shown by the app and the digest alike.
+      const owner = await base44.asServiceRole.entities.User.filter({ id: chart.user_id }).then(r => r[0]).catch(() => null);
+      const hidden = hiddenChartPoints(owner);
+      const visibleRaw = visibleNatal(raw, hidden);
+
       try {
         const { depth, missing } = await missingDaysFor(chart);
         // Every path only fills gaps — the LLM is never re-run on a cached
@@ -508,7 +514,7 @@ Deno.serve(async (req) => {
           let transits;
           try {
             const calcData = await getCalculatorTransits(base44, raw, dkDay);
-            transits = classifyCalculatorTransits(calcData, raw);
+            transits = classifyCalculatorTransits(visibleTransits(calcData, hidden), visibleRaw);
             console.log(`[preGen] chartCalculator OK for chart ${chart.id} ${dkDay}, ingresses: ${transits.ingresses?.length || 0}`);
           } catch (calcErr) {
             console.error(`[preGen] chartCalculator failed for chart ${chart.id} ${dkDay}: ${calcErr.message}`);
@@ -517,7 +523,7 @@ Deno.serve(async (req) => {
           }
 
           // Day synthesis (generated at the user's current knowledge density)
-          await storeSynthesis(await generateDaySynthesis(base44, raw, day, transits, depth));
+          await storeSynthesis(await generateDaySynthesis(base44, visibleRaw, day, transits, depth));
           stored++;
 
           // Lunar event synthesis (if exact new/full moon that day)

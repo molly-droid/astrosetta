@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { getMundanePatterns } from '@/lib/mundanePatterns';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
-import { ChevronDown, ChevronRight, Layers } from 'lucide-react';
+import { ChevronDown, ChevronRight, Layers, Share2 } from 'lucide-react';
+import ShareSheet from '@/components/share/ShareSheet';
+import { buildFormationCardData, shareVariants, chartAscendantSign } from '@/lib/shareCard';
+import { findNatalHouseForLongitude, ordinal } from '@/lib/houseUtils';
 
 const ASPECT_SYMBOLS = {
   conjunction: '☌\uFE0E', opposition: '☍\uFE0E', trine: '△\uFE0E', square: '□\uFE0E',
@@ -20,12 +23,33 @@ const CATEGORY_STYLES = {
  * Groups all mundane (collective) patterns into a single collapsed card.
  * Each formation has its own expandable detail with full explanation and dynamics.
  */
-export default function MundaneFormationsCard({ transits, onHighlight }) {
+export default function MundaneFormationsCard({ transits, onHighlight, chart = null }) {
   const [cardOpen, setCardOpen] = useState(false);
+  const [shareState, setShareState] = useState(null);
   const [expandedIdx, setExpandedIdx] = useState(-1);
   const patterns = getMundanePatterns(transits?.transitPlanets);
 
   if (patterns.length === 0) return null;
+
+  // F-04: a formation is a collective event; "my reading" names the houses of
+  // the user's chart that its planets occupy today.
+  const openShare = (p) => {
+    const raw = chart?.raw_data || {};
+    const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    let note = null;
+    if (chart && !raw.unknown_time && raw.houses?.length) {
+      const houses = [...new Set((p.planets || []).map(name => {
+        const lon = transits?.transitPlanets?.find(tp => tp.name === name)?.longitude;
+        return lon == null ? null : findNatalHouseForLongitude(lon, raw.houses, raw.house_system || 'whole_sign', chartAscendantSign(chart));
+      }).filter(Boolean))].sort((x, y) => x - y);
+      if (houses.length) {
+        const list = houses.map(ordinal);
+        const named = (p.planets || []).every(n => p.type.includes(n));
+        note = `Today's ${p.type}${named ? '' : ` (${p.planets.join(', ')})`} runs through my ${list.length > 1 ? `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}` : list[0]} house${houses.length > 1 ? 's' : ''}, linking ${houses.length > 1 ? 'those parts' : 'that part'} of my life.`;
+      }
+    }
+    setShareState(shareVariants(buildFormationCardData(p, dateStr), note ? buildFormationCardData(p, dateStr, note) : null));
+  };
 
   const handleCardToggle = () => {
     const newOpen = !cardOpen;
@@ -143,6 +167,12 @@ export default function MundaneFormationsCard({ transits, onHighlight }) {
                         ))}
                       </div>
                     )}
+                    <button
+                      onClick={() => openShare(p)}
+                      className="flex items-center gap-1.5 font-body text-[0.625rem] text-brass/60 hover:text-gold-accent transition-colors"
+                    >
+                      <Share2 size={11} /> Share this formation
+                    </button>
                     {(p.sign || p.element || p.apex) && (
                       <div className="flex flex-wrap gap-3 text-[0.625rem] font-body text-brass/50">
                         {p.sign && <span>📍 {p.sign}</span>}
@@ -157,6 +187,7 @@ export default function MundaneFormationsCard({ transits, onHighlight }) {
           })}
         </div>
       )}
+      <ShareSheet open={!!shareState} onOpenChange={(o) => !o && setShareState(null)} variants={shareState} filename="astrosetta-formation" />
     </div>
   );
 }

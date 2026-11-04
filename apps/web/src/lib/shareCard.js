@@ -1,6 +1,7 @@
 import html2canvas from 'html2canvas';
 import { PLANET_GLYPHS, SIGN_GLYPHS } from '@/lib/chartUtils';
 import { ECLIPSE_META } from '@/lib/eclipseUtils';
+import { HOUSE_NAMES } from '@/lib/houseUtils';
 import { isNativePlatform } from '@/lib/platform';
 
 const PLANET_DOMAINS = {
@@ -48,16 +49,17 @@ function hashtag(str) {
  *
  * Returns 'shared' | 'downloaded'; throws if the capture itself fails.
  */
-export async function captureCardAsPng(element, filename) {
+export async function captureCardAsPng(element, filename, size = { width: 1080, height: 1080 }) {
+  const { width, height } = size;
   const canvas = await html2canvas(element, {
     backgroundColor: '#0f1a2e',
-    width: 1080,
-    height: 1080,
+    width,
+    height,
     scale: 1,
     useCORS: true,
     logging: false,
-    windowWidth: 1080,
-    windowHeight: 1080,
+    windowWidth: width,
+    windowHeight: height,
   });
   const dataUrl = canvas.toDataURL('image/png');
 
@@ -189,4 +191,113 @@ export function formatCollectiveContext(transits) {
     lines.push(`${transits.isEclipse ? 'Eclipse: ' : ''}${phase} in ${transits.moonSign}`);
   }
   return lines.join('; ');
+}
+// ── F-04 / F-05 / F-06 card builders ─────────────────────────────────────────
+// "everyone" cards describe the collective sky and carry no personal chart
+// details; "mine" cards say how the same event lands in the user's chart.
+
+const ASPECT_WORDS = {
+  conjunction: 'merge and amplify each other',
+  opposition: 'pull against each other, asking for balance',
+  trine: 'flow together with ease',
+  square: 'create friction that pushes for change',
+  sextile: 'open a cooperative opportunity',
+};
+const INVITE = 'Learn astrology through your own chart · astrosetta.com';
+
+const houseLabel = (house) => (house ? HOUSE_NAMES[house] : null);
+
+/** Tag an existing (collective) card as the "Today's sky" variant. */
+export function asEveryone(card) {
+  return card ? { ...card, audience: 'everyone' } : card;
+}
+
+/** Personal version of an ingress: which of the user's houses it enters. */
+export function buildPersonalIngressCardData(ing, dateStr, house) {
+  const base = buildIngressCardData(ing, dateStr);
+  const where = houseLabel(house);
+  if (!where) return null;
+  const body = `${ing.planet} ${ing.approaching ? 'approaches' : 'enters'} ${ing.to_sign} in my ${where}. For ${PLANET_DURATIONS[ing.planet] || 'a while'}, ${PLANET_DOMAINS[ing.planet] || 'its themes'} play out in this part of my life.`;
+  return { ...base, audience: 'mine', kicker: 'MY INGRESS', body, textFallback: `${base.title}, in my ${where}\n${dateStr}\n\n${body}\n\n${INVITE}` };
+}
+
+/** Personal version of a station. */
+export function buildPersonalStationCardData(station, dateStr, house) {
+  const base = buildStationCardData(station, dateStr);
+  const where = houseLabel(house);
+  if (!where) return null;
+  const isRx = station.type === 'retrograde';
+  const body = `${station.planet} ${isRx ? 'stations retrograde' : 'stations direct'} at ${station.degree?.toFixed(1)}° ${station.sign}, in my ${where}. ${isRx ? 'Time to revisit and rethink' : 'Things start moving again'} in this part of my life.`;
+  return { ...base, audience: 'mine', kicker: 'MY STATION', body, textFallback: `${base.title}, in my ${where}\n${dateStr}\n\n${body}\n\n${INVITE}` };
+}
+
+/** Personal version of a lunation. */
+export function buildPersonalLunationCardData(lunation, dateStr, house) {
+  const base = buildLunationCardData(lunation, dateStr);
+  const where = houseLabel(house);
+  if (!where) return null;
+  const isFull = lunation.phase === 'Full Moon';
+  const body = `This ${base.title} lands in my ${where}. ${isFull ? 'Something in this part of my life comes to light or completes.' : 'A fresh start is seeded in this part of my life.'}`;
+  return { ...base, audience: 'mine', kicker: `MY ${base.kicker}`, body, textFallback: `${base.title}, in my ${where}\n${dateStr}\n\n${body}\n\n${INVITE}` };
+}
+
+/** A collective planet-to-planet transit, for everyone. */
+export function buildSkyAspectCardData(a, dateStr) {
+  const p1 = a.planet1 || a.transit_planet, p2 = a.planet2 || a.natal_planet;
+  const title = `${p1} ${a.aspect} ${p2}`;
+  const body = `${p1} and ${p2} ${ASPECT_WORDS[a.aspect] || 'meet in the sky'}. Everyone feels it through ${PLANET_DOMAINS[p1] || p1} meeting ${PLANET_DOMAINS[p2] || p2}.`;
+  const hashtags = ['#astrology', hashtag(p1), hashtag(p2), hashtag(a.aspect), '#astrosetta'];
+  return { glyph: `${PLANET_GLYPHS[p1] || ''} ${PLANET_GLYPHS[p2] || ''}`.trim() || '✦', glyphColor: '#C9A961', kicker: "TODAY'S TRANSIT", title, bodyType: 'prose', body, dateStr, audience: 'everyone', hashtags, textFallback: `${title}\n${dateStr}\n\n${body}\n\n${hashtags.join(' ')}\n\nRead your chart → astrosetta.com` };
+}
+
+/** The same collective transit, through the user's houses. */
+export function buildMySkyAspectCardData(a, dateStr, house1, house2) {
+  const base = buildSkyAspectCardData(a, dateStr);
+  const p1 = a.planet1 || a.transit_planet, p2 = a.planet2 || a.natal_planet;
+  if (!house1 || !house2) return null;
+  const body = house1 === house2
+    ? `${p1} and ${p2} ${ASPECT_WORDS[a.aspect] || 'meet'} in my ${HOUSE_NAMES[house1]}.`
+    : `${p1} in my ${HOUSE_NAMES[house1]} and ${p2} in my ${HOUSE_NAMES[house2]} ${ASPECT_WORDS[a.aspect] || 'meet'}, linking those two parts of my life.`;
+  return { ...base, audience: 'mine', kicker: 'MY TRANSIT', body, textFallback: `${base.title}\n${dateStr}\n\n${body}\n\n${INVITE}` };
+}
+
+/** An aspect-pattern formation (Grand Trine, T-Square, …). */
+export function buildFormationCardData(pattern, dateStr, personalNote = null) {
+  const names = pattern.planets || [];
+  const andList = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : (names[0] || '');
+  // Named formations ("Saturn-Neptune Conjunction") already carry the planets.
+  const title = names.every(n => pattern.type.includes(n)) ? pattern.type : `${pattern.type}: ${andList}`;
+  const body = personalNote
+    ? personalNote
+    : `${andList} form a ${pattern.type.replace(/^.*?(Conjunction|Grand Trine|T-Square|Grand Cross|Kite|Yod|Stellium|Cradle|Basket)$/i, '$1') || 'formation'}${pattern.sign ? ` in ${pattern.sign}` : ''} in today's sky, working as one linked unit for everyone.`;
+  return { glyph: '✧', glyphColor: '#C9A961', kicker: personalNote ? 'MY FORMATION' : 'SKY FORMATION', title, bodyType: 'prose', body, dateStr, audience: personalNote ? 'mine' : 'everyone', textFallback: `${title}\n${dateStr}\n\n${body}\n\n${personalNote ? INVITE : 'Read your chart → astrosetta.com'}` };
+}
+
+/** F-05: a Stories-sized list of key dates for a week or month. */
+export function buildKeyDatesCardData({ title, kicker, dates, audience, dateStr }) {
+  if (!dates?.length) return null;
+  const textFallback = `${title}\n${dateStr}\n\n${dates.map(d => `${d.date}: ${d.text}`).join('\n')}\n\n${audience === 'mine' ? INVITE : 'Read your chart → astrosetta.com'}`;
+  return { glyph: '✦', glyphColor: '#C9A961', kicker, title, bodyType: 'dates', dates: dates.slice(0, 8), dateStr, audience, audienceLabel: audience === 'mine' ? 'MY SKY' : 'THE SKY', format: 'story', textFallback };
+}
+
+/** F-06: quiz result / milestone card that doubles as an invite. */
+export function buildQuizResultCardData({ title, kicker = 'DAILY QUIZ', stats, badge, dateStr }) {
+  const textFallback = `${title}\n${(stats || []).map(s => `${s.label}: ${s.value}`).join(' · ')}${badge ? `\n${badge}` : ''}\n\n${INVITE}`;
+  return { glyph: '✦', glyphColor: '#C9A961', kicker, title, bodyType: 'stats', stats, badge, dateStr, cta: INVITE, textFallback };
+}
+
+/** F-04: the two share choices for an event; drops the personal one when it
+ *  can't be built (unknown birth time, no house). */
+export function shareVariants(everyoneCard, mineCard) {
+  return [
+    everyoneCard && { key: 'everyone', label: 'Share for everyone', card: asEveryone(everyoneCard) },
+    mineCard && { key: 'mine', label: 'Share my reading', card: mineCard },
+  ].filter(Boolean);
+}
+
+/** The user's ascendant sign, wherever this chart vintage stores it (B-07). */
+export function chartAscendantSign(chart) {
+  const raw = chart?.raw_data || {};
+  if (raw.unknown_time) return null;
+  return raw.ascendant_sign || raw.angles?.ascendant?.sign || chart?.ascendant_sign || null;
 }

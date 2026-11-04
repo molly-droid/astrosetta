@@ -7,7 +7,10 @@ import { Share2 } from 'lucide-react';
 import { getCachedSynthesis, saveCachedSynthesis } from '@/lib/synthesisCache';
 import CollapsibleCardHeader from '@/components/ui/CollapsibleCardHeader';
 import ShareSheet from '@/components/share/ShareSheet';
-import { buildStationCardData } from '@/lib/shareCard';
+import { buildStationCardData, buildPersonalStationCardData, shareVariants, chartAscendantSign } from '@/lib/shareCard';
+import { findNatalHouseForLongitude } from '@/lib/houseUtils';
+
+const ZODIAC = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
 
 const PLANET_DURATIONS = {
   Mercury: 'about 3 weeks', Venus: 'about 6 weeks',
@@ -205,7 +208,12 @@ function StationCard({ station, chart, autoExpandKey }) {
                 <p className="font-body text-xs text-gold-primary leading-relaxed">{highlightSynthesisText(reading.ritual)}</p>
               </div>
               <button
-                onClick={() => setShareCard(buildStationCardData(station, dateStr))}
+                onClick={() => {
+                  const raw = chart?.raw_data || {};
+                  const lon = ZODIAC.indexOf(station.sign) * 30 + (station.degree || 0);
+                  const house = raw.unknown_time || ZODIAC.indexOf(station.sign) < 0 ? null : findNatalHouseForLongitude(lon, raw.houses || [], raw.house_system || 'whole_sign', chartAscendantSign(chart));
+                  setShareCard(shareVariants(buildStationCardData(station, dateStr), buildPersonalStationCardData(station, dateStr, house)));
+                }}
                 className="flex items-center gap-1.5 self-start font-body text-[0.625rem] text-brass/60 hover:text-gold-accent transition-colors pt-1"
               >
                 <Share2 size={11} /> Share this station
@@ -214,7 +222,7 @@ function StationCard({ station, chart, autoExpandKey }) {
           )}
         </div>
       )}
-      <ShareSheet open={!!shareCard} onOpenChange={(o) => !o && setShareCard(null)} card={shareCard} filename={`astrosetta-${station.planet}-station`} textFallback={shareCard?.textFallback || ''} />
+      <ShareSheet open={!!shareCard} onOpenChange={(o) => !o && setShareCard(null)} variants={shareCard} filename={`astrosetta-${station.planet}-station`} />
     </div>
   );
 }

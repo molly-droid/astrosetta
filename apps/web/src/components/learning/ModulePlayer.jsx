@@ -24,6 +24,7 @@ import { base44 } from '@/api/base44Client';
 import { getMoonPhaseName } from '@/lib/moonPhase';
 import { analyzeChartDynamics } from '@/lib/chartDynamics';
 import { evaluateDignity } from '@/lib/essentialDignities';
+import ShareProgressButton from '@/components/share/ShareProgressButton';
 import { Button } from '@/components/ui/button';
 import OrnamentDivider from '@/components/ui/OrnamentDivider';
 import PlacementSlide from './PlacementSlide';
@@ -932,6 +933,23 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
                 ? 'A good refresher — this module stays complete. Where would you like to go next?'
                 : `You earned ${mod.xp_reward || 50} XP. Where would you like to go next?`}
             </p>
+            {progress?.status !== 'completed' && (
+              <ShareProgressButton
+                label="Share this milestone"
+                filename="astrosetta-module-complete"
+                className="mx-auto pt-1"
+                card={{
+                  kicker: 'MODULE COMPLETE',
+                  title: mod.title,
+                  stats: [
+                    { label: 'XP earned', value: `+${mod.xp_reward || 50}` },
+                    { label: 'Section', value: String(mod.section || 'Learn').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) },
+                  ],
+                  badge: 'Learning astrology through my own chart',
+                  dateStr: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+                }}
+              />
+            )}
           </div>
 
           <OrnamentDivider />

@@ -8,7 +8,7 @@ import { getCachedSynthesis, saveCachedSynthesis } from '@/lib/synthesisCache';
 import CollapsibleCardHeader from '@/components/ui/CollapsibleCardHeader';
 import { findNatalHouseForSign } from '@/lib/houseUtils';
 import ShareSheet from '@/components/share/ShareSheet';
-import { buildIngressCardData } from '@/lib/shareCard';
+import { buildIngressCardData, buildPersonalIngressCardData, shareVariants, chartAscendantSign } from '@/lib/shareCard';
 
 const SIGNS = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
 
@@ -294,7 +294,11 @@ function IngressCard({ ing, chart, compact, onLinkToHighlights, autoExpandKey })
                 <p className="font-body text-xs text-brass leading-relaxed">{highlightSynthesisText(reading.ritual)}</p>
               </div>
               <button
-                onClick={() => setShareCard(buildIngressCardData(ing, dateStr))}
+                onClick={() => {
+                  const raw = chart?.raw_data || {};
+                  const { entryHouse } = raw.unknown_time ? {} : findNatalHouseForSign(ing.to_sign, raw.houses || [], raw.house_system || 'whole_sign', chartAscendantSign(chart));
+                  setShareCard(shareVariants(buildIngressCardData(ing, dateStr), buildPersonalIngressCardData(ing, dateStr, entryHouse)));
+                }}
                 className="flex items-center gap-1.5 self-start font-body text-[0.625rem] text-brass/60 hover:text-gold-accent transition-colors pt-1"
               >
                 <Share2 size={11} /> Share this ingress
@@ -303,7 +307,7 @@ function IngressCard({ ing, chart, compact, onLinkToHighlights, autoExpandKey })
           )}
         </div>
       )}
-      <ShareSheet open={!!shareCard} onOpenChange={(o) => !o && setShareCard(null)} card={shareCard} filename={`astrosetta-${ing.planet}-${ing.to_sign}-ingress`} textFallback={shareCard?.textFallback || ''} />
+      <ShareSheet open={!!shareCard} onOpenChange={(o) => !o && setShareCard(null)} variants={shareCard} filename={`astrosetta-${ing.planet}-${ing.to_sign}-ingress`} />
     </div>
   );
 }

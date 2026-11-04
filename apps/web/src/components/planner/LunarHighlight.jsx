@@ -8,7 +8,7 @@ import { Share2 } from 'lucide-react';
 import { getCachedSynthesis, saveCachedSynthesis } from '@/lib/synthesisCache';
 import CollapsibleCardHeader from '@/components/ui/CollapsibleCardHeader';
 import ShareSheet from '@/components/share/ShareSheet';
-import { buildLunationCardData } from '@/lib/shareCard';
+import { buildLunationCardData, buildPersonalLunationCardData, shareVariants } from '@/lib/shareCard';
 
 // Module-level cache: `${chartId}_${dateKey}_${phase}${isEclipse?_eclipse}` → result
 const lunarCache = {};
@@ -166,7 +166,7 @@ export default function LunarHighlight({ lunation, chart, date, autoExpand = fal
                 <p className="font-body text-xs text-brass leading-relaxed">{highlightSynthesisText(reading.ritual)}</p>
               </div>
               <button
-                onClick={() => setShareCard(buildLunationCardData({ phase, moonSign, isEclipse, eclipseType }, shareDateStr))}
+                onClick={() => setShareCard(shareVariants(buildLunationCardData({ phase, moonSign, isEclipse, eclipseType }, shareDateStr), buildPersonalLunationCardData({ phase, moonSign, isEclipse, eclipseType }, shareDateStr, raw.unknown_time ? null : moonHouseNum)))}
                 className="flex items-center gap-1.5 self-start font-body text-[0.625rem] text-brass/60 hover:text-gold-accent transition-colors pt-1"
               >
                 <Share2 size={11} /> Share this {isEclipse ? 'eclipse' : phase.toLowerCase()}
@@ -175,7 +175,7 @@ export default function LunarHighlight({ lunation, chart, date, autoExpand = fal
           )}
         </div>
       )}
-      <ShareSheet open={!!shareCard} onOpenChange={(o) => !o && setShareCard(null)} card={shareCard} filename={`astrosetta-${phase.toLowerCase().replace(' ', '-')}-${moonSign.toLowerCase()}`} textFallback={shareCard?.textFallback || ''} />
+      <ShareSheet open={!!shareCard} onOpenChange={(o) => !o && setShareCard(null)} variants={shareCard} filename={`astrosetta-${phase.toLowerCase().replace(' ', '-')}-${moonSign.toLowerCase()}`} />
     </div>
   );
 }

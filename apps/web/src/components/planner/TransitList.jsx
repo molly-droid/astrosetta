@@ -6,7 +6,10 @@ import { useAuth } from '@/lib/AuthContext';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
 import Eli5Button from '@/components/ui/Eli5Button';
 import { invokeLLMTask } from '@/api/llmTasks';
-import { Loader2, ChevronDown, ChevronRight, SlidersHorizontal, Lock, ArrowUpDown } from 'lucide-react';
+import { Loader2, ChevronDown, ChevronRight, SlidersHorizontal, Lock, ArrowUpDown, Share2 } from 'lucide-react';
+import ShareSheet from '@/components/share/ShareSheet';
+import { buildSkyAspectCardData, buildMySkyAspectCardData, shareVariants, chartAscendantSign } from '@/lib/shareCard';
+import { findNatalHouseForLongitude } from '@/lib/houseUtils';
 import PaywallModal from '@/components/paywall/PaywallModal';
 import InterpretationMarkdown from '@/components/ui/InterpretationMarkdown';
 
@@ -180,7 +183,21 @@ function AspectRow({ a, chart, date, transitPlanets, natalPlanets, canViewInterp
   const [text, setText] = useState(preloadedText || null);
   const [loading, setLoading] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [shareVariantsState, setShareVariantsState] = useState(null);
   const { knowledgeDepth } = useUserPrefs();
+
+  // F-04: collective (sky-to-sky) transits can be shared for everyone, or as
+  // "my reading" — which of the user's houses each planet is crossing.
+  const openShare = () => {
+    const raw = chart?.raw_data || {};
+    const dateStr = date?.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) || '';
+    const houseOf = (name) => {
+      const lon = transitPlanets?.find(p => p.name === name)?.longitude;
+      return lon == null || raw.unknown_time ? null : findNatalHouseForLongitude(lon, raw.houses || [], raw.house_system || 'whole_sign', chartAscendantSign(chart));
+    };
+    const asp = { planet1: a.transit_planet, planet2: a.natal_planet, aspect: a.aspect };
+    setShareVariantsState(shareVariants(buildSkyAspectCardData(asp, dateStr), buildMySkyAspectCardData(asp, dateStr, houseOf(a.transit_planet), houseOf(a.natal_planet))));
+  };
 
   const borderColor =
     a.type === 'natal' ? 'border-l-celestial-blue/60' :
@@ -243,6 +260,9 @@ function AspectRow({ a, chart, date, transitPlanets, natalPlanets, canViewInterp
   return (
     <div className={`border-l-2 ${borderColor} rounded-r-lg overflow-hidden`}>
       {showPaywall && <PaywallModal variant="interpret" fromTier="free" context={labelContext} onClose={() => setShowPaywall(false)} />}
+      {a.type === 'mundane' && (
+        <ShareSheet open={!!shareVariantsState} onOpenChange={(o) => !o && setShareVariantsState(null)} variants={shareVariantsState} filename={`astrosetta-${a.transit_planet}-${a.aspect}-${a.natal_planet}`.toLowerCase()} />
+      )}
       <button
         onClick={toggle}
         className={`w-full flex items-center justify-between py-2 px-3 transition-colors text-left ${bgHover}`}
@@ -288,6 +308,14 @@ function AspectRow({ a, chart, date, transitPlanets, natalPlanets, canViewInterp
             <>
               <InterpretationMarkdown text={text} onHighlightTransit={onHighlightTransit} highlightClass="text-gold-primary" className="font-body text-sm text-white/90 leading-snug" />
               <Eli5Button context={eli5Context} />
+              {a.type === 'mundane' && (
+                <button
+                  onClick={openShare}
+                  className="flex items-center gap-1.5 font-body text-[0.625rem] text-brass/60 hover:text-gold-accent transition-colors pt-2"
+                >
+                  <Share2 size={11} /> Share this transit
+                </button>
+              )}
             </>
           )}
         </div>

@@ -16,7 +16,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
 import { fetchExplanation } from '@/lib/explainIt';
 import ShareSheet from '@/components/share/ShareSheet';
-import { buildRisingSignCardData, formatCollectiveContext } from '@/lib/shareCard';
+import { buildRisingSignCardData, formatCollectiveContext, shareVariants } from '@/lib/shareCard';
 import CollapsibleCardHeader from '@/components/ui/CollapsibleCardHeader';
 import SynthesisCategoryCard from '@/components/planner/SynthesisCategoryCard';
 import GatedFeature from '@/components/paywall/GatedFeature';
@@ -49,8 +49,8 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
   const hasGenerated = useRef(false);
   const prevDepthRef = useRef(knowledgeDepth);
   const dateKey = date ? new Date(date.getFullYear(), date.getMonth(), date.getDate()).toLocaleDateString('en-CA') : null;
-  const cacheKey = chart?.id && dateKey ? `v20_${chart.id}_${dateKey}_${knowledgeDepth}` : null;
-  const dbKey = dateKey ? `day-v20-${dateKey}-${knowledgeDepth}` : null;
+  const cacheKey = chart?.id && dateKey ? `v24_${chart.id}_${dateKey}_${knowledgeDepth}` : null;
+  const dbKey = dateKey ? `day-v24-${dateKey}-${knowledgeDepth}` : null;
   // Opposite-color highlighting: gold body copy → white highlights; white body copy → gold highlights
   const highlightOnGold = (text) => highlightSynthesisText(text, onHighlightTransit, 'text-white');
   const highlightOnWhite = (text) => highlightSynthesisText(text, onHighlightTransit, 'text-gold-primary');
@@ -463,7 +463,16 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
         dateStr: shareDateStr,
         collectiveContext: formatCollectiveContext(transits),
       });
-      setShareCard(buildRisingSignCardData(ascSign, res.data, shareDateStr));
+      // F-04: the day's collective sky (no personal details) alongside the
+      // personal rising-sign reading.
+      const sky = String(synthesis?.collective_highlight || (synthesis?.collective_reading || [])[0] || '').replace(/\*\*/g, '').trim();
+      const everyone = sky ? {
+        glyph: '✦', glyphColor: '#C9A961', kicker: 'COLLECTIVE READING', title: `The sky on ${shareDateStr}`,
+        bodyType: 'prose', body: sky, dateStr: '',
+        textFallback: `The sky on ${shareDateStr}\n\n${sky}\n\nRead your chart → astrosetta.com`,
+      } : null;
+      const mine = { ...buildRisingSignCardData(ascSign, res.data, shareDateStr), audience: 'mine' };
+      setShareCard(shareVariants(everyone, mine));
     } catch { /* non-critical */ }
     setShareLoading(false);
   };
@@ -665,7 +674,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
           )}
         </div>
       )}
-      <ShareSheet open={!!shareCard} onOpenChange={(o) => !o && setShareCard(null)} card={shareCard} filename="astrosetta-rising-sign" textFallback={shareCard?.textFallback || ''} />
+      <ShareSheet open={!!shareCard} onOpenChange={(o) => !o && setShareCard(null)} variants={shareCard} filename="astrosetta-daily" />
     </div>
   );
 }

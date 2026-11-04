@@ -1,7 +1,10 @@
 import { onDayOnly } from '@/lib/transitEvents';
 import React, { useState, useRef, useEffect } from 'react';
 import { useTransits } from './useTransits';
-import { Loader2, Sparkles, RefreshCw, Download, ChevronDown, ChevronRight, CalendarDays } from 'lucide-react';
+import { Loader2, Sparkles, RefreshCw, Download, ChevronDown, ChevronRight, CalendarDays, Share2 } from 'lucide-react';
+import ShareSheet from '@/components/share/ShareSheet';
+import { buildKeyDatesCardData, shareVariants } from '@/lib/shareCard';
+import { fetchPeriodKeyDates, keyDateRows } from '@/lib/periodKeyDates';
 import PlanetTracker from './PlanetTracker';
 import PeriodTransitChart from './PeriodTransitChart';
 import PeriodHighlights from './PeriodHighlights';
@@ -177,6 +180,8 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
 
   // Week synthesis
   const [synthesis, setSynthesis] = useState(null);
+  const [shareState, setShareState] = useState(null);
+  const [shareLoading, setShareLoading] = useState(false);
   const [synthLoading, setSynthLoading] = useState(false);
   const [synthExpanded, setSynthExpanded] = useState(false);
   const [synthTab, setSynthTab] = useState('personal');
@@ -252,12 +257,35 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
     setSynthLoading(false);
   };
 
+  // F-05: Stories-sized key-dates card for the week, for everyone or mine.
+  const shareWeek = async () => {
+    if (shareLoading) return;
+    setShareLoading(true);
+    try {
+      const events = await fetchPeriodKeyDates(days, chart);
+      const range = `${days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${days[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+      const card = (audience) => buildKeyDatesCardData({
+        title: audience === 'mine' ? 'My week in the sky' : 'This week in the sky',
+        kicker: 'KEY DATES',
+        dates: keyDateRows(events, audience),
+        audience,
+        dateStr: range,
+      });
+      const hasHouses = events.some(e => e.house);
+      const v = shareVariants(card('everyone'), hasHouses ? card('mine') : null);
+      setShareState(v.length ? v : [{ key: 'everyone', label: 'Share for everyone', card: buildKeyDatesCardData({ title: 'This week in the sky', kicker: 'KEY DATES', dates: [{ date: range, text: 'A quiet week: no stations, sign changes, or lunations' }], audience: 'everyone', dateStr: range }) }]);
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
   const weekLabel = `${days[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${days[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
 
   const weekJournalKey = new Date(start.getFullYear(), start.getMonth(), start.getDate()).toLocaleDateString('en-CA');
 
   return (
     <div className="space-y-3">
+      <ShareSheet open={!!shareState} onOpenChange={(o) => !o && setShareState(null)} variants={shareState} filename="astrosetta-week" />
       <PeriodTransitChart startDate={days[0]} endDate={days[6]} chart={chart} periodLabel="this week" />
 
       {relationshipSelector && (
@@ -385,6 +413,10 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
                 <button onClick={() => downloadWeekSynthesisICS(days, synthesis)}
                   className="flex items-center gap-1 font-body text-[0.625rem] text-brass/40 hover:text-gold-accent transition-colors">
                   <Download size={10} /> Add to Calendar
+                </button>
+                <button onClick={shareWeek} disabled={shareLoading}
+                  className="flex items-center gap-1 font-body text-[0.625rem] text-brass/40 hover:text-gold-accent transition-colors disabled:opacity-50">
+                  {shareLoading ? <Loader2 size={10} className="animate-spin" /> : <Share2 size={10} />} Share
                 </button>
               </div>
             </div>

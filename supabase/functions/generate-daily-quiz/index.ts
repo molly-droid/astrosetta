@@ -10,6 +10,54 @@ import { compatClient } from '../_shared/base44Compat.ts';
 import { json, handleOptions } from '../_shared/edge.ts';
 import { TONE_DIRECTIVE } from '../_shared/toneDirective.ts';
 import { pickBestProgress } from '../_shared/userProgress.ts';
+import { fetchKnowledgeDepth, densityInstruction } from '../_shared/knowledgeDensity.ts';
+
+// ── AI-07: quiz difficulty follows the learner ────────────────────────────────
+// Beginners are only quizzed on concepts they've covered. The basics (what a
+// planet or sign stands for, the glyphs, where planets are today) are always
+// fair game; every other question type unlocks when the user completes a
+// lesson that teaches it — or straight away at a higher knowledge level.
+const BASIC_QUESTION_TYPES = new Set([
+  'planet_glyph_id', 'transit_sign_id', 'sign_glyph', 'planet_keyword',
+  'natal_planet_sign', 'transit_natal_planet', 'retrograde_definition',
+]);
+function questionUnlocked(type, learner) {
+  if (BASIC_QUESTION_TYPES.has(type) || type === 'curriculum') return true;
+  if (learner.depth === 'technical') return true;
+  const done = (keys) => keys.some(k => learner.completedKeys.has(k));
+  const inSection = (sections) => sections.some(sec => learner.completedSections.has(sec));
+  switch (type) {
+    case 'element': case 'natal_element':
+      return learner.depth === 'insightful' || done(['elements_intro', 'element_balance', 'chart_balance']) || inSection(['signs', 'elements_modalities']);
+    case 'modality': case 'natal_modality':
+      return learner.depth === 'insightful' || done(['modalities_intro', 'chart_balance']) || inSection(['signs', 'elements_modalities']);
+    case 'aspect_meaning': case 'transit_natal_aspect':
+      return inSection(['aspects']) || done(['reading_a_transit']);
+    case 'natal_house_theme': case 'transit_natal_house':
+      return inSection(['houses']);
+    case 'chart_ruler':
+      return done(['chart_ruler']);
+    case 'retrograde_live':
+      return done(['retrograde_planets']);
+    default:
+      return false;
+  }
+}
+
+async function loadLearner(base44, userId) {
+  const depth = await fetchKnowledgeDepth(base44, userId);
+  const progress = await base44.asServiceRole.entities.UserModuleProgress.filter({ user_id: userId, status: 'completed' }).catch(() => []);
+  const completedIds = new Set(progress.map(p => p.module_id).filter(Boolean));
+  const modules = await base44.asServiceRole.entities.LearningModule.list('-order_index', 200).catch(() => []);
+  const completed = modules.filter(m => completedIds.has(m.id));
+  return {
+    depth,
+    completedIds,
+    completedKeys: new Set(completed.map(m => m.subject_key)),
+    completedSections: new Set(completed.map(m => m.section)),
+    completedTitles: completed.map(m => m.title),
+  };
+}
 
 const SIGN_GLYPHS = { Aries:'♈\uFE0E',Taurus:'♉\uFE0E',Gemini:'♊\uFE0E',Cancer:'♋\uFE0E',Leo:'♌\uFE0E',Virgo:'♍\uFE0E',Libra:'♎\uFE0E',Scorpio:'♏\uFE0E',Sagittarius:'♐\uFE0E',Capricorn:'♑\uFE0E',Aquarius:'♒\uFE0E',Pisces:'♓\uFE0E' };
 const PLANET_GLYPHS = { Sun:'☉\uFE0E',Moon:'☽\uFE0E',Mercury:'☿\uFE0E',Venus:'♀\uFE0E',Mars:'♂\uFE0E',Jupiter:'♃\uFE0E',Saturn:'♄\uFE0E',Uranus:'♅\uFE0E',Neptune:'♆\uFE0E',Pluto:'♇\uFE0E',Chiron:'⚷\uFE0E' };
@@ -291,10 +339,12 @@ function qNatalPlanetSignId(natalPlanets) {
 }
 
 // ── Curriculum quiz questions ─────────────────────────────────────────────────
-async function getCurriculumQuestions(base44, count) {
+async function getCurriculumQuestions(base44, count, learner = null) {
   const modules = await base44.asServiceRole.entities.LearningModule.list('-order_index', 100);
   const quizBlocks = [];
   for (const m of modules) {
+    // AI-07: only quiz on lessons this user has actually finished.
+    if (learner && !learner.completedIds.has(m.id)) continue;
     // ModulePlayer renders non-synthesis content_blocks first, so the slide
     // index within that filtered list is what we pass as the learn target.
     const nonSyn = (m.content_blocks || []).filter(b => b.type !== 'synthesis');
@@ -427,7 +477,7 @@ function computeNatalHits(transitPlanets, natalPlanets) {
   return hits.sort((a, b) => a.orb - b.orb);
 }
 
-function buildApprenticeQuestions(transitPlanets, mundaneAspects, natalPlanets, ascendantSign) {
+function buildApprenticeQuestions(transitPlanets, mundaneAspects, natalPlanets, ascendantSign, learner = null) {
   const usedPlanets = new Set();
   const pool = [];
 
@@ -458,12 +508,13 @@ function buildApprenticeQuestions(transitPlanets, mundaneAspects, natalPlanets, 
     qNatalContactHouse(natalHits, natalPlanets),
   ].filter(Boolean);
 
-  const selected = [...shuffle(contactPool), ...shuffle(pool)].slice(0, 5);
+  const allowed = (q) => !learner || questionUnlocked(q.type, learner);
+  const selected = [...shuffle(contactPool.filter(allowed)), ...shuffle(pool.filter(allowed))].slice(0, 5);
   return selected.map((q, i) => ({ id: i + 1, ...q }));
 }
 
 // ── Adept quiz builder — LLM + curriculum + natal mix ────────────────────────
-async function buildAdeptQuestions(base44, transitPlanets, natalPlanets, mundaneAspects, ascendantSign) {
+async function buildAdeptQuestions(base44, transitPlanets, natalPlanets, mundaneAspects, ascendantSign, learner = null) {
   const transitContext = (transitPlanets || []).slice(0, 7).map(p => `${p.name} in ${p.sign}${p.retrograde ? ' (Rx)' : ''}`).join(', ');
   const natalContext = (natalPlanets || []).slice(0, 5).map(p => `${p.name} in ${p.sign} in House ${p.house}`).join(', ');
   const mundaneContext = (mundaneAspects || []).slice(0, 5).map(a => `${a.transit_planet} ${a.aspect} ${a.natal_planet}`).join(', ');
@@ -474,6 +525,8 @@ async function buildAdeptQuestions(base44, transitPlanets, natalPlanets, mundane
   // Generate 3 LLM questions
   const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
     prompt: `You are an astrology quiz question writer for intermediate students (Adept tier).
+${learner ? `${densityInstruction(learner.depth)}
+Lessons this student has completed: ${learner.completedTitles.slice(0, 40).join(', ') || 'none yet'}. Keep questions within concepts these lessons and everyday basics cover; do not test techniques they have not studied.` : ''}
 
     ${TONE_DIRECTIVE}
 
@@ -561,6 +614,7 @@ Deno.serve(async (req) => {
     // shadow the user's real progress (users are never pushed back a level).
     const progress = pickBestProgress(progRecords);
     const tier = body.tier || progress?.current_tier || 'apprentice';
+    const learner = await loadLearner(base44, user.id);
 
     // Get user's timezone date key
     const timezone = body.timezone || progress?.timezone || 'UTC';
@@ -635,8 +689,8 @@ Deno.serve(async (req) => {
     let questions = [];
     if (tier === 'apprentice') {
       // Pull curriculum questions and mix into the apprentice pool
-      const curriculumQs = await getCurriculumQuestions(base44, 2);
-      const templateQuestions = buildApprenticeQuestions(transitPlanets, mundaneAspects, natalPlanets, ascendantSign);
+      const curriculumQs = await getCurriculumQuestions(base44, 2, learner);
+      const templateQuestions = buildApprenticeQuestions(transitPlanets, mundaneAspects, natalPlanets, ascendantSign, learner);
       // Replace 1-2 template questions with curriculum for cross-topic variety
       questions = [...templateQuestions];
       for (const cq of curriculumQs) {
@@ -649,9 +703,9 @@ Deno.serve(async (req) => {
       // Re-number IDs
       questions = questions.slice(0, 5).map((q, i) => ({ ...q, id: i + 1 }));
     } else {
-      questions = await buildAdeptQuestions(base44, transitPlanets, natalPlanets, mundaneAspects, ascendantSign);
+      questions = await buildAdeptQuestions(base44, transitPlanets, natalPlanets, mundaneAspects, ascendantSign, learner);
       if (questions.length < 3) {
-        questions = buildApprenticeQuestions(transitPlanets, mundaneAspects, natalPlanets, ascendantSign);
+        questions = buildApprenticeQuestions(transitPlanets, mundaneAspects, natalPlanets, ascendantSign, learner);
       }
     }
 

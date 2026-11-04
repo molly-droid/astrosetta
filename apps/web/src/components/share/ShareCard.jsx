@@ -5,18 +5,28 @@ import React, { forwardRef } from 'react';
  * and scaled down in the preview sheet. All text/copy is passed in via `card`.
  *
  * card shape:
- *  { glyph, glyphColor, kicker, title, bodyType: 'prose'|'bullets',
- *    body, bullets, dateStr }
+ *  { glyph, glyphColor, kicker, title, bodyType: 'prose'|'bullets'|'dates'|'stats',
+ *    body, bullets, dates: [{ date, text }], stats: [{ label, value }], badge,
+ *    dateStr, format: 'square'|'story', audience: 'everyone'|'mine', cta }
+ * F-04: `audience` adds the "Today's sky" / "My sky" label. F-05: `format:
+ * 'story'` renders 1080×1920 for Stories. F-06: `stats` + `cta` (invite line).
  */
+export const cardSize = (card) => (card?.format === 'story' ? { width: 1080, height: 1920 } : { width: 1080, height: 1080 });
+const AUDIENCE_LABEL = { everyone: "TODAY'S SKY", mine: 'MY SKY' };
 const ShareCard = forwardRef(({ card }, ref) => {
   if (!card) return null;
 
   const isBullets = card.bodyType === 'bullets' && Array.isArray(card.bullets) && card.bullets.length > 0;
+  const isDates = card.bodyType === 'dates' && Array.isArray(card.dates) && card.dates.length > 0;
+  const isStats = card.bodyType === 'stats' && Array.isArray(card.stats) && card.stats.length > 0;
+  const { width, height } = cardSize(card);
+  const audience = card.audienceLabel || AUDIENCE_LABEL[card.audience];
+  const story = card.format === 'story';
 
   return (
     <div ref={ref} style={{
-      width: 1080,
-      height: 1080,
+      width,
+      height,
       background: 'radial-gradient(ellipse at center, #16243f 0%, #0f1a2e 72%)',
       display: 'flex',
       flexDirection: 'column',
@@ -36,6 +46,25 @@ const ShareCard = forwardRef(({ card }, ref) => {
       {/* Faint corner ornaments */}
       <div style={{ position: 'absolute', top: 58, left: 68, fontFamily: 'Playfair Display, Georgia, serif', fontSize: 34, color: 'rgba(201,169,97,0.4)' }}>✦</div>
       <div style={{ position: 'absolute', top: 58, right: 68, fontFamily: 'Playfair Display, Georgia, serif', fontSize: 34, color: 'rgba(201,169,97,0.4)' }}>✦</div>
+
+      {/* Audience label (F-04) */}
+      {audience && (
+        <p style={{
+          position: 'absolute',
+          top: 52,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          fontFamily: 'Lora, Georgia, serif',
+          fontSize: 22,
+          letterSpacing: '0.3em',
+          whiteSpace: 'nowrap',
+          color: '#0f1a2e',
+          background: card.audience === 'mine' ? '#C9A961' : '#A8C4D4',
+          borderRadius: 999,
+          padding: '10px 30px',
+          margin: 0,
+        }}>{audience}</p>
+      )}
 
       {/* Kicker */}
       {card.kicker && (
@@ -76,7 +105,28 @@ const ShareCard = forwardRef(({ card }, ref) => {
       }}>{card.title}</h1>
 
       {/* Body */}
-      {isBullets ? (
+      {isDates ? (
+        <div style={{ width: '100%', maxWidth: 860, margin: '0 0 50px' }}>
+          {card.dates.map((d, i) => (
+            <div key={i} style={{ display: 'flex', gap: 30, alignItems: 'baseline', padding: story ? '24px 0' : '22px 0', borderTop: i ? '1px solid rgba(201,169,97,0.18)' : 'none' }}>
+              <span style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: story ? 40 : 34, color: '#C9A961', minWidth: story ? 200 : 190, fontWeight: 700 }}>{d.date}</span>
+              <span style={{ fontFamily: 'Lora, Georgia, serif', fontSize: story ? 40 : 34, lineHeight: 1.35, color: '#D8CDA9' }}>{d.text}</span>
+            </div>
+          ))}
+        </div>
+      ) : isStats ? (
+        <div style={{ width: '100%', maxWidth: 860, margin: story ? '0 0 50px' : '0 0 26px', display: 'grid', gridTemplateColumns: `repeat(${Math.min(card.stats.length, 2)}, 1fr)`, gap: story ? 26 : 18 }}>
+          {card.stats.map((st, i) => (
+            <div key={i} style={{ border: '1px solid rgba(201,169,97,0.3)', borderRadius: 22, padding: story ? '28px 20px' : '16px 16px', textAlign: 'center' }}>
+              <div style={{ fontFamily: 'Playfair Display, Georgia, serif', fontSize: story ? 64 : 52, fontWeight: 700, color: '#C9A961', lineHeight: 1.1 }}>{st.value}</div>
+              <div style={{ fontFamily: 'Lora, Georgia, serif', fontSize: 24, letterSpacing: '0.16em', textTransform: 'uppercase', color: '#C4A882', opacity: 0.75, marginTop: 10 }}>{st.label}</div>
+            </div>
+          ))}
+          {card.badge && (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', fontFamily: 'Lora, Georgia, serif', fontSize: 32, color: '#D8CDA9', marginTop: 8 }}>{card.badge}</div>
+          )}
+        </div>
+      ) : isBullets ? (
         <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 50px', maxWidth: 820, width: '100%' }}>
           {card.bullets.map((b, i) => (
             <li key={i} style={{
@@ -133,7 +183,7 @@ const ShareCard = forwardRef(({ card }, ref) => {
             opacity: 0.55,
             letterSpacing: '0.12em',
             margin: '6px 0 0',
-          }}>astrosetta.com</p>
+          }}>{card.cta || 'astrosetta.com'}</p>
         </div>
       </div>
     </div>

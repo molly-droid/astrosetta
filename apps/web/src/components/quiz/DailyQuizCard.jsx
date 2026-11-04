@@ -16,6 +16,10 @@ import QuizHistoryDrawer from './QuizHistoryDrawer';
 import BonusQuizCard from './BonusQuizCard';
 import { track, EVENTS } from '@/lib/analytics';
 import { forceTextGlyph } from '@/lib/chartUtils';
+import ShareProgressButton from '@/components/share/ShareProgressButton';
+
+const cap = (t) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : '');
+const todayLabel = () => new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
 const PLANET_GLYPHS = {
   Sun: '☉\uFE0E', Moon: '☽\uFE0E', Mercury: '☿\uFE0E', Venus: '♀\uFE0E', Mars: '♂\uFE0E',
@@ -268,6 +272,21 @@ export default function DailyQuizCard({ userProgress, onProgressUpdate, transits
               You've earned your way to <span className="font-bold capitalize text-gold-accent">{tierAdvanced}</span>
             </p>
             <TierBadge tier={tierAdvanced} />
+            <ShareProgressButton
+              label="Share this level-up"
+              filename="astrosetta-level-up"
+              className="mx-auto pt-1"
+              card={{
+                kicker: 'LEVEL UP',
+                title: `${cap(tier)} → ${cap(tierAdvanced)}`,
+                stats: [
+                  { label: 'New level', value: cap(tierAdvanced) },
+                  { label: 'Day streak', value: streakCount },
+                ],
+                badge: `Leveled up learning astrology with my own chart`,
+                dateStr: todayLabel(),
+              }}
+            />
           </motion.div>
         )}
 
@@ -299,6 +318,22 @@ export default function DailyQuizCard({ userProgress, onProgressUpdate, transits
           </div>
 
           <p className="font-body text-xs text-brass italic text-center">Keep learning at your own pace ✦</p>
+
+          <ShareProgressButton
+            label="Share my result"
+            filename="astrosetta-quiz"
+            className="w-full"
+            card={{
+              title: 'Daily Quiz Complete',
+              stats: [
+                { label: 'Score', value: `${finalScore ?? quiz.score}%` },
+                { label: 'Day streak', value: streakCount },
+                { label: 'Level', value: cap(displayTier) },
+                { label: 'Total XP', value: user?.xp_total ?? 0 },
+              ],
+              dateStr: todayLabel(),
+            }}
+          />
 
           <Button
             variant="outline"
@@ -340,6 +375,21 @@ export default function DailyQuizCard({ userProgress, onProgressUpdate, transits
               <span className="font-body text-sm text-white font-semibold">Practitioner's Lens ready</span>
             </div>
           </div>
+          <ShareProgressButton
+              label="Share my result"
+              filename="astrosetta-quiz"
+              className="w-full"
+              card={{
+                title: 'Daily Quiz Complete',
+                stats: [
+                  { label: 'Score', value: `${quiz.score}%` },
+                  { label: 'Day streak', value: streakCount },
+                  { label: 'Level', value: cap(tier) },
+                  { label: 'Total XP', value: user?.xp_total ?? 0 },
+                ],
+                dateStr: todayLabel(),
+              }}
+            />
           <Button
             variant="outline"
             size="sm"

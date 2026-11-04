@@ -8,6 +8,7 @@
  * transit list and natal wheel only — no interpretations, no synthesis).
  */
 import { PERSONA, TONE_DIRECTIVE, densityPromptSuffix, s, block, num, bool, LLMTaskDef } from './core.ts';
+import { densityRules, densityOverviewSpec } from '../knowledgeDensity.ts';
 
 const strArray = { type: 'array', items: { type: 'string' } };
 
@@ -101,10 +102,11 @@ Rules:
 - PERSONALIZATION LOCK: The overview and personal_reading must feel like they belong to no one else. Every personal_reading bullet MUST name the user's natal placement it touches inside the prose — e.g. "Because your natal Mars in Scorpio sits in your 5th house, you may experience this transit Venus as..." or "With your Virgo Midheaven, you may experience this Virgo Moon as...". When the transit lands on an angle (Ascendant, Midheaven, IC, Descendant), name that angle in the sentence. If a bullet could be true for anyone with any chart, rewrite it until it couldn't.
 - INVITING TONE: Speak directly to the user in warm possibility language — "you may experience," "you might notice," "for you, this can show up as." Never commands, guarantees, or collective phrasing ("everyone," "we all") in the overview or personal_reading.
 - No platitudes, no generic horoscope language. Every sentence must be traceable to a specific transit configuration in the data above.
+${densityRules(p.knowledgeDepth)}
 
 Return JSON:
 {
-  "overview": "3-4 sentences synthesizing the WHOLE of what is happening for this person today — weave the day's personal transits and the collective sky into one coherent narrative. Name the key transit configurations and how they interact (which life areas are lit up, what the overall tone is). Speak directly to the user and name their natal reference points (e.g. "your Virgo Midheaven") where relevant. This is the headline the user reads first.",
+  "overview": "3-4 sentences synthesizing the WHOLE of what is happening for this person today — weave the day's personal transits and the collective sky into one coherent narrative. Name the key transit configurations and how they interact (which life areas are lit up, what the overall tone is). Speak directly to the user and name their natal reference points (e.g. "your Virgo Midheaven") where relevant. This is the headline the user reads first.${densityOverviewSpec(p.knowledgeDepth)}",
   "personal_reading": ["TransitLabel — 2-3 sentence deep interpretation of the astrological mechanic", "..."],
   "collective_reading": ["PlanetName in Sign aspectName PlanetName — 1 sentence on collective meaning", "..."],
   "collective_highlight": "1 sentence on single most significant mundane transit",

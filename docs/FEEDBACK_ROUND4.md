@@ -161,6 +161,54 @@ her doc). Each verified against the code:
 - **F-06 — share quiz results and milestones** (score, XP, streak, level-up,
   badge; app name + download link as an invite). NOT done.
 
+### Implemented 2026-11-03/04 — proof in ~/Desktop/round4-proof/
+
+- **E-04 ✅ verified.** Real behaviour was the reverse of the report: the
+  digest applied NO visibility rule (free users got Lilith/Tyche/Lots), and
+  transiting Juno/Pallas/Vesta/Tyche were never computed. Fix: shared
+  `_shared/chartVisibility.ts` (server mirror of chartPointVisibility.js —
+  Premium + toggles for Lilith/asteroids, toggles for Lots/Nodes) applied to
+  the digest's transit list AND to the shared day-reading generator inputs in
+  both server paths (digest on-demand + pre-generate-synthesis) — the day
+  reading is shared by app/email/pre-gen under one period_key, so an
+  unfiltered generator leaked onto every surface (incl. Juno in a free user's
+  in-app reading). chart-calculator `include_asteroid_transits` (only the
+  digest asks). Digest `preview: true` (test mode only) returns HTML without
+  sending. Verified: free preview = no Lilith/asteroids, Lots present (toggle
+  on), Nodes present (on); Premium +b5 = Lilith/Juno/Pallas/Vesta/Tyche incl.
+  a TRANSITING Pallas, no Lots/Nodes (toggles off). Also fixed: recent
+  ingresses were described as "approaching" (Juno "approaches Aquarius" a
+  week after entering it). NOTE the digest's own BETA_ALL_PAID=true (free
+  tier gets the full digest) is a launch flag — flip at cutover with the
+  server GATING_ADMIN_ONLY.
+- **AI-06 ✅ (iterated).** Root cause: the level instruction opened a long
+  prompt; the concrete output rules + overview spec ("synthesize the WHOLE
+  day") dominated, so level only changed tone. Fix: `densityRules()` in the
+  Rules list + `densityOverviewSpec()` in the overview's JSON spec (Essential:
+  3 most important configurations, define every planet/sign/aspect/house on
+  first use, Molly's own examples); Insightful/Technical drop definitions,
+  keep warmth. Both prompt copies (llm-task day-synthesis + daySynthesisGenerator).
+  Reading cache key bumped to day-v24 so stale readings regenerate.
+- **AI-07 ✅ verified.** Question types gated by completed lessons
+  (aspects → aspect questions, houses → house questions, …), basics always
+  allowed; curriculum questions only from completed modules; Adept LLM prompt
+  gets the level + completed lesson titles. Before: Essential account with 2
+  intro lessons was asked about Mars "in detriment" and conjunctions. After:
+  0-lesson beginner got only planet-meaning/glyph/position questions; unlock
+  matrix tested per profile.
+- **F-04 ✅ / F-05 ✅ / F-06 ✅ verified** (client): ShareCard story format,
+  audience pill (Today's sky / My sky / The sky), dates + stats layouts,
+  invite line; ShareSheet "Share for everyone / Share my reading" toggle.
+  Personal variants name the user's house (all checked against real cusps).
+  Surfaces: station/ingress/lunation banners, collective transit rows,
+  Cosmic Formations, Daily Reading, Week (new), Month (was a mislabeled
+  "Daily Horoscope" card → key-dates Stories card), quiz results, level-up,
+  Module Complete.
+- Flagged, not changed: station/ingress share cards are dated with the
+  viewing day, not the event day; chartUtils maps aliases "Lilith"/"Black
+  Moon" to the garbled glyph "lluminate"; MundanePatternBanner.jsx and
+  WeekSynthesis.jsx are unused components.
+
 Also from the same pass: **E-02 RESOLVED** — she reviewed the digest Oct 22
 ("knowledge density works well") and wants it as the model for AI-06; and
 **E-01 is done** (12-houses welcome section shipped in round 1) though her

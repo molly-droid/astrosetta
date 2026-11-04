@@ -359,7 +359,7 @@ export default function Home() {
 
             {/* Beneath transits — cosmic formations */}
             <div ref={collectiveRef}>
-              <MundaneFormationsCard transits={todayTransits} onHighlight={setHighlightPattern} />
+              <MundaneFormationsCard transits={todayTransits} onHighlight={setHighlightPattern} chart={chart} />
             </div>
           </div>
         )}

@@ -451,6 +451,13 @@ Deno.serve(async (req) => {
       const trnn = trp('North Node') ? trp('North Node').longitude : trueNode(tJDE);
       tPlanets.push({ name: 'North Node', ...si(trnn), retrograde: true, house: null });
       tPlanets.push({ name: 'South Node', ...si(n360(trnn + 180)), retrograde: true, house: null });
+      // E-04: transiting asteroids (Premium bodies) only when the caller asks —
+      // the Premium digest does; app surfaces keep their existing body set.
+      if (body.include_asteroid_transits === true) {
+        for (const nm of ['Juno', 'Pallas', 'Vesta', 'Tyche']) {
+          tPlanets.push({ name: nm, ...si(trp(nm) ? trp(nm).longitude : pLon(nm, Tt, tJDE)), retrograde: trp(nm) ? trp(nm).retrograde : isRetro(nm, tJDE), house: null });
+        }
+      }
       // Siderealize transit planets for Vedic so transit-to-natal aspects are
       // computed on a consistent (sidereal) frame with the sidereal natal chart.
       if (tradition === 'vedic') {

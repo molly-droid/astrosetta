@@ -9,7 +9,8 @@ import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/sy
 import { useUserPrefs } from '@/lib/UserPrefsContext';
 import { fetchExplanation } from '@/lib/explainIt';
 import ShareSheet from '@/components/share/ShareSheet';
-import { buildRisingSignCardData, formatCollectiveContext } from '@/lib/shareCard';
+import { formatCollectiveContext, buildKeyDatesCardData, shareVariants } from '@/lib/shareCard';
+import { fetchPeriodKeyDates, keyDateRows } from '@/lib/periodKeyDates';
 import SynthesisCategoryCard from '@/components/planner/SynthesisCategoryCard';
 import { useAuth } from '@/lib/AuthContext';
 import { usePermissions, CORE_CTA_LABEL } from '@/lib/permissions';
@@ -232,19 +233,24 @@ export default function MonthSynthesis({ date, chart }) {
     setExplainLoading(false);
   };
 
+  // F-05: Stories-sized key dates for the month (stations, ingresses,
+  // lunations), shared for everyone or as "mine" with the user's houses.
   const handleShare = async () => {
-    const ascSign = chart?.raw_data?.ascendant_sign || chart?.ascendant_sign;
-    if (chart?.raw_data?.unknown_time || !ascSign || shareLoading) return;
+    if (shareLoading) return;
     setShareLoading(true);
     try {
+      const y = date.getFullYear(), m = date.getMonth();
+      const days = Array.from({ length: new Date(y, m + 1, 0).getDate() }, (_, i) => new Date(y, m, i + 1));
+      const events = await fetchPeriodKeyDates(days, chart);
       const monthDateStr = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      const res = await base44.functions.invoke('generateRisingSignCard', {
-        sign: ascSign,
-        dateKey: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`,
+      const card = (audience) => buildKeyDatesCardData({
+        title: audience === 'mine' ? `My ${date.toLocaleDateString('en-US', { month: 'long' })} in the sky` : `${date.toLocaleDateString('en-US', { month: 'long' })} in the sky`,
+        kicker: 'KEY DATES',
+        dates: keyDateRows(events, audience),
+        audience,
         dateStr: monthDateStr,
-        collectiveContext: shareContextRef.current || '',
       });
-      setShareCard(buildRisingSignCardData(ascSign, res.data, monthDateStr));
+      setShareCard(shareVariants(card('everyone'), events.some(e => e.house) ? card('mine') : null));
     } catch { /* non-critical */ }
     setShareLoading(false);
   };
@@ -371,19 +377,17 @@ export default function MonthSynthesis({ date, chart }) {
                   >
                     <RefreshCw size={10} /> Regenerate
                   </button>
-                  {!chart?.raw_data?.unknown_time && (
                   <button onClick={handleShare}
                     className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-gold-accent transition-colors">
                     {shareLoading ? <Loader2 size={10} className="animate-spin" /> : <Share2 size={10} />} Share
                   </button>
-                  )}
                 </div>
               </div>
             </>
           )}
         </div>
       )}
-      <ShareSheet open={!!shareCard} onOpenChange={(o) => !o && setShareCard(null)} card={shareCard} filename="astrosetta-month" textFallback={shareCard?.textFallback || ''} />
+      <ShareSheet open={!!shareCard?.length} onOpenChange={(o) => !o && setShareCard(null)} variants={shareCard} filename="astrosetta-month" />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
 import { insertGlyphs } from '../_shared/emailGlyphs.ts';
 import { fetchKnowledgeDepth, densityInstruction } from '../_shared/knowledgeDensity.ts';
 import { generateDaySynthesis, classifyCalculatorTransits } from '../_shared/daySynthesisGenerator.ts';
+import { hiddenChartPoints, visibleNatal, visibleTransits, NODE_POINTS } from '../_shared/chartVisibility.ts';
 import { getActiveEmailHighlight } from '../_shared/featureSchedule.ts';
 import { TONE_DIRECTIVE } from '../_shared/toneDirective.ts';
 import { ordinal } from '../_shared/emailUtils.ts';
@@ -15,7 +16,11 @@ const PLANET_GLYPHS = {
   Saturn: '♄\uFE0E', Uranus: '♅\uFE0E', Neptune: '♆\uFE0E', Pluto: '♇\uFE0E', Chiron: '⚷\uFE0E',
   Ascendant: 'AC', Midheaven: 'MC', 'North Node': '☊\uFE0E', 'South Node': '☋\uFE0E',
   'Black Moon Lilith': '⚸\uFE0E', Lilith: '⚸\uFE0E', 'Black Moon': '⚸\uFE0E',
+  Juno: '\u26B5\uFE0E', Pallas: '\u26B4\uFE0E', Vesta: '\u26B6\uFE0E', Tyche: '⊛\uFE0E',
+  'Part of Fortune': '⊕\uFE0E', 'Part of Spirit': '⊖\uFE0E', 'Part of Eros': '⊗\uFE0E', 'Part of Necessity': '⊘\uFE0E',
 };
+
+// E-04: visibility rule shared with pre-generation (_shared/chartVisibility.ts).
 const ASPECT_GLYPHS = { conjunction: '☌\uFE0E', opposition: '☍\uFE0E', trine: '△\uFE0E', square: '□\uFE0E', sextile: '⚹\uFE0E' };
 
 // ── Moon phase ──────────────────────────────────────────────────────────────
@@ -278,8 +283,12 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
     ? `${profectedHouse}th house profection year (${PROF_THEMES[profectedHouse]}). Year lord is ${yearLord} (ruler of ${profectedSign})${lordPlanet ? `, placed in ${lordPlanet.sign} in their ${lordPlanet.house ? (lordPlanet.house + getOrdinal(lordPlanet.house)) : ''} house` : ''}.`
     : '';
 
+  const hidden = hiddenChartPoints(targetUser);
+  const shown = (name) => !hidden.has(name);
+
   // Compute today's transits via chartCalculator — same engine the on-site chart uses
   const transitRes = await base44.asServiceRole.functions.invoke('chartCalculator', {
+    include_asteroid_transits: shown('Juno'),
     chart_type: 'transit',
     birth_date: raw.birth_date,
     birth_time: raw.birth_time || '12:00:00',
@@ -301,6 +310,7 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
   // Personal transits (to natal), top 6 by tightest orb
   const personal = (tData.transit_aspects || [])
     .filter(a => a.natal_planet !== a.transit_planet)
+    .filter(a => shown(a.transit_planet) && shown(a.natal_planet))
     .filter(a => !unknownTime || !ANGLE_TARGETS.has(a.natal_planet))
     .sort((a, b) => a.orb - b.orb)
     .slice(0, 6)
@@ -324,7 +334,7 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
   // same data the on-site chart uses. raw.houses may be stale.
   const natalHouses = unknownTime ? [] : (tData.natal?.houses || raw.houses || []);
   const freshAscendantSign = unknownTime ? null : (tData.natal?.angles?.ascendant?.sign || chart.ascendant_sign || raw.ascendant_sign);
-  const ingresses = (tData.ingresses || []).map(ing => {
+  const ingresses = (tData.ingresses || []).filter(ing => shown(ing.planet)).map(ing => {
     const info = findNatalHousesForSign(ing.to_sign, natalHouses, raw.house_system || 'whole_sign', freshAscendantSign);
     const houseDesc = info.crossesInto
       ? `enters the ${ordinal(info.entryHouse)} house (${info.entryTheme}), then shifts into the ${ordinal(info.crossesInto.house)} house (${info.crossesIntoTheme}) as it moves through the sign`
@@ -346,7 +356,7 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
   });
 
   // Retrograde stations
-  const stations = (tData.stations || []).map(s => ({
+  const stations = (tData.stations || []).filter(s => shown(s.planet)).map(s => ({
     ...s,
     glyph: PLANET_GLYPHS[s.planet] || '',
     sign_glyph: SIGN_GLYPHS[s.sign] || '',
@@ -362,11 +372,11 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
 
   // Authoritative transit positions — the LLM must use THESE signs, never its own knowledge
   const transitPositions = transitPlanets
-    .filter(p => !['North Node', 'South Node', 'Black Moon Lilith'].includes(p.name))
+    .filter(p => !NODE_POINTS.includes(p.name) && shown(p.name))
     .map(p => `${p.name}: ${p.sign} ${p.degree?.toFixed(0)}°`)
     .join(', ');
   const ingressText = ingresses.length
-    ? ingresses.map(i => `${i.planet} ${i.exact ? 'ingresses' : 'is approaching ingress'} from ${i.from_sign} to ${i.to_sign}${i.house_desc ? ` — ${i.house_desc}` : ''}${i.duration ? `. ${i.planet} will remain in ${i.to_sign} for ${i.duration}` : ''}`)
+    ? ingresses.map(i => `${i.planet} ${i.exact ? 'ingresses' : i.recent ? `recently entered (${Math.round(i.days_since ?? 0)} days ago)` : 'is approaching ingress'} from ${i.from_sign} to ${i.to_sign}${i.house_desc ? ` — ${i.house_desc}` : ''}${i.duration ? `. ${i.planet} will remain in ${i.to_sign} for ${i.duration}` : ''}`)
       .join('\n')
     : 'No sign ingresses today.';
   const stationText = stations.length
@@ -386,14 +396,15 @@ async function buildEmailForUser(base44, targetUser, appUrl) {
     const recs = await base44.asServiceRole.entities.CalendarSynthesis.filter({
       user_id: targetUser.id, period_type: 'day', date_start: todayStr,
     }, '-updated_date', 10);
-    const exact = recs.find(r => r.period_key === `day-v20-${todayStr}-${knowledgeDepth}`);
+    const exact = recs.find(r => r.period_key === `day-v24-${todayStr}-${knowledgeDepth}`);
     if (exact?.data) {
       cachedSynthesis = exact.data;
     } else {
       const genDate = new Date();
       genDate.setUTCHours(12, 0, 0, 0);
+      const vRaw = visibleNatal(raw, hidden);
       const rec = await generateDaySynthesis(
-        base44, raw, genDate, classifyCalculatorTransits(tData, raw), knowledgeDepth);
+        base44, vRaw, genDate, classifyCalculatorTransits(visibleTransits(tData, hidden), vRaw), knowledgeDepth);
       const payload = { user_id: targetUser.id, ...rec, generated_at: new Date().toISOString() };
       const existing = await base44.asServiceRole.entities.CalendarSynthesis.filter({
         user_id: targetUser.id, period_key: rec.period_key,
@@ -998,6 +1009,8 @@ Deno.serve(async (req) => {
     if (body.test) {
       const built = await buildEmailForUser(base44, user, appUrl);
       if (!built) return json({ error: 'No natal chart found for your account. Create your chart first.' }, { status: 400 });
+      // Preview: return the caller's own email instead of sending it.
+      if (body.preview === true) return json({ success: true, preview: true, subject: built.subject, html: built.html });
       await sendDigestEmail({ to: user.email, subject: built.subject, html: built.html });
       return json({ success: true, sent_to: user.email });
     }

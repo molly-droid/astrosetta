@@ -3,8 +3,9 @@
 Source: the same artifact ("Astrosetta — TestFlight Updates for Jacob"),
 exported to PDF 2026-10-29 as "phase 4" (40 pages; round-3 export was 37).
 Her round log: *"Round 4 — Verified: B-07. New: AI-08, B-31 (Oct 27
-testing; in progress)."* Diffed against the round-3 export: those three
-rows are the whole delta.
+testing; in progress)."* CORRECTION: those three rows were NOT the whole
+delta — six more items were added under round 3; see "Missed in the first
+triage" below.
 
 She tested Oct 27 — B-30 (plan switching) still shows **New**; she had not
 retested on build 15 yet.
@@ -119,6 +120,54 @@ aspect being taught), patterns family (run chartDynamics detectors on the
 natal chart), dignities family (classical tables); Tier 3 = mundane/history
 modules (Great Conjunctions, profections — personalization method needs
 Molly's call).
+
+## Missed in the first triage — added 2026-11-03
+
+The first pass relied on her round-4 log line ("New: AI-08, B-31") and the
+v3→v4 text diff, and missed that she ALSO extended the round-3 log to "New:
+B-28, B-29, B-30, AI-06, AI-07, E-04, F-04, F-05, F-06". A per-ID check of all
+67 IDs in the phase-4 export against FEEDBACK_ROUND*.md + STATUS.md found
+exactly six untracked: AI-06, AI-07, E-04, F-04, F-05, F-06 (all P1 New in
+her doc). Each verified against the code:
+
+- **AI-06 — in-app daily readings should explain more at Essential** (define
+  each term in plain words the first time it appears; higher levels drop the
+  definitions, not the warmth; use the digest's density approach). PARTLY in
+  place: Planner day reading already receives knowledgeDepth (cache keyed by
+  it) and the in-app `densityPromptSuffix` is near-identical to the digest's
+  `densityInstruction`; the digest prompt adds stronger "explain the mechanic"
+  rules. Her experience = the in-app prompts don't produce definitions. Work:
+  strengthen the in-app reading prompts + verify output at each level.
+- **AI-07 — daily quiz difficulty should follow the user's level.** PARTLY in
+  place: generate-daily-quiz scales by progress tier (Apprentice = templates +
+  2 curriculum questions; Adept+ = LLM "intermediate" questions). MISSING, the
+  core of her complaint: curriculum questions are drawn at random from ALL 97
+  modules, not the user's completed ones (an Apprentice can get Vedic or
+  antiscia questions); knowledge level (Essential/…) is not used; no gradual
+  unlock as modules complete.
+- **E-04 — Daily Digest ignores the plan's extra bodies.** NOT done: the digest
+  filters out Black Moon Lilith and never includes Juno/Pallas/Vesta/Tyche for
+  any plan, so Premium's paid bodies never appear. Closest to a real gap (paid
+  feature missing) — treat as a fix. She suspects the same plan-check gap as
+  B-29.
+- **F-04 — personal vs collective sharing.** NOT done: add Share to collective
+  items (transits, Planetary Highlights, formations) with a "Share for
+  everyone" / "Share my reading" choice and "Today's sky" / "My sky" labels.
+- **F-05 — Share on Week and Month at a Glance.** HALF done: Month has a
+  personal-only Share button. Week has none — WeekSynthesis.jsx (which has a
+  Share button) is imported nowhere, and Base44's own week view didn't use it
+  either, hence "bring back". Also wants the F-04 choice + Stories-sized
+  key-dates card.
+- **F-06 — share quiz results and milestones** (score, XP, streak, level-up,
+  badge; app name + download link as an invite). NOT done.
+
+Also from the same pass: **E-02 RESOLVED** — she reviewed the digest Oct 22
+("knowledge density works well") and wants it as the model for AI-06; and
+**E-01 is done** (12-houses welcome section shipped in round 1) though her
+doc still shows it New.
+
+Scope: E-04 = fix (paid feature not delivered). AI-06, AI-07, F-04, F-05,
+F-06 = new product work (like AI-08) for the scope conversation.
 
 ## Sequencing
 

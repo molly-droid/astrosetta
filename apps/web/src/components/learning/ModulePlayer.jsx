@@ -25,6 +25,8 @@ import { getMoonPhaseName } from '@/lib/moonPhase';
 import { analyzeChartDynamics } from '@/lib/chartDynamics';
 import { evaluateDignity } from '@/lib/essentialDignities';
 import ShareProgressButton from '@/components/share/ShareProgressButton';
+import { computeProfection, computeGreatConjunctions, houseBasis, wholeSignHouse } from '@/lib/timeLords';
+import { getMundanePatterns } from '@/lib/mundanePatterns';
 import { Button } from '@/components/ui/button';
 import OrnamentDivider from '@/components/ui/OrnamentDivider';
 import PlacementSlide from './PlacementSlide';
@@ -415,6 +417,57 @@ function buildPersonalSynthesis(chart, subjectKey, section, extra) {
     return `Your natal Moon was not void of course. At your birth, the Moon in ${voc.moon_sign} was still applying to a ${voc.first_aspect?.aspect || 'major aspect'}${voc.first_aspect ? ` with ${voc.first_aspect.planet}` : ''}, which perfected ${h(voc.first_aspect?.hours_after_birth)} after you were born. The Moon still had business to complete in ${voc.moon_sign}. In the traditional reading, being born with an applying Moon gives your emotional life a sense of forward motion: things develop, engagements complete, the story your feelings are telling is still unfolding. When you watch the transiting Moon go void (the app's planner shows this), you're seeing the opposite condition to the one you were born under.`;
   }
 
+  // AI-08 Tier 3 — timing and collective-history modules (Molly's spec).
+  if (subjectKey === 'profections') {
+    const pr = computeProfection(chart);
+    if (!pr) return buildSectionSynthesis(chart, section);
+    // The card states the facts; this paragraph says what they mean.
+    const via = pr.lordHouse && pr.lordHouse !== pr.house
+      ? ` Because ${pr.lord} sits in a different house, those questions tend to get worked out through ${HOUSE_THEMES[pr.lordHouse]}.`
+      : '';
+    return `Each birthday moves your year to the next house of your chart, and the planet ruling that house's sign becomes your Lord of the Year. This year the spotlight is on ${HOUSE_THEMES[pr.house] || 'this part of life'}, and ${pr.lord}'s transits carry extra weight for you: when ${pr.lord} is active in the sky, this year's story moves.${via}${pr.bigYear ? ' Years that land on the 1st, 4th, 7th or 10th house are traditionally the turning-point years.' : ''}`;
+  }
+  if (subjectKey === 'great_conjunctions') {
+    const gc = computeGreatConjunctions(chart);
+    if (!gc) return buildSectionSynthesis(chart, section);
+    const r = gc.recent, n = gc.next;
+    // The card states the facts; this paragraph says what they mean.
+    let text = `Jupiter and Saturn meet about every 20 years, and each meeting starts a new chapter for the area of life where it lands. Since ${r.label}, your chapter has been about ${HOUSE_THEMES[r.house] || 'the life area it touches'}: Jupiter brings growth there, Saturn asks you to build something that lasts.`;
+    if (n) text += ` Around ${n.label} the focus shifts to ${HOUSE_THEMES[n.house] || 'a new area'}.`;
+    if (gc.near.length) text += ` Because your ${gc.near.join(' and ')} ${gc.near.length === 1 ? 'sits' : 'sit'} within 5° of where it happened, this cycle ties straight into what ${gc.near.length === 1 ? 'that planet stands' : 'those planets stand'} for in your chart.`;
+    return text;
+  }
+  if (subjectKey === 'barbaults_basket' || subjectKey === 'mundane_aspect_patterns') {
+    const sky = extra?.sky;
+    const basis = houseBasis(chart);
+    if (!sky?.length || !basis) return buildSectionSynthesis(chart, section);
+    const houseOf = (name) => { const p = sky.find(x => x.name === name); return p?.sign ? wholeSignHouse(p.sign, basis.sign) : null; };
+    const patterns = getMundanePatterns(sky);
+    if (subjectKey === 'barbaults_basket') {
+      const SLOW = ['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'];
+      const placed = SLOW.map(n => `${n} in your ${houseOf(n)}${getOrdinalSuffix(houseOf(n))}`).join(', ');
+      // Only a true Barbault's Basket counts here (outer-planet cradle with
+      // Jupiter and Pluto) — ordinary cradles aren't this module's subject.
+      const basket = patterns.find(p => p.type === "Barbault's Basket");
+      const now = basket
+        ? `Right now the sky holds a Barbault's Basket (${basket.planets.join(', ')}).`
+        : `There's no Barbault's Basket in today's sky; it's a rare formation that takes the slow planets years to line up.`;
+      return `Barbault's Basket is built from the slow outer planets, so it plays out across whole eras rather than days. Today those planets sit across your chart like this: ${placed}. ${now} If one forms, those are the parts of your life where you'd feel the collective shift most personally.`;
+    }
+    if (!patterns.length) return `There are no major collective patterns in today's sky. When one forms, the Cosmic Formations card on your Home screen will show it and which part of your life it runs through.`;
+    const andList = (xs) => xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0];
+    // Named formations (conjunctions, grand trines, stelliums) lead; cradles follow.
+    const ordered = [...patterns.filter(p => p.category !== 'cradle'), ...patterns.filter(p => p.category === 'cradle')];
+    const shown = ordered.slice(0, 3);
+    const lines = shown.map(p => {
+      const hs = [...new Set((p.planets || []).map(houseOf).filter(Boolean))].sort((a, b) => a - b);
+      const named = (p.planets || []).every(n => p.type.includes(n));
+      return `${named ? `the ${p.type}` : `a ${p.type} (${andList(p.planets)})`}, running through your ${andList(hs.map(h => `${h}${getOrdinalSuffix(h)}`))} house${hs.length > 1 ? 's' : ''}`;
+    });
+    const count = patterns.length === 1 ? 'one collective pattern' : `${patterns.length} collective patterns`;
+    return `Today's sky holds ${count}${patterns.length > shown.length ? ', including' : ':'} ${lines.join('; ')}. A collective pattern affects everyone, but you feel it most in the houses it occupies in your own chart.`;
+  }
+
   // AI-08 Tier 2 — aspects, patterns, dignities and elements families.
   const tier2 = buildTier2Synthesis(chart, subjectKey, raw, planets);
   if (tier2) return tier2;
@@ -754,6 +807,24 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
   // natal Moon forward (was it void at birth?). Fetched once per chart; until
   // it arrives the slide shows the section fallback, then upgrades in place.
   const [vocInfo, setVocInfo] = useState(null);
+  // AI-08 Tier 3: today's sky for the collective-pattern modules.
+  const [skyPlanets, setSkyPlanets] = useState(null);
+  useEffect(() => {
+    if (!['barbaults_basket', 'mundane_aspect_patterns'].includes(mod.subject_key)) return;
+    const raw = chart?.raw_data;
+    if (!raw?.birth_date || skyPlanets) return;
+    let cancelled = false;
+    base44.functions.invoke('chartCalculator', {
+      chart_type: 'transit',
+      birth_date: raw.birth_date,
+      birth_time: raw.birth_time,
+      birth_location: raw.birth_location,
+      transit_date: new Date().toLocaleDateString('en-CA'),
+      transit_time: '12:00:00',
+    }).then(res => { if (!cancelled) setSkyPlanets(res.data?.transit_planets || []); })
+      .catch(() => { if (!cancelled) setSkyPlanets([]); });
+    return () => { cancelled = true; };
+  }, [mod.subject_key, chart?.id]);
   useEffect(() => {
     if (mod.subject_key !== 'void_of_course') return;
     const raw = chart?.raw_data;
@@ -890,7 +961,7 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
         : block.options?.findIndex(o => o === block.answer))
     : -1;
   const isCorrect = answered && block?.type === 'quiz' && selectedAnswer === correctIdx;
-  const rawSynthesisText = buildPersonalSynthesis(chart, mod.subject_key, mod.section, { voc: vocInfo });
+  const rawSynthesisText = buildPersonalSynthesis(chart, mod.subject_key, mod.section, { voc: vocInfo, sky: skyPlanets });
   const synthesisText = rawSynthesisText?.replace(/ — /g, ', ').replace(/—/g, ', ');
 
   if (showMastery) {

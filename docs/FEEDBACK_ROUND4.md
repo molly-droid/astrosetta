@@ -161,6 +161,30 @@ her doc). Each verified against the code:
 - **F-06 — share quiz results and milestones** (score, XP, streak, level-up,
   badge; app name + download link as an invite). NOT done.
 
+### AI-08 Tier 3 ✅ shipped 2026-11-04 (Molly answered the hook question)
+
+Built to Molly's spec, client-only (`lib/timeLords.js`, ModulePlayer +
+PlacementSlide cards). **Profections:** house = (completed age % 12) + 1;
+sign = rising (Sun sign when birth time unknown) + age % 12; Lord = trad ruler;
+card: main line, ruler's house, birthday-to-birthday range, next-year teaser,
+"Big year" badge on 1/4/7/10. **Great Conjunctions:** dates/signs/degrees
+pulled from chart-calculator (Astrology-API engine), each validated at ≤0.05°
+Jupiter–Saturn separation; triple passes = one event; whole-sign house from
+rising (Sun fallback); ages; "starting line" for natal planets within 5° of
+the most recent (Moon excluded without birth time); collapsed "More" = the
+last conjunction before birth. **Decided without asking (per Tony):** houses
+in these modules are whole-sign from the rising sign (Molly specified it for
+conjunctions; traditional for profections) — note: the rest of the app uses
+the chart's own house system, so a Placidus user can see a slightly
+different house elsewhere; **Barbault's Basket** = where the five slow planets
+sit in the user's houses today + whether a true Barbault's Basket is in the
+sky (ordinary cradles excluded); **Mundane Aspect Patterns** = today's sky
+patterns (named formations first) and the houses each runs through.
+Verified: hand-checked both test charts + no-birth-time; 48-combination
+sweep (6 prod charts × with/without time × 4 modules) clean. Observation:
+the existing mundane detector builds cradles from Venus/Chiron/the Nodes —
+consider limiting collective cradles to the slow planets (separate decision).
+
 ### Implemented 2026-11-03/04 — proof in ~/Desktop/round4-proof/
 
 - **E-04 ✅ verified.** Real behaviour was the reverse of the report: the

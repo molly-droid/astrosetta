@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { computeProfection, computeGreatConjunctions } from '@/lib/timeLords';
 import { PLANET_GLYPHS, SIGN_GLYPHS } from '@/lib/chartUtils';
 import SignName from '@/components/ui/SignName';
 
@@ -59,7 +60,18 @@ export function extractPlacementData(chart, subjectKey) {
 
   // AI-08 Tier 1: subjects whose paragraph is self-contained get no card at
   // all (per Molly: the Big Three card belongs only on Big Three modules) …
+  // AI-08 Tier 3 timing cards (Molly's spec).
+  if (subjectKey === 'profections') {
+    const pr = computeProfection(chart);
+    return pr ? { type: 'profection', pr } : null;
+  }
+  if (subjectKey === 'great_conjunctions') {
+    const gc = computeGreatConjunctions(chart);
+    return gc ? { type: 'greatConjunction', gc } : null;
+  }
+
   if ([
+    'barbaults_basket', 'mundane_aspect_patterns',
     'chart_balance', 'empty_houses', 'decans',
     // Tier 2
     'aspects_intro', 'conjunction', 'square_opposition', 'trine_sextile', 'minor_aspects',
@@ -208,9 +220,78 @@ export function extractPlacementData(chart, subjectKey) {
   return null;
 }
 
+const ord = (n) => `${n}${['th', 'st', 'nd', 'rd'][((n % 100) - 20) % 10] || ['th', 'st', 'nd', 'rd'][n % 100] || 'th'}`;
+const basisNote = (basis) => basis === 'rising'
+  ? 'Houses counted in whole signs from your rising sign.'
+  : 'Birth time unknown, so houses are counted in whole signs from your Sun sign.';
+
+function ProfectionCard({ pr }) {
+  return (
+    <div className="celestial-card p-5 border-gold-accent/40 bg-gold-primary/10 text-center space-y-3">
+      <p className="font-body text-[0.625rem] text-brass/60 uppercase tracking-widest">Your Profection Year</p>
+      {pr.bigYear && (
+        <span className="inline-block font-body text-[0.625rem] font-semibold uppercase tracking-widest px-2.5 py-1 rounded-full bg-gold-primary text-paper">Big year</span>
+      )}
+      <p className="font-display text-lg text-white leading-snug">
+        You're in a {ord(pr.house)}-house year ({pr.sign}), ruled by {pr.lord}.
+      </p>
+      {pr.lordSign && (
+        <p className="font-body text-xs text-brass">
+          {pr.lord} sits in {pr.lordSign}{pr.lordHouse ? `, your ${ord(pr.lordHouse)} house` : ''}.
+        </p>
+      )}
+      <p className="font-body text-[0.6875rem] text-white/60">{pr.range}</p>
+      <div className="border-t border-gold-primary/20 pt-3">
+        <p className="font-body text-[0.625rem] text-brass/60 uppercase tracking-widest mb-1">Next year</p>
+        <p className="font-body text-xs text-white/80">
+          {ord(pr.next.house)} house ({pr.next.sign}), ruled by {pr.next.lord}{[1, 4, 7, 10].includes(pr.next.house) ? ' · big year' : ''}
+        </p>
+      </div>
+      <p className="font-body text-[0.5625rem] text-brass/40 italic">{basisNote(pr.basis)}</p>
+    </div>
+  );
+}
+
+function GreatConjunctionCard({ gc }) {
+  const [more, setMore] = useState(false);
+  const r = gc.recent, n = gc.next, b = gc.beforeBirth;
+  return (
+    <div className="celestial-card p-5 border-gold-accent/40 bg-gold-primary/10 text-center space-y-3">
+      <p className="font-body text-[0.625rem] text-brass/60 uppercase tracking-widest">Your Great Conjunctions</p>
+      <p className="font-display text-lg text-white leading-snug">
+        In {r.label}, a new 20-year chapter began in your {ord(r.house)} house.
+      </p>
+      <p className="font-body text-xs text-brass">
+        {r.sign} {gc.recentDegree}° · you were {r.age}
+        {n ? ` · next in ${n.label}: your ${ord(n.house)} house, at ${n.age}` : ''}
+      </p>
+      {gc.near.length > 0 && (
+        <p className="font-body text-xs text-gold-accent font-semibold">
+          Your {gc.near.join(' and ')} {gc.near.length === 1 ? 'sits' : 'sit'} right at the starting line.
+        </p>
+      )}
+      {b && (
+        <div className="border-t border-gold-primary/20 pt-2">
+          <button onClick={() => setMore(m => !m)} className="font-body text-[0.625rem] text-brass/70 uppercase tracking-widest hover:text-gold-accent">
+            {more ? 'Less' : 'More'}
+          </button>
+          {more && (
+            <p className="font-body text-xs text-white/75 mt-2">
+              Before you were born: the {b.label} conjunction in {b.sign}{b.hits.length > 1 ? ` (${b.hits.length} passes)` : ''} landed in your {ord(b.house)} house. That's the chapter you were born into.
+            </p>
+          )}
+        </div>
+      )}
+      <p className="font-body text-[0.5625rem] text-brass/40 italic">{basisNote(gc.basis)}</p>
+    </div>
+  );
+}
+
 export default function PlacementSlide({ chart, subjectKey }) {
   const data = extractPlacementData(chart, subjectKey);
   if (!data) return null;
+  if (data.type === 'profection') return <ProfectionCard pr={data.pr} />;
+  if (data.type === 'greatConjunction') return <GreatConjunctionCard gc={data.gc} />;
 
   // ── Retrograde placement ──
   if (data.type === 'retrograde') {

@@ -574,6 +574,18 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-11-04 (Tony): **Android went live early, then UNPUBLISHED until cutover.**
+Google approved versionCode 3 and, with "start rollout" pressed, it went
+public (listing showed "1+ downloads"). Only unknown signups since Oct 20:
+kai@mail.ru + kai@mail.ruk (Nov 2, a minute apart, never confirmed or signed
+in, no chart — abandoned; possibly a Google tester; harmless, delete at
+cleanup). Tony unpublished (Setup → Advanced settings → App availability);
+listing verified 404; internal testing unaffected. Republishing now requires
+Google review → CUTOVER PLAN: turn on Managed publishing; ~1 week before
+cutover upload versionCode 4 (round-4 + AI-08 client changes) AND republish
+in one review; once approved, click "Publish changes" on cutover day (iOS is
+already manual-release). Do not republish versionCode 3._
+
 _2026-11-03 later (Tony): **Cutover data import REHEARSED end to end — clean.**
 Tony exported every Base44 table (dashboard CSVs). New
 `scripts/import/convert-csv-export.py` (CSV → importer JSON, typed from the

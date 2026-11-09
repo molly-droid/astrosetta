@@ -9,6 +9,7 @@
 import { compatClient } from '../_shared/base44Compat.ts';
 import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
 import { fetchKnowledgeDepth } from '../_shared/knowledgeDensity.ts';
+import { hiddenChartPoints, visibleNatal, visibleTransits } from '../_shared/chartVisibility.ts';
 import {
   SIGNS, PLANET_GLYPHS, ASPECT_GLYPHS, ASPECT_ABBREV, ASPECT_ANGLES, PERSONA,
   SLOW_SET, ALL_TP, DOW_SHORT, HOUSE_THEMES, PLANET_DURATIONS, CHART_RULERS, TRAD_RULERS, PROF_THEMES,

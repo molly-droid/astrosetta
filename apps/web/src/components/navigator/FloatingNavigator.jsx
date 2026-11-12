@@ -165,6 +165,22 @@ function detectTargetSavedChart(message, savedCharts) {
   return null;
 }
 
+// The person the previous question was scoped to, read back from the last
+// user message's context block (so it survives reopening the chat). Null when
+// the last question was about the user's own chart.
+function previousScopeName(messages) {
+  const lastUser = [...(messages || [])].reverse().find(m => m.role === 'user');
+  const m = lastUser?.content?.match(/^(?:THE USER IS ASKING SPECIFICALLY ABOUT|THE USER IS ASKING ABOUT THEIR RELATIONSHIP WITH): ([^\n(.]+)/m);
+  return m ? m[1].trim() : null;
+}
+
+// A third-person pronoun with no name attached: "what about her Venus?"
+const THIRD_PERSON_REGEX = /\b(she|he|her|hers|him|his|they|them|their|theirs)\b/i;
+
+// Default lens: the user's own chart. Without this the model often kept
+// reading through a person scoped earlier in the conversation history.
+const OWN_CHART_DIRECTIVE = `THIS QUESTION IS ABOUT THE USER'S OWN CHART (below). Earlier messages may have been about someone else's chart; that scope has ended. Answer through the user's own natal chart unless this question names another person.\n\n`;
+
 // Keywords that signal a relationship/composite/synastry question — when these
 // appear alongside a named partner, we inject the computed composite chart and
 // synastry cross-aspects so the navigator can read the relationship directly.
@@ -617,6 +633,10 @@ export default function FloatingNavigator() {
     setInput('');
     setSending(true);
     setSendError('');
+    // Show the message immediately. It used to appear only once the server
+    // had saved it, after the date lookup and context building below; the
+    // realtime update then replaces this copy with the stored one.
+    setMessages(prev => [...prev, { role: 'user', content: msg, pending: true }]);
     try {
       // Lazily fetch the saved-charts roster once per session (raw list + formatted context).
       if (savedChartsListRef.current === undefined) {
@@ -655,6 +675,12 @@ export default function FloatingNavigator() {
           const fetched = await fetchTransitsForDate({ raw_data: targetChart.raw_data }, targetDate);
           if (fetched) ctx += fetched;
         } catch { /* transits are a bonus */ }
+      } else if (previousScopeName(messages) && THIRD_PERSON_REGEX.test(msg)) {
+        // "What about her Venus?" right after a question about someone else:
+        // ambiguous, so ask instead of guessing. The answer ("Mom's" / "mine")
+        // routes through the branches above on the next message.
+        const prev = previousScopeName(messages);
+        ctx = `THE LENS FOR THIS QUESTION IS UNCLEAR: it uses a pronoun without a name, and the previous question was about ${prev}. Do NOT answer yet. Reply with one short, friendly question asking whether to read this through the user's own chart or ${prev}'s chart, and nothing else.`;
       } else {
         // Default: user's natal chart + full saved-charts roster + date transits.
         let extraTransitBlock = '';
@@ -670,7 +696,7 @@ export default function FloatingNavigator() {
           }
         } catch { /* date extraction is a bonus */ }
         ctx = chartContextRef.current
-          ? `${chartContextRef.current}${savedChartsContextRef.current || ''}${extraTransitBlock}`
+          ? `${OWN_CHART_DIRECTIVE}${chartContextRef.current}${savedChartsContextRef.current || ''}${extraTransitBlock}`
           : (savedChartsContextRef.current ? `${savedChartsContextRef.current}${extraTransitBlock}` : `${extraTransitBlock}`);
       }
 
@@ -679,6 +705,7 @@ export default function FloatingNavigator() {
         : msg;
       await base44.agents.addMessage(conversationRef.current, { role: 'user', content: fullContent });
     } catch (error) {
+      setMessages(prev => prev.filter(m => !m.pending));
       // Keep any newer draft the user typed while this request was pending.
       setInput(current => current || msg);
       setSendError(error.code === 'limit_reached'

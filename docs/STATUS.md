@@ -574,6 +574,35 @@ Google Payments merchant profile to the Play developer account (her account,
 owner-only action, verification takes days) — no Play subscriptions, no
 RevenueCat Play products, and no Android purchase QA until it clears._
 
+_2026-11-11 (Tony): **Cutover sign-in path PROVEN on production with a real
+Base44 account; cutover set for 2026-11-12.** Fresh Base44 CSV export
+(base44-export-2026-11-11) → converter → admin@silexdev.com's records only →
+import-base44.mjs into PRODUCTION (dry run, then real: user + chart + saved
+chart + quiz + progress + 2 XP, 0 failed). Verified: Google sign-in LINKS to the
+imported account (same auth id, providers email+google — no duplicate); Forgot
+password works end to end. BUG FOUND + FIXED (b87fd08, live): the reset link
+signed the user in but never showed "Set a new password" — supabase-js fired
+PASSWORD_RECOVERY before Login mounted to listen; now read from the URL at
+client init (ARRIVED_FOR_RECOVERY). Without it every migrated email/password
+user would have been bounced home with no password set. Findings for cutover
+day: (1) prod rows keyed by a Base44 user's email attach to that user on import
+— only one such leftover existed (admin@'s Oct 1 "Jacob" saved chart); the
+remaining orphans are +tf1/+sim1 test rows, not in Base44. (2) Molly's two
+TestFlight accounts (molly@workforceenergetics.com, molly.sharp2@gmail.com) are
+also Base44 users → DELETE them before the import so Base44 history comes in
+clean (Tony + Molly agreed). (3) Imported users arrive on Free with the web
+client's GATING_ADMIN_ONLY already false → paywalls for all 47 on day one;
+Base44 gives non-admins free Premium. ASKED Molly: (a) paywalls now at the
+founding rate, (b) existing users on free Premium until a date (recommended;
+subscription_admin_override), or (c) everyone free until a later launch.
+(4) Molly's "set a new password" email goes out only AFTER DNS points at
+Vercel (reset links target astrosetta.com); raise Auth email rate limit
+30→150/h for the day. Also live today: Navigator chart lens (defaults to the
+user's chart, asks on ambiguous pronouns; 36e6449) and instant message echo.
+App Store: 1.0 (15) REJECTED 4.3(b) (saturated astrology category) — Molly
+accepted for now; web + Android carry launch. Stripe hosted secrets are LIVE
+(2026-11-09; six price ids verified against live Stripe + secret digests)._
+
 _2026-11-04 (Tony): **Android went live early, then UNPUBLISHED until cutover.**
 Google approved versionCode 3 and, with "start rollout" pressed, it went
 public (listing showed "1+ downloads"). Only unknown signups since Oct 20:

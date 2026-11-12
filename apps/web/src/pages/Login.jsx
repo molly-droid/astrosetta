@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Sparkles } from 'lucide-react';
-import { supabase } from '@/api/base44Client';
+import { supabase, ARRIVED_FOR_RECOVERY } from '@/api/base44Client';
 import { useAuth } from '@/lib/AuthContext';
 import { isCapacitor } from '@/lib/platform';
 import AuthLayout from '@/components/AuthLayout';
@@ -31,7 +31,7 @@ export default function Login() {
     return '/home';
   }, []);
 
-  const [mode, setMode] = useState('signin'); // signin | signup | verify | forgot | recovery
+  const [mode, setMode] = useState(ARRIVED_FOR_RECOVERY ? 'recovery' : 'signin'); // signin | signup | verify | forgot | recovery
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');

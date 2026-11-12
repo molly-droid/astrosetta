@@ -9,7 +9,7 @@ import { auth } from './shim/auth.js';
 import { functions } from './shim/functions.js';
 import { integrations } from './shim/integrations.js';
 import { agents } from './shim/agents.js';
-import { supabase } from './shim/supabase.js';
+import { supabase, ARRIVED_FOR_RECOVERY } from './shim/supabase.js';
 
 export const base44 = {
   entities,
@@ -34,4 +34,4 @@ export const base44 = {
 };
 
 // Direct access for new (non-shim) code being written during the migration.
-export { supabase };
+export { supabase, ARRIVED_FOR_RECOVERY };

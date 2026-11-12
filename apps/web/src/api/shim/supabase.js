@@ -15,6 +15,13 @@ if (!url || !anonKey) {
 export const SUPABASE_URL = url;
 export const SUPABASE_ANON_KEY = anonKey;
 
+// A password-reset link lands with `type=recovery` in the URL. supabase-js
+// consumes it (and fires PASSWORD_RECOVERY) before the Login page mounts to
+// listen, so the page missed it and sent the user home without ever showing
+// the set-new-password form. Read it here, before the client strips the URL.
+export const ARRIVED_FOR_RECOVERY = typeof window !== 'undefined'
+  && /(^|[#?&])type=recovery(&|$)/.test(`${window.location.hash}&${window.location.search}`);
+
 export const supabase = createClient(url, anonKey, {
   auth: {
     autoRefreshToken: true,

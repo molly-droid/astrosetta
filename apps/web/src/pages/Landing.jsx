@@ -13,6 +13,8 @@ import LandingSidebar from '@/components/landing/LandingSidebar';
 import EventBanner from '@/components/landing/EventBanner';
 import ComparisonStrip from '@/components/landing/ComparisonStrip';
 import GooglePlayBadge from '@/components/landing/GooglePlayBadge';
+import HomeScreenGuide from '@/components/landing/HomeScreenGuide';
+import { isNativePlatform } from '@/lib/platform';
 import { track, EVENTS } from '@/lib/analytics';
 
 // ── Starfield canvas ──────────────────────────────────────────────────────────
@@ -199,6 +201,11 @@ export default function Landing() {
               <div className="mt-3 -ml-3">
                 <GooglePlayBadge />
               </div>
+              {!isNativePlatform() && (
+                <a href="#home-screen" className="inline-flex min-h-11 items-center rounded-sm font-body text-sm text-gold-accent underline underline-offset-4 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+                  Add to Home Screen
+                </a>
+              )}
             </div>
 
             {/* Right: Live chart wheel */}
@@ -492,6 +499,8 @@ export default function Landing() {
           </p>
         </section>
 
+        <HomeScreenGuide />
+
         {/* ── Final CTA ── */}
         <section className="px-6 pb-24 text-center max-w-xl mx-auto">
           <div className="rounded-3xl p-10" style={{ background: 'linear-gradient(135deg, rgba(201,169,97,0.12), rgba(157,180,200,0.06))', border: '1px solid rgba(201,169,97,0.2)' }}>
@@ -551,8 +560,13 @@ export default function Landing() {
           <div className="flex items-center justify-center mb-2">
             <GooglePlayBadge />
           </div>
-          <div className="flex items-center justify-center gap-4 mb-3">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mb-3">
             <Link to="/legal" className="font-body text-xs transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.3)' }}>Legal</Link>
+            {!isNativePlatform() && (
+              <a href="#home-screen" className="inline-flex min-h-11 items-center rounded-sm font-body text-xs text-brass hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+                Add to Home Screen
+              </a>
+            )}
             <a
               href="https://www.instagram.com/astrosetta.hq/"
               target="_blank"

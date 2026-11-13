@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
-import { Star, CalendarDays, ArrowRight, Moon, TrendingUp, Check, Lock, MousePointer, Users, MessageCircle, Gauge, Scroll, Sparkles } from 'lucide-react';
+import { Star, CalendarDays, ArrowRight, Moon, TrendingUp, Check, Lock, MousePointer, Users, MessageCircle, Gauge, Scroll, Sparkles, Instagram } from 'lucide-react';
 import ChartWheel from '@/components/chart/ChartWheel';
 import { getTodayChartData, getTodayIngresses } from '@/lib/clientAstro';
 import IngressBanner from '@/components/planner/IngressBanner';
@@ -546,6 +546,15 @@ export default function Landing() {
           </div>
           <div className="flex items-center justify-center gap-4 mb-3">
             <Link to="/legal" className="font-body text-xs transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.3)' }}>Legal</Link>
+            <a
+              href="https://www.instagram.com/astrosetta.hq/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center gap-2 rounded-sm font-body text-xs text-brass transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
+            >
+              <Instagram className="h-4 w-4" aria-hidden="true" />
+              Instagram<span className="sr-only">: @astrosetta.hq (opens in a new tab)</span>
+            </a>
           </div>
           <p className="font-body text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Operated by Sharp Energetics LLC · © 2026</p>
         </footer>

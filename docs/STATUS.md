@@ -5,6 +5,15 @@ Update this file as items move. Cutover mechanics live in
 [DEPLOYMENT.md](./DEPLOYMENT.md); the parity protocol in
 [NAVIGATOR_PARITY_TEST.md](./NAVIGATOR_PARITY_TEST.md).
 
+_2026-11-12: **Production Base44 data import completed and verified.** 48
+exported accounts mapped (45 created, 3 existing sign-ins reused); 5,634 entity
+records reconciled, retaining native data, passwords and billing. Base44 was
+read-only throughout. Recovery and password sign-in passed with a disposable
+account, without sending mail. Welcome and scheduled emails remain on hold;
+**Jacob's explicit permission is required before any email, including tests.**
+DNS still points to Base44. See [import handoff](./BASE44_IMPORT_2026-11-12.md)
+for results, private backups, email holds and final delta/cutover steps._
+
 _Completion-pass update: 2026-10-08. Historical notes below describe Tony's
 earlier hosted setup._
 

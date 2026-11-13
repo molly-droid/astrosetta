@@ -67,6 +67,14 @@ The earlier chart-dialog, Sun-sign sharing and blue/cream card fixes remain in
 commit `3164a7e`. The web receives these UI changes via Vercel; bundled iOS/Android
 apps need their next native build and release.
 
+Production rollout completed on November 13 with commit `8f770c0`. Vercel reported
+success and the published Safari guide was checked from a fresh anchored load.
+The alert configuration was enabled after confirming zero notice rows and zero
+signup-watch rows, with the cron job active. A service dry run returned queued=0
+and sent=0; an unauthenticated request returned 401. The legacy brief welcome
+trigger remains disabled. No verification emails were sent. Private rollout
+receipts remain outside Git.
+
 References: [RevenueCat customer model](https://www.revenuecat.com/docs/api-v1/customer-info-model),
 [RevenueCat base-plan identifiers](https://www.revenuecat.com/docs/integrations/webhooks/event-types-and-fields),
 [Safari page menu](https://support.apple.com/guide/iphone/browse-the-web-iph1fbef4daa/27/ios/27).

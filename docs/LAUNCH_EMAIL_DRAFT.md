@@ -1,7 +1,13 @@
 # Molly's launch email
 
-**DRAFT ONLY. DO NOT SEND, TEST SEND, OR ENABLE AUTOMATIC EMAILS WITHOUT
-JACOB'S EXPLICIT PERMISSION.**
+**The launch announcement remains on hold for the customer list. Jacob must
+explicitly approve that campaign before it is sent.**
+
+Jacob approved one personalized preview to Molly only, using the original subject
+without a test label. Resend accepted that message on November 12, 2026.
+Separately, Jacob authorized normal intended app emails and the digest schedule
+cutover, with duplicate-send safeguards. Neither approval authorizes the launch
+announcement to other members.
 
 Supplied by Molly on November 12, 2026. Formatting restored from the pasted
 message; substantive copy preserved below, with the Google Play link filled in.
@@ -30,9 +36,14 @@ The beta is over. The full app is ready for you, starting today.
 
 **ONE QUICK STEP**
 
-We upgraded our systems for launch, so please reset your password the first
-time you log in. Just tap "Forgot password" on the login screen. Your free
-account carries over automatically.
+We upgraded our systems for launch. Your free account carries over automatically.
+
+If you sign in with Google, choose "Continue with Google" using the same email
+address as before.
+
+If you sign in with email and password, please reset your password the first
+time you log in. Just tap "Forgot password" on the login screen and use the
+same email address as before.
 
 **WANT MORE?**
 

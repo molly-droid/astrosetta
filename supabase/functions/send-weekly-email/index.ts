@@ -1,3 +1,4 @@
+import { runScheduledDigest, sendDigestOnce } from '../_shared/digestDelivery.ts';
 import { compatClient } from '../_shared/base44Compat.ts';
 import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
 import { insertGlyphs } from '../_shared/emailGlyphs.ts';
@@ -598,6 +599,7 @@ Deno.serve(async (req) => {
   try {
     const base44 = compatClient(req);
     const body = await req.json().catch(() => ({}));
+    if (body.dry_run === true && !body.scheduled) return json({ error: 'Dry runs require scheduled service authentication' }, { status: 400 });
     const appUrl = body.appUrl || 'https://astrosetta.com';
 
     if (body.scheduled) {
@@ -608,29 +610,7 @@ Deno.serve(async (req) => {
       // invoke_edge_function with the vault service key, so requiring it here
       // keeps the scheduled run working and closes the hole.
       if (!isServiceRole(req)) return json({ error: 'Unauthorized' }, { status: 401 });
-      const charts = await base44.asServiceRole.entities.Chart.list('-created_date', 500);
-      const userIds = [...new Set(charts.map(c => c.user_id).filter(Boolean))];
-      let sent = 0, skipped = 0, optedOut = 0, failed = 0;
-      for (const uid of userIds) {
-        const target = await base44.asServiceRole.entities.User.filter({ id: uid }).then(r => r[0]).catch(() => null);
-        if (!target?.email) { skipped++; continue; }
-        if (target.weekly_email_opt_in === false) { optedOut++; continue; }
-        // BETA: all opted-in users receive the weekly digest (tier gate removed
-        // to match sendDailyEmail's BETA_ALL_PAID policy). Re-add the paid-tier
-        // check here once payments launch.
-        // One bad recipient must not abort the whole run — everyone after it
-        // would silently lose their digest.
-        try {
-          const built = await buildWeeklyEmailForUser(base44, target, appUrl);
-          if (!built) { skipped++; continue; }
-          await sendDigestEmail({ to: target.email, subject: built.subject, html: built.html });
-          sent++;
-        } catch (err) {
-          failed++;
-          console.error(`[weekly-digest] send failed for user ${uid}:`, err?.message || err);
-        }
-      }
-      return json({ success: true, sent, skipped, optedOut, failed });
+      return json(await runScheduledDigest({ kind: 'weekly', base44, body, build: target => buildWeeklyEmailForUser(base44, target, appUrl) }));
     }
 
     const user = await base44.auth.me();
@@ -651,15 +631,12 @@ Deno.serve(async (req) => {
     for (const uid of userIds) {
       const target = await base44.asServiceRole.entities.User.filter({ id: uid }).then(r => r[0]).catch(() => null);
       if (!target?.email) { skipped++; continue; }
-      if (target.weekly_email_opt_in === false) { optedOut++; continue; }
+      if (target.weekly_email_opt_in !== true) { optedOut++; continue; }
       const tier = getEffectiveTier(target);
       if (tier === 'free') { optedOut++; continue; }
-      const built = await buildWeeklyEmailForUser(base44, target, appUrl);
-      if (!built) { skipped++; continue; }
-      await base44.asServiceRole.integrations.Core.SendEmail({
-        to: target.email, from_name: 'Astrosetta', subject: built.subject, body: built.html,
-      });
-      sent++;
+      const status = await sendDigestOnce('weekly', target, () => buildWeeklyEmailForUser(base44, target, appUrl));
+      if (status === 'sent') sent++;
+      else skipped++;
     }
     return json({ success: true, sent, skipped, optedOut });
   } catch (error) {

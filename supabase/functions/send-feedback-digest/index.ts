@@ -1,5 +1,7 @@
+import { sendDigestOnce } from '../_shared/digestDelivery.ts';
+import { digestSlot } from '../_shared/digestSchedule.ts';
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
+import { json, handleOptions, isServiceRole, serviceClient } from '../_shared/edge.ts';
 
 const ADMIN_EMAIL = 'hello@astrosetta.com';
 const APP_URL = 'https://astrosetta.com';
@@ -26,6 +28,15 @@ Deno.serve(async (req) => {
       }
     }
 
+    const slot = digestSlot('feedback');
+    const { data: existing, error: lookupError } = await serviceClient().from('email_digest_delivery')
+      .select('status').eq('kind', 'feedback').eq('period_key', slot.period).eq('recipient', ADMIN_EMAIL);
+    if (lookupError) throw lookupError;
+    if (body.dry_run === true) return json({ success: true, dry_run: true, due: slot.due, recipient_count: 1, already_claimed: existing.length > 0 });
+    if (body.scheduled && !slot.due) return json({ skipped: true, reason: 'Outside scheduled window' });
+    if (existing.length) return json({ skipped: true, reason: 'Already claimed this week' });
+
+    const status = await sendDigestOnce('feedback', { email: ADMIN_EMAIL }, async () => {
     // Fetch all feedback from the last 7 days
     const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const allFeedback = await base44.asServiceRole.entities.Feedback.list('-created_date', 200);
@@ -40,7 +51,7 @@ Deno.serve(async (req) => {
     const weekEnd = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'America/Chicago' });
 
     if (featureRequests.length === 0 && generalFeedback.length === 0 && bugReports.length === 0) {
-      return json({ skipped: true, reason: 'No feedback this week' });
+      return null;
     }
 
     // Format feedback items for the LLM
@@ -204,21 +215,14 @@ Your job: Write a concise product digest for the founder. Return JSON with:
 </table>
 </body></html>`;
 
-    await base44.asServiceRole.integrations.Core.SendEmail({
-      to: ADMIN_EMAIL,
-      from_name: 'Astrosetta Digest',
+    return {
       subject: `✦ Weekly Feedback Digest: ${featureRequests.length + generalFeedback.length + bugReports.length} items (${weekStart} – ${weekEnd})`,
-      body: html,
+      html,
+    };
+
     });
 
-    return json({
-      success: true,
-      sent_to: ADMIN_EMAIL,
-      total: weekFeedback.length,
-      bugs: bugReports.length,
-      features: featureRequests.length,
-      general: generalFeedback.length,
-    });
+    return json({ success: true, status, sent_to: status === 'sent' ? ADMIN_EMAIL : null });
   } catch (error) {
     return json({ error: error.message }, { status: 500 });
   }

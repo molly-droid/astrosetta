@@ -42,6 +42,7 @@ try {
     'supabase/migrations/20261008000003_launch_configuration.sql',
     'supabase/migrations/20261008000004_calendar_connections.sql',
     'supabase/migrations/20261008000005_ai_request_metrics.sql',
+    'supabase/migrations/20261113000001_email_digest_delivery.sql',
     'scripts/tests/database-regressions.sql',
     'scripts/tests/migration-completion.sql',
   ]) {
@@ -58,6 +59,18 @@ try {
   })));
   assert.equal(answers.filter(x => x === 'true').length, 3);
   console.log('PASS atomic quota: exactly 3 of 16 simultaneous first calls admitted');
+  const deliverySql = "insert into public.email_digest_delivery(kind,period_key,recipient,status) values('daily','2026-11-13','test@example.invalid','processing') on conflict do nothing returning 1;";
+  const claims = await Promise.all(Array.from({ length: 20 }, () => new Promise((resolve, reject) => {
+    const child = spawn('psql', [...args, '-At', '-c', deliverySql]);
+    let stdout = '', stderr = '';
+    child.stdout.on('data', x => { stdout += x; });
+    child.stderr.on('data', x => { stderr += x; });
+    child.on('exit', code => code === 0 ? resolve(stdout) : reject(Error(stderr)));
+  })));
+  assert.equal(claims.filter(x => x.startsWith('1\n')).length, 1);
+  run('psql', [...args, '-c', "select public.test_assert(not has_table_privilege('authenticated','public.email_digest_delivery','SELECT'), 'delivery records are private'); select public.test_assert(not has_table_privilege('anon','public.email_digest_delivery','INSERT'), 'anonymous callers cannot claim mail');"]);
+  console.log('PASS email delivery: exactly 1 of 20 simultaneous claims admitted; client access denied');
+
 } finally {
   pg.kill('SIGTERM');
   await new Promise(resolve => pg.once('exit', resolve));

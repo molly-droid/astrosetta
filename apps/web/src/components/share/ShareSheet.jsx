@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from '@/components/ui/sheet';
@@ -18,12 +18,20 @@ import { isNativePlatform } from '@/lib/platform';
  */
 export default function ShareSheet({ open, onOpenChange, card: singleCard, filename = 'astrosetta-card', textFallback: singleText = '', variants = null }) {
   const captureRef = useRef(null);
+  const returnFocusRef = useRef(null);
   const [variantKey, setVariantKey] = useState(null);
+  const [theme, setTheme] = useState('blue');
+  const [availableWidth, setAvailableWidth] = useState(() => typeof window === 'undefined' ? 300 : window.innerWidth - 40);
+  useEffect(() => {
+    const resize = () => setAvailableWidth(window.innerWidth - 40);
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, []);
   const active = variants?.length ? (variants.find(v => v.key === variantKey) || variants[0]) : null;
   const card = active ? active.card : singleCard;
   const textFallback = active ? (active.textFallback ?? active.card?.textFallback ?? '') : singleText;
   const size = cardSize(card);
-  const PREVIEW_WIDTH = card?.format === 'story' ? 190 : 300;
+  const PREVIEW_WIDTH = Math.min(card?.format === 'story' ? 190 : 300, availableWidth);
   const previewScale = PREVIEW_WIDTH / size.width;
   const [downloading, setDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -71,14 +79,16 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
             zIndex: -1,
           }}
         >
-          <ShareCard ref={captureRef} card={card} />
+          <ShareCard ref={captureRef} card={card} theme={theme} />
         </div>
       )}
 
       <Sheet open={open} onOpenChange={(o) => { if (!o) setVariantKey(null); onOpenChange?.(o); }}>
         <SheetContent
           side="bottom"
-          className="rounded-t-2xl border-t border-gold-primary/30 bg-[#0f1a2e] px-5 pb-7 pt-4 text-white"
+          onOpenAutoFocus={() => { returnFocusRef.current = document.activeElement; }}
+          onCloseAutoFocus={event => { event.preventDefault(); returnFocusRef.current?.focus(); }}
+          className="max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-gold-primary/30 bg-[#0f1a2e] px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-4 text-white [&>button]:top-1 [&>button]:right-1 [&>button]:flex [&>button]:h-11 [&>button]:w-11 [&>button]:items-center [&>button]:justify-center"
         >
           <SheetHeader className="text-center">
             <SheetTitle className="font-display text-base font-semibold text-gold-accent">
@@ -92,12 +102,11 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
           </SheetHeader>
 
           {variants?.length > 1 && (
-            <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl border border-gold-primary/25 p-1" role="tablist">
+            <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl border border-gold-primary/25 p-1" role="group" aria-label="Reading to share">
               {variants.map(v => (
                 <button
                   key={v.key}
-                  role="tab"
-                  aria-selected={active?.key === v.key}
+                  aria-pressed={active?.key === v.key}
                   onClick={() => setVariantKey(v.key)}
                   className={`rounded-lg py-2 font-body text-[0.6875rem] font-semibold transition ${active?.key === v.key ? 'bg-gold-primary text-[#0f1a2e]' : 'text-gold-accent hover:bg-gold-primary/10'}`}
                 >
@@ -106,6 +115,18 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
               ))}
             </div>
           )}
+
+          <fieldset className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            <legend className="float-left mr-3 font-body text-xs leading-[44px] text-brass">Card colour</legend>
+            {[{ key: 'blue', label: 'Blue', swatch: '#0f1a2e' }, { key: 'cream', label: 'Cream', swatch: '#FDFBF7' }].map(option => (
+              <button key={option.key} type="button" aria-pressed={theme === option.key}
+                disabled={downloading} onClick={() => setTheme(option.key)}
+                className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 font-body text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold-accent disabled:opacity-50 ${theme === option.key ? 'border-gold-accent text-gold-accent' : 'border-white/20 text-white/70'}`}>
+                <span aria-hidden="true" className="h-4 w-4 rounded-full border border-white/30" style={{ background: option.swatch }} />
+                {option.label}{theme === option.key && <Check size={12} aria-hidden="true" />}
+              </button>
+            ))}
+          </fieldset>
 
           {/* Scaled preview */}
           <div className="flex justify-center my-4">
@@ -119,7 +140,7 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
               }}
             >
               <div style={{ transform: `scale(${previewScale})`, transformOrigin: 'top left', width: size.width, height: size.height }}>
-                {card && <ShareCard card={card} />}
+                {card && <ShareCard card={card} theme={theme} />}
               </div>
             </div>
           </div>

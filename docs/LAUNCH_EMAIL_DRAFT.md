@@ -1,26 +1,27 @@
 # Molly's launch email
 
-**The launch announcement remains on hold for the customer list. Jacob must
-explicitly approve that campaign before it is sent.**
+**Jacob approved the launch campaign on November 13, 2026. All 48 original
+beta accounts are covered: Molly's delivered preview, two delivered pilot
+messages, and 45 remaining messages accepted by Resend. Do not resend.**
 
 Jacob approved one personalized preview to Molly only, using the original subject
 without a test label. Resend accepted that message on November 12, 2026.
 Separately, Jacob authorized normal intended app emails and the digest schedule
-cutover, with duplicate-send safeguards. Neither approval authorizes the launch
-announcement to other members.
+cutover, with duplicate-send safeguards. These earlier approvals were separate
+from the later pilot and remainder approvals.
 
 Supplied by Molly on November 12, 2026. Formatting restored from the pasted
 message; the Google Play link, Google sign-in instructions and the approved
 card-required beta trial offer have been added. Jacob authorized an updated
 personalized preview to Molly only on November 13. It was sent with her actual
 first name and the original subject, without a test label. Resend confirmed
-delivery. The announcement remains unsent to all other members.
+delivery. Jacob then approved two pilot recipients and explicitly released the
+45 remaining messages after reviewing the pilot. See
+[the delivery record](LAUNCH_EMAIL_DELIVERY_2026-11-13.md).
 
-Before approval: finish DNS cutover and final data delta, verify production
-password recovery,
-and clarify that the founding monthly prices quoted here are web prices if
-the native stores charge different amounts. Resolve `[First Name]` with a safe
-fallback when building the approved recipient-specific messages.
+The trial checkout described below starts on the website. `[First Name]` is
+resolved from each account's display name or full name, with a safe fallback.
+Recipient data, rendered messages and provider receipts stay outside Git.
 
 **Subject:** Astrosetta is officially live ✨ (and you helped build it)
 

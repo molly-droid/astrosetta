@@ -2,7 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, MapPin, Trash2, Plus, X, Pencil, Calendar } from 'lucide-react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Loader2, MapPin, Trash2, Plus, Pencil, Calendar } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { warmSynastry } from '@/lib/synastryCache';
 
@@ -33,6 +34,7 @@ export default function SavedChartManager({ user, charts, natalChart = null, onR
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const debounceRef = useRef(null);
+  const returnFocusRef = useRef(typeof document === 'undefined' ? null : document.activeElement);
   const isEvent = form.chart_type === 'event';
 
   const handleChange = (e) => {
@@ -243,14 +245,13 @@ export default function SavedChartManager({ user, charts, natalChart = null, onR
   };
 
   return (
-    <div className="fixed inset-0 z-[10020] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 pb-[88px] md:pb-4" onClick={onClose}>
-      <div className="celestial-card w-full max-w-md max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-          <h2 className="font-display text-lg text-cream">{editingId ? 'Edit Chart' : 'Saved Charts'}</h2>
-          <button onClick={onClose} className="text-brass/50 hover:text-brass transition-colors"><X size={18} /></button>
+    <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
+      <DialogContent aria-describedby={undefined} onCloseAutoFocus={event => { event.preventDefault(); returnFocusRef.current?.focus(); }} className="flex flex-col w-[calc(100%-2rem)] max-w-md max-h-[85dvh] overflow-hidden rounded-2xl border-white/10 bg-[#0f1a2e] p-0 gap-0 [&>button]:top-2 [&>button]:right-2 [&>button]:flex [&>button]:h-11 [&>button]:w-11 [&>button]:items-center [&>button]:justify-center [&>button]:text-brass">
+        <div className="flex shrink-0 items-center min-h-[60px] pl-4 pr-16 py-3 border-b border-white/10">
+          <DialogTitle className="font-display text-lg font-normal text-cream">{editingId ? 'Edit Chart' : 'Saved Charts'}</DialogTitle>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="min-h-0 overflow-y-auto overscroll-contain p-4 space-y-3">
           {/* Existing charts */}
           {charts.length > 0 && !showForm && (
             <div className="space-y-2">
@@ -406,7 +407,7 @@ export default function SavedChartManager({ user, charts, natalChart = null, onR
             </button>
           ) : null}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -153,17 +153,19 @@ export function buildLunationCardData(lunation, dateStr) {
 }
 
 /** Build card data for a rising-sign listicle (from backend function output). */
-export function buildRisingSignCardData(sign, content, dateStr) {
+export function buildRisingSignCardData(sign, content, dateStr, { basis = 'rising', period = 'day' } = {}) {
   const glyph = SIGN_GLYPHS[sign] || '✦';
   const bullets = Array.isArray(content?.bullets) ? content.bullets : [];
-  const headline = content?.headline || `What today means for ${sign} Rising`;
-  const hashtags = ['#astrology', hashtag(sign), '#rising', '#horoscope', '#astrosetta'];
+  const signLabel = basis === 'sun' ? 'Sun' : 'Rising';
+  const headline = content?.headline || `What ${period === 'week' ? 'this week' : 'today'} means for ${sign} ${signLabel}`;
+  const hashtags = ['#astrology', hashtag(sign), basis === 'sun' ? '#sunsign' : '#rising', '#horoscope', '#astrosetta'];
   // AI-01: the image shows the short standalone summary (the full bullet list
   // overflowed the square card). The copied text keeps the bullets, where
   // there is no size limit.
   const summary = typeof content?.summary === 'string' ? content.summary.trim() : '';
-  const textFallback = `${headline}\n${dateStr}\n\n${bullets.map(b => `✦ ${b}`).join('\n')}\n\n${hashtags.join(' ')}\n\nGet your chart → astrosetta.com`;
-  const base = { glyph, glyphColor: '#C9A961', kicker: 'DAILY HOROSCOPE', title: headline, dateStr, hashtags, textFallback };
+  const readingText = bullets.length ? bullets.map(b => `✦ ${b}`).join('\n') : summary;
+  const textFallback = `${headline}\n${dateStr}\n\n${readingText}\n\n${hashtags.join(' ')}\n\nGet your chart → astrosetta.com`;
+  const base = { glyph, glyphColor: '#C9A961', kicker: `${period === 'week' ? 'WEEKLY' : 'DAILY'} ${basis === 'sun' ? 'SUN-SIGN READING' : 'HOROSCOPE'}`, title: headline, dateStr, hashtags, textFallback };
   return summary
     ? { ...base, bodyType: 'prose', body: summary, bullets }
     : { ...base, bodyType: 'bullets', bullets };

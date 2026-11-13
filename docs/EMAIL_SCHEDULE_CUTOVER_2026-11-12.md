@@ -3,9 +3,10 @@
 Jacob approved disabling the four Base44 email schedules and setting up their
 replacements in the new app. After Jacob flagged the two remaining active
 workflows, Bug Report Admin Alert and Daily Ephemeris Cross-Check were also
-deactivated. Base44 data and application code remain read-only. The launch announcement to members still needs explicit
-approval. One personalized launch preview to Molly was separately approved and
-accepted by Resend, with her real greeting and the original subject.
+deactivated. Base44 data and application code remain read-only. At cutover,
+the launch announcement remained held while one personalized Molly preview was
+separately approved and delivered. Jacob later approved the pilot and remainder
+on November 13; see `LAUNCH_EMAIL_DELIVERY_2026-11-13.md`.
 
 ## Source system
 

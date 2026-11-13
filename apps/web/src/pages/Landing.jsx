@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { Star, CalendarDays, ArrowRight, Moon, TrendingUp, Check, Lock, MousePointer, Users, MessageCircle, Gauge, Scroll, Sparkles, Instagram } from 'lucide-react';
 import ChartWheel from '@/components/chart/ChartWheel';
@@ -115,6 +115,7 @@ function useTodayChart() {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Landing() {
+  const { hash } = useLocation();
   const [loading, setLoading] = useState(false);
   const { chartData, ingresses } = useTodayChart();
   const [emailCapture, setEmailCapture] = useState('');
@@ -123,6 +124,15 @@ export default function Landing() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try { return localStorage.getItem('astrosetta_landing_sidebar_collapsed') === 'true'; } catch { return false; }
   });
+  // Email links arrive before authentication finishes and this page mounts.
+  // Restore their anchor after React has rendered the actual target section.
+  useEffect(() => {
+    if (!hash) return;
+    const target = document.getElementById(hash.slice(1));
+    if (!target) return;
+    const frame = requestAnimationFrame(() => target.scrollIntoView({ block: 'start' }));
+    return () => cancelAnimationFrame(frame);
+  }, [hash]);
   useEffect(() => {
     try { localStorage.setItem('astrosetta_landing_sidebar_collapsed', String(sidebarCollapsed)); } catch {}
   }, [sidebarCollapsed]);

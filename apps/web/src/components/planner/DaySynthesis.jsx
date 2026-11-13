@@ -17,6 +17,7 @@ import { useUserPrefs } from '@/lib/UserPrefsContext';
 import { fetchExplanation } from '@/lib/explainIt';
 import ShareSheet from '@/components/share/ShareSheet';
 import { buildRisingSignCardData, formatCollectiveContext, shareVariants } from '@/lib/shareCard';
+import { resolveShareSign } from '@/lib/shareReading';
 import CollapsibleCardHeader from '@/components/ui/CollapsibleCardHeader';
 import SynthesisCategoryCard from '@/components/planner/SynthesisCategoryCard';
 import GatedFeature from '@/components/paywall/GatedFeature';
@@ -452,13 +453,13 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
   };
 
   const handleShare = async () => {
-    const ascSign = chart?.raw_data?.ascendant_sign || chart?.ascendant_sign;
-    if (chart?.raw_data?.unknown_time || !ascSign || shareLoading) return;
+    const shareSign = resolveShareSign(chart);
+    if (!shareSign || shareLoading) return;
     setShareLoading(true);
     try {
       const shareDateStr = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
       const res = await base44.functions.invoke('generateRisingSignCard', {
-        sign: ascSign,
+        ...shareSign,
         dateKey,
         dateStr: shareDateStr,
         collectiveContext: formatCollectiveContext(transits),
@@ -471,7 +472,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
         bodyType: 'prose', body: sky, dateStr: '',
         textFallback: `The sky on ${shareDateStr}\n\n${sky}\n\nRead your chart → astrosetta.com`,
       } : null;
-      const mine = { ...buildRisingSignCardData(ascSign, res.data, shareDateStr), audience: 'mine' };
+      const mine = { ...buildRisingSignCardData(shareSign.sign, res.data, shareDateStr, shareSign), audience: 'mine' };
       setShareCard(shareVariants(everyone, mine));
     } catch { /* non-critical */ }
     setShareLoading(false);
@@ -662,8 +663,9 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
                     className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-gold-accent transition-colors">
                     {explainLoading ? <Loader2 size={10} className="animate-spin" /> : <Lightbulb size={10} />} Explain it
                   </button>
-                  {!chart?.raw_data?.unknown_time && (
+                  {resolveShareSign(chart) && (
                     <button onClick={handleShare}
+                      disabled={shareLoading}
                       className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-gold-accent transition-colors">
                       {shareLoading ? <Loader2 size={10} className="animate-spin" /> : <Share2 size={10} />} Share
                     </button>

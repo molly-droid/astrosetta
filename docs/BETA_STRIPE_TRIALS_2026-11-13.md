@@ -53,7 +53,8 @@ one-delivery-per-period safeguards. No historical emails are replayed.
 - Molly's launch announcement draft now explains card-required trial signup and
   the January 1 renewal. After rollout checks, Jacob separately authorized one
   updated personalized preview to Molly on November 13. Resend confirmed delivery.
-  The announcement has not been sent to the rest of the member list.
+  Jacob subsequently approved the pilot and released the remainder. All 48
+  original beta accounts are now covered; see `LAUNCH_EMAIL_DELIVERY_2026-11-13.md`.
 - The regular onboarding chart recap and legacy welcome template include the
   Google Play badge/link, Safari Home Screen instructions and a reminder to use
   the same account. They do not advertise beta trials to new subscribers.
@@ -86,7 +87,8 @@ Primary provider references:
 - [Stripe Checkout Session API](https://docs.stripe.com/api/checkout/sessions/create)
 - [Apple Home Screen instructions](https://support.apple.com/guide/iphone/bookmark-a-website-iph42ab2f3a7/ios)
 
-The announcement remains on hold pending Jacob's explicit permission to send.
+The announcement was released with Jacob's explicit approval after pilot review
+on November 13. Its delivery ledger is separate from normal scheduled email.
 
 ## Production verification completed
 

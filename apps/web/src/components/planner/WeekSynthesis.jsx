@@ -10,6 +10,7 @@ import { useUserPrefs } from '@/lib/UserPrefsContext';
 import { fetchExplanation } from '@/lib/explainIt';
 import ShareSheet from '@/components/share/ShareSheet';
 import { buildRisingSignCardData, formatCollectiveContext } from '@/lib/shareCard';
+import { resolveShareSign } from '@/lib/shareReading';
 import SynthesisCategoryCard from '@/components/planner/SynthesisCategoryCard';
 import { useAuth } from '@/lib/AuthContext';
 import { usePermissions, CORE_CTA_LABEL } from '@/lib/permissions';
@@ -239,17 +240,18 @@ export default function WeekSynthesis({ days, chart }) {
   };
 
   const handleShare = async () => {
-    const ascSign = chart?.raw_data?.ascendant_sign || chart?.ascendant_sign;
-    if (chart?.raw_data?.unknown_time || !ascSign || shareLoading) return;
+    const shareSign = resolveShareSign(chart);
+    if (!shareSign || shareLoading) return;
     setShareLoading(true);
     try {
       const res = await base44.functions.invoke('generateRisingSignCard', {
-        sign: ascSign,
+        ...shareSign,
+        period: 'week',
         dateKey: weekKey,
         dateStr: weekRange,
         collectiveContext: shareContextRef.current || '',
       });
-      setShareCard(buildRisingSignCardData(ascSign, res.data, weekRange));
+      setShareCard(buildRisingSignCardData(shareSign.sign, res.data, weekRange, { ...shareSign, period: 'week' }));
     } catch { /* non-critical */ }
     setShareLoading(false);
   };
@@ -348,8 +350,9 @@ export default function WeekSynthesis({ days, chart }) {
                 >
                   <RefreshCw size={10} /> Regenerate
                 </button>
-                {!chart?.raw_data?.unknown_time && (
+                {resolveShareSign(chart) && (
                 <button onClick={handleShare}
+                  disabled={shareLoading}
                   className="flex items-center gap-1 font-body text-[0.625rem] text-brass hover:text-gold-accent transition-colors">
                   {shareLoading ? <Loader2 size={10} className="animate-spin" /> : <Share2 size={10} />} Share
                 </button>

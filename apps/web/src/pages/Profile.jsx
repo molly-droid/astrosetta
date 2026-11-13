@@ -313,7 +313,7 @@ export default function Profile() {
         )}
 
         {/* Plan tab */}
-        {activeTab === 'plan' && <SubscriptionSection />}
+        {activeTab === 'plan' && <SubscriptionSection chart={chart} />}
 
         {/* My Astrosetta Moment — saved event confirmation */}
         {activeTab === 'moment' && <MyMomentSection />}

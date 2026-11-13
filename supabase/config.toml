@@ -94,6 +94,8 @@ verify_jwt = false
 verify_jwt = false
 [functions.notify-admin-bug-report]
 verify_jwt = false
+[functions.notify-admin-subscriber]
+verify_jwt = false
 [functions.pre-generate-interpretations]
 verify_jwt = false
 [functions.pre-generate-synthesis]

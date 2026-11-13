@@ -157,15 +157,15 @@ export default function HowToUseTab() {
             </div>
             <div className="flex gap-2">
               <span className="text-gold-accent text-xs mt-0.5">2.</span>
-              <p className="font-body text-xs text-white/60">Tap the <strong className="text-white/80">Share</strong> button (square with up arrow) at the bottom of the screen.</p>
+              <p className="font-body text-xs text-white/60">Tap the <strong className="text-white/80">page menu</strong> to the left of the address bar (three lines or a Reader icon). If it opens Reader, tap it again.</p>
             </div>
             <div className="flex gap-2">
               <span className="text-gold-accent text-xs mt-0.5">3.</span>
-              <p className="font-body text-xs text-white/60">Scroll down and tap <strong className="text-white/80">"Add to Home Screen"</strong>.</p>
+              <p className="font-body text-xs text-white/60">Choose <strong className="text-white/80">Share</strong>, then <strong className="text-white/80">View More</strong> if shown. If your layout already shows Share, start there.</p>
             </div>
             <div className="flex gap-2">
               <span className="text-gold-accent text-xs mt-0.5">4.</span>
-              <p className="font-body text-xs text-white/60">Tap <strong className="text-white/80">"Add"</strong> and you're done! The app icon appears on your home screen.</p>
+              <p className="font-body text-xs text-white/60">Scroll to <strong className="text-white/80">Add to Home Screen</strong>. Turn on <strong className="text-white/80">Open as Web App</strong> if shown, then tap <strong className="text-white/80">Add</strong>.</p>
             </div>
           </div>
         </div>

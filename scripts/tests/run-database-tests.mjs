@@ -45,9 +45,13 @@ try {
     'supabase/migrations/20261016000001_founding_rate_forfeiture.sql',
     'supabase/migrations/20261113000001_email_digest_delivery.sql',
     'supabase/migrations/20261113000003_beta_stripe_trials.sql',
+    'supabase/migrations/20261113000004_subscription_billing_period.sql',
+    'supabase/migrations/20261113000005_subscriber_notices.sql',
+    'supabase/migrations/20261113000007_signup_notice_caller.sql',
     'scripts/tests/database-regressions.sql',
     'scripts/tests/migration-completion.sql',
     'scripts/tests/beta-trials.sql',
+    'scripts/tests/subscriber-notices.sql',
   ]) {
     run('psql', [...args, '-f', file]);
     console.log(`PASS ${file}`);
@@ -73,6 +77,16 @@ try {
   assert.equal(claims.filter(x => x.startsWith('1\n')).length, 1);
   run('psql', [...args, '-c', "select public.test_assert(not has_table_privilege('authenticated','public.email_digest_delivery','SELECT'), 'delivery records are private'); select public.test_assert(not has_table_privilege('anon','public.email_digest_delivery','INSERT'), 'anonymous callers cannot claim mail');"]);
   console.log('PASS email delivery: exactly 1 of 20 simultaneous claims admitted; client access denied');
+
+  const noticeClaims = await Promise.all(Array.from({ length: 20 }, () => new Promise((resolve, reject) => {
+    const child = spawn('psql', [...args, '-At', '-c', 'select id from public.claim_subscriber_notice();']);
+    let stdout = '', stderr = '';
+    child.stdout.on('data', x => { stdout += x; });
+    child.stderr.on('data', x => { stderr += x; });
+    child.on('exit', code => code === 0 ? resolve(stdout.trim()) : reject(Error(stderr)));
+  })));
+  assert.equal(noticeClaims.filter(Boolean).length, 1);
+  console.log('PASS subscriber notices: exactly 1 of 20 simultaneous claims admitted');
 
 } finally {
   pg.kill('SIGTERM');

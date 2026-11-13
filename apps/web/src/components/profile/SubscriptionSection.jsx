@@ -12,6 +12,7 @@ import DowngradeSurveyModal from '@/components/profile/DowngradeSurveyModal';
 import { isNativePlatform } from '@/lib/platform';
 import { restorePurchases } from '@/lib/restorePurchases';
 import { purchasesEnabled, getNativePriceString } from '@/lib/purchases';
+import PlanAccountSummary from './PlanAccountSummary';
 
 const PLANS = [
   {
@@ -96,7 +97,7 @@ const LAPSED_COPY = {
   },
 };
 
-export default function SubscriptionSection() {
+export default function SubscriptionSection({ chart = null }) {
   const { user, reloadUser } = useAuth();
   const betaOffer = useBetaTrial(user);
   const navigate = useNavigate();
@@ -120,21 +121,31 @@ export default function SubscriptionSection() {
   // Store-localized monthly prices on native (Apple/Google price points differ
   // slightly from the web's Stripe prices — the store price is authoritative).
   const [nativePrices, setNativePrices] = useState(null);
+  const [nativeYearlyPrices, setNativeYearlyPrices] = useState(null);
   useEffect(() => {
     if (!isNativePlatform() || !purchasesEnabled()) return;
     let alive = true;
     (async () => {
-      const [interpret, calendar] = await Promise.all([
+      const [interpret, calendar, interpretYearly, calendarYearly] = await Promise.all([
         getNativePriceString('interpret', 'monthly'),
         getNativePriceString('calendar', 'monthly'),
+        getNativePriceString('interpret', 'yearly'),
+        getNativePriceString('calendar', 'yearly'),
       ]);
       if (alive && (interpret || calendar)) setNativePrices({ interpret, calendar });
+      if (alive && (interpretYearly || calendarYearly)) setNativeYearlyPrices({ interpret: interpretYearly, calendar: calendarYearly });
     })();
     return () => { alive = false; };
   }, []);
-  const planPrice = (plan) =>
-    isNativePlatform() ? (nativePrices?.[plan.id] ? `${nativePrices[plan.id]}/mo` : 'Store price unavailable')
+  const planPrice = (plan) => {
+    if (plan.id === effectiveTier && user?.subscription_billing_period === 'yearly') {
+      return isNativePlatform()
+        ? nativeYearlyPrices?.[plan.id] ? `${nativeYearlyPrices[plan.id]}/year` : 'Store price unavailable'
+        : plan.id === 'calendar' ? '$77/year' : '$55/year';
+    }
+    return isNativePlatform() ? (nativePrices?.[plan.id] ? `${nativePrices[plan.id]}/mo` : 'Store price unavailable')
       : isFoundingMember ? plan.price : ({ interpret: '$8/mo', calendar: '$10/mo' }[plan.id] || plan.price);
+  };
   const foundingPrice = (tier) =>
     (nativePrices?.[tier] && `${nativePrices[tier]}/mo`) || FOUNDING_PRICE[tier];
   const [portalLoading, setPortalLoading] = useState(false);
@@ -182,6 +193,7 @@ export default function SubscriptionSection() {
 
   return (
     <div className="space-y-3">
+      <PlanAccountSummary user={user} chart={chart} />
       {betaOffer.eligible && (
         <div className="rounded-xl border border-gold-primary/40 bg-gold-primary/10 p-4 space-y-2">
           <h2 className="font-display text-lg text-gold-accent">Premium free through December 31</h2>
@@ -287,23 +299,6 @@ export default function SubscriptionSection() {
           </Button>
         </div>
       )}
-
-      {/* Current plan badge */}
-      <div className="flex items-center justify-between">
-        <p className="font-body text-[0.625rem] uppercase tracking-widest text-brass/50">Membership</p>
-        <div className="flex items-center gap-1.5">
-          {isExpired && (
-            <span className="font-body text-[0.625rem] text-red-500 border border-red-300/40 rounded-full px-2 py-0.5">Expired</span>
-          )}
-          <span className={`font-body text-[0.625rem] font-semibold px-2.5 py-0.5 rounded-full border ${
-            effectiveTier === 'calendar' ? 'bg-gold-primary/20 border-gold-primary/50 text-gold-accent' :
-            effectiveTier === 'interpret' ? 'bg-celestial-blue/20 border-celestial-blue/40 text-white' :
-            'bg-muted border-brass/30 text-brass'
-          }`}>
-            {effectiveTier === 'calendar' ? 'Premium' : effectiveTier === 'interpret' ? 'Core' : 'Free'}
-          </span>
-        </div>
-      </div>
 
       {/* Plan cards */}
       <div className="space-y-2">

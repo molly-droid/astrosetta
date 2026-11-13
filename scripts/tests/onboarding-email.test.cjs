@@ -11,6 +11,7 @@ test('onboarding renderer includes Google Play, home-screen steps and canonical 
   assert.match(section,/https:\/\/play\.google\.com\/store\/apps\/details\?id=com\.astrosetta\.app/);
   assert.match(section,/https:\/\/astrosetta\.com\/brand\/google-play-badge-en\.png/);
   assert.match(section,/Add to Home Screen/);assert.match(section,/Safari/);assert.match(section,/Open as Web App/);
+  assert.match(section,/page menu/);assert.match(section,/Reader icon/);assert.match(section,/View More/);
   assert.doesNotMatch(section,/Premium trial|December 31|\[First Name\]/);
   const module=loadEdge('supabase/functions/send-chart-recap-email/index.ts',{mocks,globals:{Deno:{serve(){}}}});
   const raw={unknown_time:true,planets:[{name:'Sun',sign:'Capricorn',element:'Earth',modality:'Cardinal'},{name:'Moon',sign:'Taurus',element:'Earth',modality:'Fixed'}]};

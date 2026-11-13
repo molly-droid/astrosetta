@@ -21,7 +21,9 @@ delivery. Jacob then approved two pilot recipients and explicitly released the
 
 The trial checkout described below starts on the website. `[First Name]` is
 resolved from each account's display name or full name, with a safe fallback.
-Recipient data, rendered messages and provider receipts stay outside Git.
+Recipient data, rendered messages and provider receipts stay outside Git. Safari
+instructions in this reusable template were updated after the completed campaign;
+that copy change does not authorize another send.
 
 **Subject:** Astrosetta is officially live ✨ (and you helped build it)
 
@@ -80,8 +82,10 @@ moment it's ready to download. Until then, you can keep using the browser
 version and add it to your home screen for an app-like experience:
 
 1. Open astrosetta.com in Safari
-2. Tap Share, the square with an upward arrow. Open the page menu or "More" first if needed.
-3. Choose "Add to Home Screen", turn on "Open as Web App" if shown, then tap "Add".
+2. Tap the page menu to the left of the address bar (three lines or a Reader icon). If it opens Reader, tap it again.
+3. Choose "Share", then "View More" if shown. If Share is already visible, start there.
+4. Scroll to "Add to Home Screen" near the bottom of the list.
+5. Turn on "Open as Web App" if shown, then tap "Add".
 
 [View the Home Screen instructions on the website](https://astrosetta.com/#home-screen)
 

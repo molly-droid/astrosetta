@@ -6,9 +6,19 @@ export interface Entitlement {
   expires_at: string | null;
   source: 'stripe' | 'apple' | 'google';
   is_trial?: boolean;
+  billing_period?: 'monthly' | 'yearly';
 }
 type Env = (key: string) => string | undefined;
 type RecordValue = Record<string, any>;
+
+export function productBillingPeriod(product: unknown, plan?: unknown): 'monthly' | 'yearly' | undefined {
+  // Google base plans are returned separately by the v1 subscriber API.
+  const value = String(plan || String(product || '').split(':').at(-1)).toLowerCase();
+  const suffix = value.split(/[._:-]/).at(-1);
+  if (['monthly', 'month', 'p1m'].includes(suffix!)) return 'monthly';
+  if (['yearly', 'annual', 'year', 'p1y'].includes(suffix!)) return 'yearly';
+  return undefined;
+}
 
 export function stripePriceTiers(env: Env): Record<string, PaidTier> {
   const prices: Record<string, PaidTier> = {};
@@ -48,7 +58,11 @@ export function stripeEntitlements(
       }
       const end = sub.status === 'trialing' && sub.trial_end != null ? sub.trial_end : item.current_period_end ?? sub.current_period_end;
       if (typeof end !== 'number' || !Number.isFinite(end)) throw new Error('Missing Stripe period end');
-      if (end * 1000 > now) grants.push({ tier, expires_at: new Date(end * 1000).toISOString(), source: 'stripe', ...(sub.status === 'trialing' ? { is_trial: true } : {}) });
+      const recurring = item.price?.recurring;
+      const count = recurring?.interval_count ?? 1;
+      const billing_period = recurring?.interval === 'month' && count === 1 ? 'monthly'
+        : (recurring?.interval === 'year' && count === 1) || (recurring?.interval === 'month' && count === 12) ? 'yearly' : undefined;
+      if (end * 1000 > now) grants.push({ tier, expires_at: new Date(end * 1000).toISOString(), source: 'stripe', ...(sub.status === 'trialing' ? { is_trial: true } : {}), ...(billing_period ? { billing_period } : {}) });
     }
   }
   return grants;
@@ -78,7 +92,8 @@ export function revenueCatEntitlements(payload: RecordValue, now = Date.now()): 
     if (grace != null && expires !== null) {
       expires = new Date(Math.max(Date.parse(expires), Date.parse(isoDate(grace)))).toISOString();
     }
-    if (expires === null || Date.parse(expires) > now) grants.push({ tier, expires_at: expires, source });
+    const billing_period = productBillingPeriod(product, purchase.product_plan_identifier);
+    if (expires === null || Date.parse(expires) > now) grants.push({ tier, expires_at: expires, source, ...(billing_period ? { billing_period } : {}) });
   }
   return grants;
 }

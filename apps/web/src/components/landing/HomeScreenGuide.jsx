@@ -22,9 +22,12 @@ export default function HomeScreenGuide() {
             </h3>
             <ol className="list-decimal pl-5 mt-4 space-y-3 font-body text-sm leading-relaxed text-white/75 marker:text-gold-accent">
               <li>Visit <span className="text-white">astrosetta.com</span> in <strong className="text-white">Safari</strong>.</li>
-              <li>Choose <strong className="text-white">Share</strong>, the square with an upward arrow. You may need to open the page menu or <strong className="text-white">More</strong> first.</li>
-              <li>Find <strong className="text-white">Add to Home Screen</strong>. Enable <strong className="text-white">Open as Web App</strong> if shown, then select <strong className="text-white">Add</strong>.</li>
+              <li>Tap the <strong className="text-white">page menu</strong> to the left of the address bar. It can look like three lines or a Reader icon. If it opens Reader, tap it again.</li>
+              <li>Choose <strong className="text-white">Share</strong>, then <strong className="text-white">View More</strong> if shown.</li>
+              <li>Scroll to <strong className="text-white">Add to Home Screen</strong> near the bottom of the list.</li>
+              <li>Turn on <strong className="text-white">Open as Web App</strong> if shown, then tap <strong className="text-white">Add</strong>.</li>
             </ol>
+            <p className="mt-4 font-body text-xs leading-relaxed text-white/60">If your Safari layout has a Share button already visible, start there.</p>
           </div>
 
           <div className="rounded-2xl border border-white/10 p-5">

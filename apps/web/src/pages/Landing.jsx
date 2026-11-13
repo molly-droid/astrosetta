@@ -12,6 +12,7 @@ import FeatureExampleModal, { FEATURE_EXAMPLES } from '@/components/landing/Feat
 import LandingSidebar from '@/components/landing/LandingSidebar';
 import EventBanner from '@/components/landing/EventBanner';
 import ComparisonStrip from '@/components/landing/ComparisonStrip';
+import GooglePlayBadge from '@/components/landing/GooglePlayBadge';
 import { track, EVENTS } from '@/lib/analytics';
 
 // ── Starfield canvas ──────────────────────────────────────────────────────────
@@ -195,6 +196,9 @@ export default function Landing() {
                 </CtaButton>
               </div>
               <p className="mt-3 font-body text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>No credit card required · Start free</p>
+              <div className="mt-3 -ml-3">
+                <GooglePlayBadge />
+              </div>
             </div>
 
             {/* Right: Live chart wheel */}
@@ -543,6 +547,9 @@ export default function Landing() {
               alt="Astrosetta"
               className="h-12 w-auto"
             />
+          </div>
+          <div className="flex items-center justify-center mb-2">
+            <GooglePlayBadge />
           </div>
           <div className="flex items-center justify-center gap-4 mb-3">
             <Link to="/legal" className="font-body text-xs transition-colors hover:text-white" style={{ color: 'rgba(255,255,255,0.3)' }}>Legal</Link>

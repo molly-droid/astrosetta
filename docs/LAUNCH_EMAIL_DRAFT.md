@@ -11,8 +11,10 @@ announcement to other members.
 
 Supplied by Molly on November 12, 2026. Formatting restored from the pasted
 message; the Google Play link, Google sign-in instructions and the approved
-card-required beta trial offer have been added. The trial wording below is a
-new draft and has not been emailed.
+card-required beta trial offer have been added. Jacob authorized an updated
+personalized preview to Molly only on November 13. It was sent with her actual
+first name and the original subject, without a test label. Resend confirmed
+delivery. The announcement remains unsent to all other members.
 
 Before approval: finish DNS cutover and final data delta, verify production
 password recovery,
@@ -77,8 +79,10 @@ moment it's ready to download. Until then, you can keep using the browser
 version and add it to your home screen for an app-like experience:
 
 1. Open astrosetta.com in Safari
-2. Tap the Share icon (then "More" if you don't see the option)
-3. Tap "Add to Home Screen"
+2. Tap Share, the square with an upward arrow. Open the page menu or "More" first if needed.
+3. Choose "Add to Home Screen", turn on "Open as Web App" if shown, then tap "Add".
+
+[View the Home Screen instructions on the website](https://astrosetta.com/#home-screen)
 
 When the iOS app launches, your login, info, and plan all stay exactly the
 same. There's nothing to redo.

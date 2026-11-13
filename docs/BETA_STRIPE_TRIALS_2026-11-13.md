@@ -51,7 +51,9 @@ one-delivery-per-period safeguards. No historical emails are replayed.
 ## Email templates
 
 - Molly's launch announcement draft now explains card-required trial signup and
-  the January 1 renewal. This revised draft has not been emailed to anyone.
+  the January 1 renewal. After rollout checks, Jacob separately authorized one
+  updated personalized preview to Molly on November 13. Resend confirmed delivery.
+  The announcement has not been sent to the rest of the member list.
 - The regular onboarding chart recap and legacy welcome template include the
   Google Play badge/link, Safari Home Screen instructions and a reminder to use
   the same account. They do not advertise beta trials to new subscribers.

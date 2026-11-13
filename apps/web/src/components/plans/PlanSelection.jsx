@@ -1,3 +1,4 @@
+import useBetaTrial from '@/hooks/useBetaTrial';
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { hasFoundingRate } from '@/lib/permissions';
@@ -86,6 +87,8 @@ const PLANS = [
 
 export default function PlanSelection({ variant = 'page', onFree, onPurchased, onRestored, eventCtx = null, billing: billingProp, onBillingChange }) {
   const { user, reloadUser } = useAuth();
+  const betaOffer = useBetaTrial(user);
+  const betaTrialAvailable = betaOffer.eligible && !eventCtx?.signup;
   const isOnboarding = variant === 'onboarding';
   const realTier = user?.subscription_tier || 'free';
   // Founding RATE, not cohort membership: a founder who lapsed and came
@@ -221,6 +224,10 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
 
   const handleSelect = async (tier) => {
     if (!ageConfirmed) return;
+    if (user?.subscription_is_trial) {
+      showNotice('To cancel your trial or update your card, use Manage billing in My Info → Plan.', tier);
+      return;
+    }
     showNotice(null);
     const source = user?.subscription_source;
     const hasPaidPlan = realTier !== 'free';
@@ -269,6 +276,7 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
       const res = await base44.functions.invoke('createCheckoutSession', {
         tier,
         period: billing,
+        betaTrial: tier === 'calendar' && betaTrialAvailable,
         successUrl,
         cancelUrl: `${origin}/subscribe`,
         ...(signup ? {
@@ -307,6 +315,13 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
 
   return (
     <div className="space-y-4">
+      {betaTrialAvailable && (
+        <div className="rounded-xl border border-gold-primary/40 bg-gold-primary/10 p-4 space-y-2">
+          <h2 className="font-display text-lg text-gold-accent">A thank-you for beta testing</h2>
+          <p className="font-body text-sm text-cream/85">Start Premium free through December 31, 2026. Add your card at checkout to begin.</p>
+          <p className="font-body text-xs text-cream/70">On January 1, 2027, your subscription renews at {billing === 'yearly' ? '$77/year' : '$7.77/month'} unless you cancel beforehand in Manage billing.</p>
+        </div>
+      )}
       {/* Billing toggle — Monthly | Yearly (2 months free), default Monthly */}
       <div className="flex items-center justify-center gap-1.5 p-1 rounded-full bg-white/[0.04] border border-white/[0.08] max-w-xs mx-auto">
         {['monthly', 'yearly'].map(b => (
@@ -357,9 +372,11 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
       </div>
 
       {/* Paid plans */}
-      {PLANS.map((plan) => {
+      {(betaTrialAvailable ? [...PLANS].reverse() : PLANS).map((plan) => {
         const isCurrent = !isOnboarding && realTier === plan.tier;
         const isLoading = loading === plan.tier;
+        const isBetaTrial = betaTrialAvailable && plan.tier === 'calendar';
+        const coveredByBetaTrial = betaTrialAvailable && plan.tier === 'interpret';
         const storePrice = nativePrices?.[plan.tier]?.[billing];
         const displayPrice = isNative ? storePrice || 'Price unavailable' : (billing === 'yearly'
           ? plan.yearlyPrice
@@ -380,7 +397,7 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
                 {isCurrent && (
                   <span className="font-body text-[0.625rem] text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-2 py-0.5">Current</span>
                 )}
-                {plan.badge && !isCurrent && (
+                {plan.badge && !isCurrent && !coveredByBetaTrial && (
                   <span className="font-body text-[0.625rem] text-gold-accent bg-gold-primary/10 border border-gold-primary/30 rounded-full px-2 py-0.5">{plan.badge}</span>
                 )}
               </div>
@@ -407,6 +424,8 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
               </div>
             )}
 
+            {coveredByBetaTrial && <p className="font-body text-xs text-gold-accent mt-2">All Core features are included in your free Premium trial.</p>}
+            {isBetaTrial && <p className="font-body text-sm text-gold-accent mt-2">$0 today. Card required. First payment January 1, 2027.</p>}
             <p className="font-body text-xs text-brass/70 mt-2 mb-1.5">Everything in {plan.everythingIn}, plus:</p>
             <ul className="space-y-1.5 mb-4">
               {plan.features.map((f) => (
@@ -454,7 +473,7 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
                 </label>
                 <Button
                   onClick={() => handleSelect(plan.tier)}
-                  disabled={!!loading || !ageConfirmed || (isNative && !storePrice)}
+                  disabled={coveredByBetaTrial || !!loading || !ageConfirmed || (!isNative && betaOffer.loading) || (isNative && !storePrice)}
                   className={`w-full font-display font-bold text-base py-3 ${
                     plan.highlight
                       ? 'bg-gold-primary hover:bg-gold-accent text-cream'
@@ -464,7 +483,7 @@ export default function PlanSelection({ variant = 'page', onFree, onPurchased, o
                   {isLoading ? (
                     <><Loader2 size={16} className="animate-spin mr-2" /> {isNative ? 'Processing…' : 'Redirecting...'}</>
                   ) : (
-                    <><Zap size={15} className="mr-1.5" /> {plan.cta}</>
+                    <><Zap size={15} className="mr-1.5" /> {coveredByBetaTrial ? 'Included in Premium trial' : isBetaTrial ? 'Start Premium trial' : plan.cta}</>
                   )}
                 </Button>
               </>

@@ -237,7 +237,7 @@ function findNatalHousesForSign(sign, natalHouses, houseSystem = 'whole_sign', a
 async function buildEmailForUser(base44, targetUser, appUrl) {
   const tier = getEffectiveTier(targetUser);
   // BETA: all users treated as paid. Set to false once payments launch.
-  const BETA_ALL_PAID = true;
+  const BETA_ALL_PAID = false;
 
   const isPaid = BETA_ALL_PAID || tier === 'interpret' || tier === 'calendar';
   const charts = await base44.asServiceRole.entities.Chart.filter({ user_id: targetUser.id }, '-created_date');

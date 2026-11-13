@@ -1,3 +1,4 @@
+import useBetaTrial from '@/hooks/useBetaTrial';
 import React, { useState, useEffect } from 'react';
 import { X, Sparkles, CalendarDays, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,7 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
   // Store-localized monthly price strings (native only); fall back to web copy
   const [nativePrices, setNativePrices] = useState({ interpret: null, calendar: null });
   const { user, reloadUser } = useAuth();
+  const betaOffer = useBetaTrial(user);
   const isCalendarUpgrade = variant === 'calendar';
   const platform = getPlatform();
   const isNative = platform === 'ios' || platform === 'android';
@@ -65,6 +67,7 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
     try { origin = window.top.location.origin; } catch { origin = window.location.origin; }
     const res = await base44.functions.invoke('createCheckoutSession', {
       tier,
+      betaTrial: tier === 'calendar' && betaOffer.eligible,
       successUrl: `${origin}/profile?success=true&tier=${tier}`,
       cancelUrl: `${origin}/subscribe`,
     });
@@ -170,6 +173,13 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
     secondaryLabel: 'Maybe Later',
   };
 
+  if (betaOffer.eligible) {
+    config.primaryLabel = 'Start Premium trial';
+    config.title = 'Start your Premium trial';
+    config.tierName = 'Premium trial';
+    config.description = 'Includes every Core and Premium feature, free through December 31, 2026.';
+  }
+
   return (
     <div className="fixed inset-0 z-[10020] flex items-center justify-center bg-black/80 px-0 sm:px-4 py-4" onClick={onClose}>
       <div
@@ -203,6 +213,12 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
         </div>
 
         <div className="px-5 py-4 space-y-4">
+          {betaOffer.eligible && (
+            <div className="rounded-lg border border-gold-primary/30 p-3 bg-gold-primary/10 space-y-1.5">
+              <p className="font-body text-sm text-gold-accent">Premium free through December 31, 2026</p>
+              <p className="font-body text-xs text-white/80">Card required at checkout. Renews at $7.77/month on January 1, 2027 unless you cancel beforehand in Manage billing.</p>
+            </div>
+          )}
           {/* Features */}
           <ul className="space-y-2">
             {config.features.map((f, i) => (
@@ -249,24 +265,24 @@ export default function PaywallModal({ variant = 'interpret', fromTier = 'free',
           {/* CTAs */}
           <div className="space-y-2 pt-1">
             <Button
-              onClick={() => handleCheckout(isCalendarUpgrade ? 'calendar' : 'interpret')}
-              disabled={!!loading || (isNative && !nativePrices[isCalendarUpgrade ? 'calendar' : 'interpret'])}
+              onClick={() => handleCheckout(betaOffer.eligible || isCalendarUpgrade ? 'calendar' : 'interpret')}
+              disabled={!!loading || (!isNative && betaOffer.loading) || (isNative && !nativePrices[isCalendarUpgrade ? 'calendar' : 'interpret'])}
               className="w-full bg-gold-primary hover:bg-gold-accent text-deep-blue font-body text-sm h-10 font-semibold"
             >
-              {loading === (isCalendarUpgrade ? 'calendar' : 'interpret')
+              {loading === (betaOffer.eligible || isCalendarUpgrade ? 'calendar' : 'interpret')
                 ? <><Loader2 size={15} className="animate-spin mr-2" /> {isNative ? 'Processing…' : 'Redirecting...'}</>
                 : config.primaryLabel}
             </Button>
-            {!isCalendarUpgrade && fromTier === 'free' && (
+            {!betaOffer.eligible && !isCalendarUpgrade && fromTier === 'free' && (
               <Button
                 variant="outline"
                 onClick={() => handleCheckout('calendar')}
-                disabled={!!loading || (isNative && !nativePrices.calendar)}
+                disabled={!!loading || (!isNative && betaOffer.loading) || (isNative && !nativePrices.calendar)}
                 className="w-full font-body text-sm h-9 border-gold-primary/30 text-brass"
               >
                 {loading === 'calendar'
                   ? <><Loader2 size={15} className="animate-spin mr-2" /> {isNative ? 'Processing…' : 'Redirecting...'}</>
-                  : `Subscribe to Premium — ${premiumPrice}/mo`}
+                  : betaOffer.eligible ? 'Start Premium trial' : `Subscribe to Premium — ${premiumPrice}/mo`}
               </Button>
             )}
             <button onClick={onClose} className="w-full font-body text-xs text-brass/50 hover:text-brass transition-colors py-1">

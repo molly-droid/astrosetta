@@ -1,3 +1,4 @@
+import useBetaTrial from '@/hooks/useBetaTrial';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
@@ -13,6 +14,7 @@ import PlanSelection from '@/components/plans/PlanSelection';
 // plan slide uses, so upgrades and first-signup purchases are one flow (F-01).
 export default function Subscribe() {
   const { user } = useAuth();
+  const betaOffer = useBetaTrial(user);
   const navigate = useNavigate();
   const effectiveTier = getEffectiveTier(user);
   const [eventCtx, setEventCtx] = useState({ event: null, signup: null });
@@ -74,7 +76,7 @@ export default function Subscribe() {
         )}
 
         {/* Event gift panel — pop-up signups (QR tag, in-event tap, or promo code) */}
-        <EventGiftPanel billing={billing} user={user} onEventContext={setEventCtx} />
+        {!betaOffer.eligible && <EventGiftPanel billing={billing} user={user} onEventContext={setEventCtx} />}
 
         <PlanSelection
           variant="page"
@@ -95,11 +97,16 @@ export default function Subscribe() {
         <div className="rounded-xl border border-gold-primary/15 bg-gold-primary/[0.04] p-3.5 space-y-2">
           <p className="font-label text-[0.625rem] font-semibold uppercase tracking-[0.05em] text-brass/60">Subscription terms</p>
           <p className="font-body text-[0.6875rem] text-white/60 leading-relaxed">
-            Core and Premium are auto-renewing subscriptions at the price shown above and confirmed at checkout.
-            Founding pricing applies where eligible. Confirm your price at checkout. Payment is charged to your
-            payment method at confirmation of purchase, and each subscription automatically renews until cancelled
-            at least 24 hours before the current period ends. Cancel anytime in your {settingsLabel} subscription
-            settings — cancelling stops future renewals and your access continues to the end of the paid period.
+            {betaOffer.eligible ? (
+              <>Your Premium trial is $0 today and requires a card. Premium is free through December 31, 2026.
+              On January 1, 2027, the subscription renews at {billing === 'yearly' ? '$77/year' : '$7.77/month'} until cancelled.
+              Cancel before January 1 in My Info → Plan → Manage billing to avoid the first payment.</>
+            ) : (
+              <>Core and Premium are auto-renewing subscriptions at the price shown above and confirmed at checkout.
+              Founding pricing applies where eligible. Confirm your price at checkout. Payment is charged at confirmation
+              unless checkout includes a free trial. Subscriptions renew automatically until cancelled.
+              Manage your subscription in {settingsLabel}.</>
+            )}
           </p>
           <div className="flex items-center flex-wrap gap-x-4 gap-y-1">
             <Link to="/terms" className="font-body text-[0.6875rem] text-gold-accent underline hover:text-gold-primary">Terms of Service</Link>

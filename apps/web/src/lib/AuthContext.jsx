@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }) => {
       // supplied by the browser; imported null flags must not block login.
       const updates = {};
       const storedTier = localStorage.getItem('founding_tier_preference');
-      if (storedTier && !currentUser.founding_tier_preference) {
+      if (['free', 'core', 'pro'].includes(storedTier) && !['free', 'core', 'pro'].includes(currentUser.founding_tier_preference)) {
         updates.founding_tier_preference = storedTier;
         localStorage.removeItem('founding_tier_preference');
       }

@@ -1,3 +1,4 @@
+import { BETA_TRIAL_CAMPAIGN, BETA_TRIAL_END } from '../_shared/betaTrial.ts';
 import { compatClient } from '../_shared/base44Compat.ts';
 import { json, handleOptions, serviceClient } from '../_shared/edge.ts';
 import Stripe from 'npm:stripe@14';
@@ -50,7 +51,28 @@ Deno.serve(async (req) => {
     for await (const sub of stripe.subscriptions.list({ customer: customerId, status: 'all', limit: 100 })) {
       subscriptions.push(sub);
     }
-    const grants = stripeEntitlements(subscriptions, stripePriceTiers((key) => Deno.env.get(key)));
+    const prices = stripePriceTiers((key) => Deno.env.get(key));
+    const betaSubscriptions = subscriptions.filter(sub => sub.metadata?.beta_campaign === BETA_TRIAL_CAMPAIGN)
+      .sort((a,b) => a.created - b.created || a.id.localeCompare(b.id));
+    for (const sub of betaSubscriptions) {
+      if (sub.trial_end * 1000 !== Date.parse(BETA_TRIAL_END) || sub.metadata?.base44_user_id !== user.id
+          || !sub.items.data.some(item => prices[item.price.id] === 'calendar')) {
+        throw new Error('Invalid beta trial subscription');
+      }
+      const { data: winner, error: claimError } = await db.rpc('redeem_beta_trial', { p_user_id: user.id, p_subscription_id: sub.id });
+      if (claimError) throw claimError;
+      if (winner !== sub.id && sub.status !== 'canceled') {
+        await stripe.subscriptions.cancel(sub.id, { invoice_now: false, prorate: false });
+        sub.status = 'canceled';
+      }
+    }
+    if (betaSubscriptions.length) {
+      const openSessions = await stripe.checkout.sessions.list({ customer: customerId, status: 'open', limit: 100 });
+      for (const session of openSessions.data.filter(s => s.metadata?.beta_campaign === BETA_TRIAL_CAMPAIGN)) {
+        await stripe.checkout.sessions.expire(session.id);
+      }
+    }
+    const grants = stripeEntitlements(subscriptions, prices);
     await applyBillingSnapshot(db, user.id, 'stripe', observedAt, grants);
 
     // Portal/support identifiers do not control the effective cross-store tier.

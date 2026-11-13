@@ -146,9 +146,9 @@ export default function Profile() {
       {showSuccess && (
         <div className="bg-green-50 border-b border-green-200 px-4 py-3 text-center">
           <p className="font-display text-sm font-bold text-green-800">
-            ✦ Welcome to {successTier === 'calendar' ? 'Navigator' : 'Interpreter'}!
+            {user?.subscription_is_trial ? 'Your Premium trial is active' : user?.subscription_tier === 'free' ? 'Confirming your subscription' : `Welcome to ${successTier === 'calendar' ? 'Premium' : 'Core'}`}
           </p>
-          <p className="font-body text-xs text-green-700 mt-0.5">Your subscription is now active.</p>
+          <p className="font-body text-xs text-green-700 mt-0.5">{user?.subscription_is_trial ? 'Premium is free through December 31, 2026. Manage renewal or cancellation in the Plan tab.' : user?.subscription_tier === 'free' ? 'This can take a moment. Your plan will update when Stripe confirms checkout.' : 'Your subscription is now active.'}</p>
         </div>
       )}
 

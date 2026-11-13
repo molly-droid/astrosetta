@@ -1,3 +1,4 @@
+import useBetaTrial from '@/hooks/useBetaTrial';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
@@ -97,6 +98,7 @@ const LAPSED_COPY = {
 
 export default function SubscriptionSection() {
   const { user, reloadUser } = useAuth();
+  const betaOffer = useBetaTrial(user);
   const navigate = useNavigate();
   const effectiveTier = getEffectiveTier(user);
   // Real (stored) tier drives the management + lapsed surfaces so they stay
@@ -180,6 +182,19 @@ export default function SubscriptionSection() {
 
   return (
     <div className="space-y-3">
+      {betaOffer.eligible && (
+        <div className="rounded-xl border border-gold-primary/40 bg-gold-primary/10 p-4 space-y-2">
+          <h2 className="font-display text-lg text-gold-accent">Premium free through December 31</h2>
+          <p className="font-body text-sm text-white/80">A thank-you for beta testing. Add your card at checkout to start. Renews January 1, 2027 at $7.77/month or $77/year unless you cancel beforehand.</p>
+          <Button onClick={() => navigate('/subscribe')} className="bg-gold-primary text-cream">Start Premium trial</Button>
+        </div>
+      )}
+      {user?.subscription_is_trial && (
+        <div className="rounded-xl border border-gold-primary/40 bg-gold-primary/10 p-4 space-y-2">
+          <h2 className="font-display text-lg text-gold-accent">Your Premium trial is active</h2>
+          <p className="font-body text-sm text-white/80">Premium is free through December 31, 2026. Review your January 1 renewal price and cancellation status in Manage billing below.</p>
+        </div>
+      )}
       {/* Founding member / start-free banner (replaces the old beta-unlock banner) */}
       {isFoundingMember ? (
         <div className="rounded-xl border border-gold-primary/40 bg-gold-primary/8 p-3.5 space-y-2">

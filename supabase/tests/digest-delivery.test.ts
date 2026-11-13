@@ -60,3 +60,15 @@ Deno.test('dry run sends nothing; opt-outs, missing preferences and existing del
   await runScheduledDigest({...args,body:{},now:new Date('2026-11-13T22:00:00Z')});
   assert.equal(deliveries,1);
 });
+
+Deno.test('weekly digests require current paid access or an active trial; Free and expired accounts are excluded', async () => {
+  const users = [
+    {id:'trial',email:'trial@example.com',weekly_email_opt_in:true,subscription_tier:'calendar',subscription_expires:'2027-01-01T06:00:00Z',subscription_is_trial:true},
+    {id:'free',email:'free@example.com',weekly_email_opt_in:true,subscription_tier:'free'},
+    {id:'expired',email:'expired@example.com',weekly_email_opt_in:true,subscription_tier:'calendar',subscription_expires:'2000-01-01'},
+  ];
+  const base44={asServiceRole:{entities:{Chart:{list:async()=>users.map(u=>({user_id:u.id}))},User:{filter:async({id})=>users.filter(u=>u.id===id)}}}};
+  const db={from:()=>({select:()=>({eq:()=>({eq:async()=>({data:[],error:null})})})})};
+  const result=await runScheduledDigest({kind:'weekly',base44,db,body:{dry_run:true},now:new Date('2026-11-16T13:00:00Z'),build:()=>{throw Error('must not generate');}});
+  assert.equal(result.eligible,1);assert.equal(result.optedOut,2);
+});

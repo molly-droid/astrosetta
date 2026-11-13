@@ -1,3 +1,4 @@
+import { mobileAppEmailSection } from '../_shared/mobileAppEmail.ts';
 import { compatClient } from '../_shared/base44Compat.ts';
 import { json, handleOptions, getAuthUser, isServiceRole } from '../_shared/edge.ts';
 
@@ -158,6 +159,8 @@ Deno.serve(async (req) => {
   <tr><td style="padding:20px 28px 8px;text-align:center;">
     <p style="font-family:Georgia,serif;font-size:12px;color:${MUTED};line-height:1.6;margin:0;">Welcome to Astrosetta. The sky is happening right now.<br>Your feedback shapes what we build next.</p>
   </td></tr>
+
+  ${mobileAppEmailSection()}
 
   <tr><td style="padding:16px 28px;text-align:center;">
     <div style="height:1px;background:${GOLD}22;margin-bottom:16px;"></div>

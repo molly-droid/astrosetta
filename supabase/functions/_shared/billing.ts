@@ -5,6 +5,7 @@ export interface Entitlement {
   tier: PaidTier;
   expires_at: string | null;
   source: 'stripe' | 'apple' | 'google';
+  is_trial?: boolean;
 }
 type Env = (key: string) => string | undefined;
 type RecordValue = Record<string, any>;
@@ -45,9 +46,9 @@ export function stripeEntitlements(
         }
         continue;
       }
-      const end = item.current_period_end ?? sub.current_period_end;
+      const end = sub.status === 'trialing' && sub.trial_end != null ? sub.trial_end : item.current_period_end ?? sub.current_period_end;
       if (typeof end !== 'number' || !Number.isFinite(end)) throw new Error('Missing Stripe period end');
-      if (end * 1000 > now) grants.push({ tier, expires_at: new Date(end * 1000).toISOString(), source: 'stripe' });
+      if (end * 1000 > now) grants.push({ tier, expires_at: new Date(end * 1000).toISOString(), source: 'stripe', ...(sub.status === 'trialing' ? { is_trial: true } : {}) });
     }
   }
   return grants;

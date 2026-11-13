@@ -46,6 +46,11 @@ export async function runScheduledDigest({ kind, base44, body, build, now = new 
     if (!target?.email) continue;
     // Explicit opt-in only. An incomplete/missing preference cannot add someone.
     if (target[`${kind}_email_opt_in`] !== true) { optedOut++; continue; }
+    // Weekly/monthly synthesis is Core/Premium access; a current Stripe trial
+    // qualifies, but the former beta-wide override must not grant it to Free.
+    const paid = ['interpret','calendar'].includes(target.subscription_tier)
+      && (!target.subscription_expires || Date.parse(target.subscription_expires) > now.getTime());
+    if (kind !== 'daily' && !paid) { optedOut++; continue; }
     const recipient = target.email.trim().toLowerCase();
     if (seen.has(recipient)) { duplicates++; continue; }
     seen.add(recipient);

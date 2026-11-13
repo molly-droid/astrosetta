@@ -105,7 +105,7 @@ function findNatalHouse(longitude, natalHouses, houseSystem = 'whole_sign', asce
 function getEffectiveTier(user) {
   if (!user) return 'free';
   // BETA: all users treated as paid. Set to false once payments launch.
-  const BETA_ALL_PAID = true;
+  const BETA_ALL_PAID = false;
   if (BETA_ALL_PAID) return 'calendar';
   const tier = user.subscription_tier;
   if (!tier || tier === 'free') return 'free';

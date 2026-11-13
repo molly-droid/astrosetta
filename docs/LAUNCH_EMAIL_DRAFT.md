@@ -10,7 +10,9 @@ cutover, with duplicate-send safeguards. Neither approval authorizes the launch
 announcement to other members.
 
 Supplied by Molly on November 12, 2026. Formatting restored from the pasted
-message; substantive copy preserved below, with the Google Play link filled in.
+message; the Google Play link, Google sign-in instructions and the approved
+card-required beta trial offer have been added. The trial wording below is a
+new draft and has not been emailed.
 
 Before approval: finish DNS cutover and final data delta, verify production
 password recovery,
@@ -45,9 +47,17 @@ If you sign in with email and password, please reset your password the first
 time you log in. Just tap "Forgot password" on the login screen and use the
 same email address as before.
 
-**WANT MORE?**
+**A THANK-YOU FOR BETA TESTING**
 
-To unlock Core or Premium features, go to My Info → Plan and upgrade anytime.
+You can start a Premium trial free through December 31, 2026. Sign in at
+astrosetta.com, go to My Info → Plan and choose “Start Premium trial.”
+
+A card is required at checkout. Choose monthly or yearly billing. Your first
+payment is January 1, 2027 at $7.77/month or $77/year, unless you cancel beforehand
+in Manage billing. After starting your trial on the website, the same Premium
+access works in the Android app and, once available, the iPhone app.
+
+You can also keep using Free. Premium includes all Core features.
 
 As a thank-you, you keep your Founding Member pricing for as long as you stay
 subscribed:

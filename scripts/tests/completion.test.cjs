@@ -254,7 +254,7 @@ test('Google token refresh preserves the refresh token and saves a new expiry', 
   assert.equal(await module.googleAccessToken(db,B),null);
 });
 
-test('Google sync paginates existing events, never deletes unrelated moon events, and writes valid timed events', async () => {
+test('Google sync paginates existing events, preserves unrelated events, and keeps journals private', async () => {
   let handler, pages = 0;
   const posts = [];
   const today = new Date().toISOString().slice(0,10);
@@ -275,7 +275,5 @@ test('Google sync paginates existing events, never deletes unrelated moon events
   const response = await handler(new Request('https://test.invalid',{method:'POST',body:JSON.stringify({days_ahead:1,filters:{major_transits:false,new_moon:false,full_moon:false,retrogrades:false,journal:true}})}));
   assert.equal(response.status,200);
   assert.equal(pages,2);
-  assert.equal(posts.length,1);
-  assert.equal(posts[0].start.timeZone,'America/Toronto');
-  assert.ok(posts[0].end.dateTime>posts[0].start.dateTime);
+  assert.equal(posts.length,0, 'B-16: private journal notes must not be exported to a shared calendar');
 });

@@ -143,7 +143,7 @@ export default function Landing() {
   };
 
   const handleSignIn = (tierPreference = null) => {
-    if (tierPreference) localStorage.setItem('founding_tier_preference', tierPreference);
+    if (['free', 'core', 'pro'].includes(tierPreference)) localStorage.setItem('founding_tier_preference', tierPreference);
     setLoading(true);
     base44.auth.redirectToLogin(window.location.origin + '/home');
   };

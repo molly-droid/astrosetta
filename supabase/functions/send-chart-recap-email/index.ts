@@ -1,3 +1,4 @@
+import { mobileAppEmailSection } from '../_shared/mobileAppEmail.ts';
 /**
  * sendChartRecapEmail — Detailed onboarding email recapping the user's full natal chart.
  *
@@ -10,7 +11,7 @@
  * Also accepts { user_id } for admin/testing invocations without a user session.
  */
 import { compatClient } from '../_shared/base44Compat.ts';
-import { json, handleOptions } from '../_shared/edge.ts';
+import { json, handleOptions, isServiceRole } from '../_shared/edge.ts';
 import { insertGlyphs } from '../_shared/emailGlyphs.ts';
 import { TONE_DIRECTIVE } from '../_shared/toneDirective.ts';
 import { ordinal } from '../_shared/emailUtils.ts';
@@ -60,7 +61,7 @@ function signOf(planets, name) {
 }
 
 // ── Build the structured reference from Chart.raw_data ─────────────────────────
-function buildStructuredReference(raw, chart) {
+export function buildStructuredReference(raw, chart) {
   const planets = raw.planets || [];
   const houses = raw.houses || [];
   const aspects = raw.aspects || [];
@@ -248,7 +249,7 @@ Return JSON with: greeting, big_three, chart_ruler, balance, opportunities, chal
 }
 
 // ── HTML renderer ──────────────────────────────────────────────────────────────
-function renderRecapHtml({ user, chart, ref, narrative, appUrl }) {
+export function renderRecapHtml({ user, chart, ref, narrative, appUrl }) {
   const BG = '#FDFBF7', CARD = '#F5F1E8', GOLD = '#A07C3F', GOLD2 = '#B08D4A', TEXT = '#2C3E50', MUTED = '#8B7355', BLUE = '#4E6E8E';
   const home = appUrl ? `${appUrl}/home` : '#';
   const chartLink = appUrl ? `${appUrl}/chart` : '#';
@@ -418,6 +419,8 @@ function renderRecapHtml({ user, chart, ref, narrative, appUrl }) {
     </table>
   </td></tr>
 
+  ${mobileAppEmailSection()}
+
   <!-- Footer -->
   <tr><td style="padding:20px 28px;text-align:center;">
     <div style="height:1px;background:${GOLD}22;margin-bottom:14px;"></div>
@@ -441,11 +444,12 @@ async function handler(req: Request): Promise<Response> {
   try {
     const base44 = compatClient(req);
     const body = await req.json().catch(() => ({}));
-    const appUrl = body.appUrl || 'https://astrosetta.com';
+    const appUrl = 'https://astrosetta.com';
 
     // Resolve recipient — onboarding invokes with a user token (auth.me resolves);
     // admin/test invocations pass user_id directly.
     let recipient = await base44.auth.me();
+    if (!recipient && !isServiceRole(req)) return json({ error: 'Unauthorized' }, { status: 401 });
     if (!recipient && body.user_id) {
       try {
         recipient = await base44.asServiceRole.entities.User.get(body.user_id);

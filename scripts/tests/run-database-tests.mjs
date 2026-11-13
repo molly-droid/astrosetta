@@ -42,9 +42,12 @@ try {
     'supabase/migrations/20261008000003_launch_configuration.sql',
     'supabase/migrations/20261008000004_calendar_connections.sql',
     'supabase/migrations/20261008000005_ai_request_metrics.sql',
+    'supabase/migrations/20261016000001_founding_rate_forfeiture.sql',
     'supabase/migrations/20261113000001_email_digest_delivery.sql',
+    'supabase/migrations/20261113000003_beta_stripe_trials.sql',
     'scripts/tests/database-regressions.sql',
     'scripts/tests/migration-completion.sql',
+    'scripts/tests/beta-trials.sql',
   ]) {
     run('psql', [...args, '-f', file]);
     console.log(`PASS ${file}`);

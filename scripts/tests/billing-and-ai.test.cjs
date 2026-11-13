@@ -120,7 +120,7 @@ function aiHarness({ user = { role: 'learner', subscription_tier: 'interpret' },
   };
   const module = loadEdge('supabase/functions/_shared/aiAccess.ts', {
     mocks: { './edge.ts': edge },
-    transform: source => preview ? source : source.replace('const GATING_ADMIN_ONLY = true;', 'const GATING_ADMIN_ONLY = false;'),
+    transform: source => preview ? source.replace('const GATING_ADMIN_ONLY = false;', 'const GATING_ADMIN_ONLY = true;') : source,
   });
   return { db, calls, reserve: () => module.reserveAiUsage(db, A, 'core', 'navigator-chat') };
 }

@@ -119,7 +119,7 @@ export function effectiveTier(user: UserRow | null): Tier {
   if (!user) return 'free';
   const BETA_ALL_PAID = false;
   if (BETA_ALL_PAID) return 'calendar';
-  const GATING_ADMIN_ONLY = true;
+  const GATING_ADMIN_ONLY = false;
   if (GATING_ADMIN_ONLY && user.role !== 'admin') return 'calendar';
   const tier = user.subscription_tier;
   if (!tier || tier === 'free') return 'free';

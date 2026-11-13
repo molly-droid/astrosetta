@@ -5,6 +5,16 @@ Update this file as items move. Cutover mechanics live in
 [DEPLOYMENT.md](./DEPLOYMENT.md); the parity protocol in
 [NAVIGATOR_PARITY_TEST.md](./NAVIGATOR_PARITY_TEST.md).
 
+_2026-11-12, about 9:15 PM Toronto: **astrosetta.com now serves Vercel in normal
+Chrome and system DNS checks.** Molly's A/CNAME records are correct; earlier
+Base44 responses were cached DNS. HTTPS and the permanent www redirect pass.
+The Instagram link and new official Google Play badges are visible on the real
+domain. Disposable-account password sign-in, Home, Learn, natal chart and Free
+plan/pricing checks passed; all QA data was removed afterward. All 48 migrated
+Auth accounts were rechecked and confirmed. No email or purchase was triggered,
+and automatic email sending remains held pending Jacob's explicit permission.
+See [live domain verification](./LIVE_DOMAIN_VERIFICATION_2026-11-12.md)._
+
 _2026-11-12 later: **Final reference/storage sweep passed.** 65 foreign keys
 checked, zero broken; text references also clean. Backed up and removed 718
 orphan staff QA rows, merged 251 duplicate lesson-progress rows and six duplicate

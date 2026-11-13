@@ -1,12 +1,17 @@
 # DNS instructions for Molly
 
-Checked November 12, 2026. DNS is currently hosted on Network Solutions
-nameservers (`ns99.worldnic.com`, `ns100.worldnic.com`). The root still points
-to `216.24.57.1`, and `www` points to `base44.onrender.com`.
+DNS is hosted on Network Solutions nameservers (`ns99.worldnic.com`,
+`ns100.worldnic.com`). Before the November 12 cutover, the root pointed to
+`216.24.57.1` and `www` pointed to `base44.onrender.com`.
+
+**Completed later November 12:** Molly applied the values below. Both domains
+now reach the new app with valid HTTPS, and www redirects to the root. Earlier
+old-site responses were cached DNS; the former addresses above are historical.
+See [live verification](./LIVE_DOMAIN_VERIFICATION_2026-11-12.md).
 
 Both custom domains are now attached in Vercel. `astrosetta.com` connects to
 Production and `www.astrosetta.com` permanently redirects to it (308). Both
-await the DNS changes below. DNS at Network Solutions has not been changed.
+were initially awaiting the DNS changes below, which Molly has now completed.
 
 ## Message to Molly
 

@@ -85,3 +85,21 @@ Primary provider references:
 - [Apple Home Screen instructions](https://support.apple.com/guide/iphone/bookmark-a-website-iph42ab2f3a7/ios)
 
 The announcement remains on hold pending Jacob's explicit permission to send.
+
+## Production verification completed
+
+- Implementation commit `f8afcd3` is deployed to Vercel and the production
+  Supabase project. The production website serves the updated trial interface.
+- Live hosted monthly and annual trial checkout both showed $0 due today and
+  required card collection. The renewal prices are $7.77/month and $77/year.
+  No card was entered and no subscription or payment was completed in QA.
+- Removing the disposable account from the cohort made a forged trial request
+  fail with HTTP 409. Its ordinary monthly checkout showed the normal 777-cent
+  amount due, with no beta trial metadata. Free Navigator access returned HTTP 403.
+- The Google Play badge and Safari Home Screen instructions were checked in the
+  rendered onboarding email preview. Both onboarding email functions are deployed.
+- All disposable QA checkout resources, the empty Stripe customer, Supabase auth
+  account and owned conversation were removed. The cohort contains the original
+  48 members. The temporary service-authenticated diagnostic function was deleted.
+- No announcement, preview email or digest was sent by these verification steps.
+  Normal intended application email flows remain enabled.

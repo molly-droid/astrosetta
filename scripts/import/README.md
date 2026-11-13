@@ -1,5 +1,13 @@
 # Production data import (Base44 -> Supabase)
 
+**Production follow-up, November 12:** use the reconciliation tools for a target
+that already contains member data. The original importer below overwrites
+matching rows and can fire welcome emails. Read the
+[completed import handoff](../../docs/BASE44_IMPORT_2026-11-12.md) and
+[final reference/storage audit](../../docs/FINAL_DATA_STORAGE_AUDIT_2026-11-12.md)
+before repeating any live operation. Do not send or re-enable emails without
+Jacob's explicit permission.
+
 **Step 0 — Base44's dashboard exports CSV, not JSON.** Convert first:
 
     python3 -I convert-csv-export.py <export-dir-of-*_export.csv> \

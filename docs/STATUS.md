@@ -5,6 +5,17 @@ Update this file as items move. Cutover mechanics live in
 [DEPLOYMENT.md](./DEPLOYMENT.md); the parity protocol in
 [NAVIGATOR_PARITY_TEST.md](./NAVIGATOR_PARITY_TEST.md).
 
+_2026-11-12 later: **Final reference/storage sweep passed.** 65 foreign keys
+checked, zero broken; text references also clean. Backed up and removed 718
+orphan staff QA rows, merged 251 duplicate lesson-progress rows and six duplicate
+module XP awards, then reconciled XP counters. All 48 members and 5,634 source
+records remain accounted for. Verified 57 deployed media files and preserved
+two additional logos found in the live Base44 bundle; the one Storage attachment
+is healthy and backed up. Both custom domains now exist in Vercel; exact DNS
+records are in [DNS instructions](./DNS_CUTOVER_INSTRUCTIONS.md). Email preview
+prepared locally only; all sending still requires Jacob's explicit permission.
+See [final audit](./FINAL_DATA_STORAGE_AUDIT_2026-11-12.md)._
+
 _2026-11-12: **Production Base44 data import completed and verified.** 48
 exported accounts mapped (45 created, 3 existing sign-ins reused); 5,634 entity
 records reconciled, retaining native data, passwords and billing. Base44 was

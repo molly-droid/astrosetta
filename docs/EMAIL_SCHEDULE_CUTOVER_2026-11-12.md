@@ -1,8 +1,9 @@
 # Email schedule cutover
 
 Jacob approved disabling the four Base44 email schedules and setting up their
-replacements in the new app. All other Base44 data and workflows remain outside
-that authorization. The launch announcement to members still needs explicit
+replacements in the new app. After Jacob flagged the two remaining active
+workflows, Bug Report Admin Alert and Daily Ephemeris Cross-Check were also
+deactivated. Base44 data and application code remain read-only. The launch announcement to members still needs explicit
 approval. One personalized launch preview to Molly was separately approved and
 accepted by Resend, with her real greeting and the original subject.
 
@@ -15,8 +16,13 @@ Verified after reloading Base44's Workflows page:
 - Monthly Email Digest: deactivated and verified inactive.
 - Weekly Feedback Digest: deactivated and verified inactive.
 
-Bug Report Admin Alert and Daily Ephemeris Cross-Check were left unchanged.
-Source charts, users, application code and other records were not edited.
+Bug Report Admin Alert and Daily Ephemeris Cross-Check were initially left
+unchanged, then deactivated following Jacob's follow-up. A fresh page reload
+confirmed all eight listed Base44 workflows inactive. Supabase's replacement
+ephemeris job is active, and its bug-report trigger is enabled and invokes
+`notify-admin-bug-report`. No test bug report was inserted and no email was sent
+for this check. Source charts, users, application code and other records were
+not edited.
 
 ## New app
 

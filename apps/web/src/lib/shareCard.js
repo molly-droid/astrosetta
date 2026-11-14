@@ -36,22 +36,14 @@ function hashtag(str) {
 }
 
 /**
- * Capture a DOM element (the 1080×1080 share card) as a PNG and hand it to the
- * user (B-03).
- *
- * On web that's an <a download>. In the native app that link is a no-op —
- * WKWebView ignores downloads of data: URLs, which is why "Download image" did
- * nothing on Molly's phone. Native instead writes the PNG to the app's cache
- * and opens the system share sheet, whose "Save Image" action saves to Photos
- * (iOS shows the NSPhotoLibraryAddUsageDescription prompt at that point) and
- * also allows sharing straight to Messages/Instagram — the point of a share
- * card.
- *
- * Returns 'shared' | 'downloaded'; throws if the capture itself fails.
+ * Render before a browser save/share tap, so Safari's user gesture is retained.
+ * Native apps can render on demand before opening Capacitor's share sheet.
  */
-export async function captureCardAsPng(element, filename, size = { width: 1080, height: 1080 }) {
+async function captureCardCanvas(element, size) {
+  if (!element) throw new Error('The share card is not ready.');
+  await element.ownerDocument?.fonts?.ready;
   const { width, height } = size;
-  const canvas = await html2canvas(element, {
+  return html2canvas(element, {
     backgroundColor: '#0f1a2e',
     width,
     height,
@@ -61,29 +53,33 @@ export async function captureCardAsPng(element, filename, size = { width: 1080, 
     windowWidth: width,
     windowHeight: height,
   });
+}
+
+export async function renderCardAsPngBlob(element, size = { width: 1080, height: 1080 }) {
+  const canvas = await captureCardCanvas(element, size);
+  return new Promise((resolve, reject) => canvas.toBlob(blob => {
+    if (blob) resolve(blob);
+    else reject(new Error('The PNG image could not be rendered.'));
+  }, 'image/png'));
+}
+
+export async function shareNativeCardAsPng(element, filename, size = { width: 1080, height: 1080 }) {
+  if (!isNativePlatform()) throw new Error('Use the prepared browser image to save this card.');
+  const canvas = await captureCardCanvas(element, size);
   const dataUrl = canvas.toDataURL('image/png');
-
-  if (isNativePlatform()) {
-    const [{ Filesystem, Directory }, { Share }] = await Promise.all([
-      import('@capacitor/filesystem'),
-      import('@capacitor/share'),
-    ]);
-    const path = `${filename}-${Date.now()}.png`;
-    await Filesystem.writeFile({
-      path,
-      data: dataUrl.split(',')[1], // base64 payload without the data: prefix
-      directory: Directory.Cache,
-    });
-    const { uri } = await Filesystem.getUri({ path, directory: Directory.Cache });
-    await Share.share({ title: filename, files: [uri] });
-    return 'shared';
-  }
-
-  const link = document.createElement('a');
-  link.download = `${filename}.png`;
-  link.href = dataUrl;
-  link.click();
-  return 'downloaded';
+  const [{ Filesystem, Directory }, { Share }] = await Promise.all([
+    import('@capacitor/filesystem'),
+    import('@capacitor/share'),
+  ]);
+  const path = `${filename}-${Date.now()}.png`;
+  await Filesystem.writeFile({
+    path,
+    data: dataUrl.split(',')[1], // base64 payload without the data: prefix
+    directory: Directory.Cache,
+  });
+  const { uri } = await Filesystem.getUri({ path, directory: Directory.Cache });
+  await Share.share({ title: filename, files: [uri] });
+  return 'shared';
 }
 
 export async function copyShareText(text) {

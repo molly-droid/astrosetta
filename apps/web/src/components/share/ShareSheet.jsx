@@ -4,7 +4,8 @@ import {
 } from '@/components/ui/sheet';
 import { Loader2, Download, Copy, Check, Image as ImageIcon } from 'lucide-react';
 import ShareCard, { cardSize } from './ShareCard';
-import { captureCardAsPng, copyShareText } from '@/lib/shareCard';
+import { renderCardAsPngBlob, shareNativeCardAsPng, copyShareText } from '@/lib/shareCard';
+import { prepareBrowserShareImage, releaseBrowserShareImage, canShareImage, sharePreparedImage, isShareCancelled } from '@/lib/browserShareImage';
 import { isNativePlatform } from '@/lib/platform';
 
 
@@ -36,23 +37,60 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
   const [downloading, setDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saveError, setSaveError] = useState(null);
-  // Native opens the system share sheet (save to Photos, or send straight to
-  // another app); web downloads the file (B-03).
+  const [renderError, setRenderError] = useState(null);
+  const [renderAttempt, setRenderAttempt] = useState(0);
+  const [imageState, setImageState] = useState(null);
   const nativeShare = isNativePlatform();
+  const imageFilename = active ? `${filename}-${active.key}` : filename;
+  const prepared = open && imageState?.card === card && imageState?.theme === theme && imageState?.filename === imageFilename && !imageState.image.released
+    ? imageState.image : null;
+  const browserShare = !nativeShare && canShareImage(prepared);
+  const preparing = open && !nativeShare && !prepared && !renderError;
+
+  useEffect(() => {
+    if (!open || nativeShare || !card) return;
+    let cancelled = false;
+    let image;
+    setImageState(null);
+    setRenderError(null);
+    setSaveError(null);
+    (async () => {
+      try {
+        const blob = await renderCardAsPngBlob(captureRef.current, { width: size.width, height: size.height });
+        image = prepareBrowserShareImage(blob, imageFilename);
+        if (!cancelled) setImageState({ card, theme, filename: imageFilename, image });
+        else releaseBrowserShareImage(image);
+      } catch {
+        if (!cancelled) setRenderError("The image couldn't be prepared. Please try again.");
+      }
+    })();
+    return () => { cancelled = true; if (image) releaseBrowserShareImage(image); };
+  }, [open, nativeShare, card, theme, imageFilename, size.width, size.height, renderAttempt]);
 
   const handleDownload = async () => {
     if (!captureRef.current || downloading) return;
     setDownloading(true);
     setSaveError(null);
     try {
-      await captureCardAsPng(captureRef.current, active ? `${filename}-${active.key}` : filename, size);
+      await shareNativeCardAsPng(captureRef.current, imageFilename, size);
     } catch (err) {
       // A cancelled native share sheet is a normal outcome, not a failure.
-      const msg = String(err?.message || '');
-      if (!/cancel/i.test(msg)) setSaveError("The image couldn't be saved. Please try again.");
+      if (!isShareCancelled(err)) setSaveError("The image couldn't be saved. Please try again.");
     } finally {
       setDownloading(false);
     }
+  };
+
+  const handleBrowserShare = async () => {
+    if (!prepared || downloading) return;
+    setDownloading(true);
+    setSaveError(null);
+    try {
+      // No render/await before this call: Safari requires the original tap.
+      await sharePreparedImage(prepared);
+    } catch (error) {
+      if (!isShareCancelled(error)) setSaveError('Sharing is unavailable. Use one of the save options below.');
+    } finally { setDownloading(false); }
   };
 
   const handleCopy = async () => {
@@ -96,8 +134,8 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
             </SheetTitle>
             <SheetDescription className="font-body text-[0.6875rem] text-brass/60">
               {card?.format === 'story'
-                ? 'Download a 1080×1920 image sized for Stories, or copy a text version.'
-                : <>Download a 1080×1080 image for Instagram &amp; Pinterest, or copy a text version for X.</>}
+                ? 'Save or share a 1080×1920 image sized for Stories, or copy the text.'
+                : 'Save or share a 1080×1080 image, or copy the reading as text.'}
             </SheetDescription>
           </SheetHeader>
 
@@ -107,6 +145,7 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
                 <button
                   key={v.key}
                   aria-pressed={active?.key === v.key}
+                  disabled={downloading}
                   onClick={() => setVariantKey(v.key)}
                   className={`rounded-lg py-2 font-body text-[0.6875rem] font-semibold transition ${active?.key === v.key ? 'bg-gold-primary text-[#0f1a2e]' : 'text-gold-accent hover:bg-gold-primary/10'}`}
                 >
@@ -147,14 +186,21 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
 
           {/* CTAs */}
           <div className="grid grid-cols-2 gap-3 mt-2">
+            {nativeShare || browserShare || !prepared ? (
             <button
-              onClick={handleDownload}
-              disabled={downloading}
+              onClick={nativeShare ? handleDownload : handleBrowserShare}
+              disabled={downloading || (!nativeShare && !prepared)}
               className="flex items-center justify-center gap-2 rounded-xl bg-gold-primary py-3 font-body text-xs font-semibold text-[#0f1a2e] transition hover:bg-gold-accent disabled:opacity-50"
             >
-              {downloading ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
-              {downloading ? 'Rendering…' : nativeShare ? 'Save or Share' : 'Download Image'}
+              {downloading || preparing ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />}
+              {preparing ? 'Preparing image…' : downloading ? 'Opening…' : 'Save or Share'}
             </button>
+            ) : (
+              <a href={prepared.url} download={prepared.filename}
+                className="flex items-center justify-center gap-2 rounded-xl bg-gold-primary py-3 font-body text-xs font-semibold text-[#0f1a2e] hover:bg-gold-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2">
+                <Download size={15} aria-hidden="true" /> Download Image
+              </a>
+            )}
             <button
               onClick={handleCopy}
               className="flex items-center justify-center gap-2 rounded-xl border border-gold-primary/40 py-3 font-body text-xs font-semibold text-gold-accent transition hover:bg-gold-primary/10"
@@ -162,10 +208,23 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
               {copied ? <Check size={15} /> : <Copy size={15} />}
               {copied ? 'Copied!' : 'Copy Text'}
             </button>
-            {saveError && (
-              <p className="col-span-2 text-center font-body text-[0.6875rem] text-red-300">{saveError}</p>
+            {(saveError || renderError) && (
+              <p role="alert" className="col-span-2 text-center font-body text-xs text-red-300">{saveError || renderError}</p>
             )}
+            {renderError && !nativeShare && <button onClick={() => setRenderAttempt(value => value + 1)} className="col-span-2 min-h-11 rounded-lg border border-gold-primary/40 font-body text-xs text-gold-accent">Try again</button>}
           </div>
+
+          {!nativeShare && prepared && (
+            <details key={prepared.url} open={!!saveError || undefined} className="mt-3 rounded-xl border border-gold-primary/25 p-3 font-body text-xs text-brass">
+              <summary className="min-h-11 cursor-pointer content-center text-gold-accent">Other ways to save the image</summary>
+              <p className="leading-relaxed mb-3">On iPhone or iPad, touch and hold the image below, then choose Save to Photos or Save Image. You can also open it in a new tab.</p>
+              <div className="flex flex-wrap gap-x-5 mb-3">
+                <a href={prepared.url} download={prepared.filename} className="inline-flex min-h-11 items-center underline underline-offset-4 text-gold-accent">Download PNG</a>
+                <a href={prepared.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center underline underline-offset-4 text-gold-accent">Open image<span className="sr-only"> in a new tab</span></a>
+              </div>
+              <img src={prepared.url} alt={card?.title || 'Astrosetta reading card'} width={size.width} height={size.height} className="block w-full max-w-sm h-auto mx-auto rounded-xl" />
+            </details>
+          )}
 
           <p className="mt-3 flex items-center justify-center gap-1.5 font-body text-[0.625rem] text-brass/40 italic text-center">
             <ImageIcon size={10} /> Watermarked with the Astrosetta logo — free to share.

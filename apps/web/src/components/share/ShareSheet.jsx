@@ -17,10 +17,11 @@ import { isNativePlatform } from '@/lib/platform';
  * F-04: `variants` — [{ key, label, card, textFallback }] — adds a
  * "Share for everyone" / "Share my reading" choice; the first is the default.
  */
-export default function ShareSheet({ open, onOpenChange, card: singleCard, filename = 'astrosetta-card', textFallback: singleText = '', variants = null }) {
+export default function ShareSheet({ open, onOpenChange, card: singleCard, filename = 'astrosetta-card', textFallback: singleText = '', variants = null, pages = null }) {
   const captureRef = useRef(null);
   const returnFocusRef = useRef(null);
   const [variantKey, setVariantKey] = useState(null);
+  const [pageIndex, setPageIndex] = useState(0);
   const [theme, setTheme] = useState('blue');
   const [availableWidth, setAvailableWidth] = useState(() => typeof window === 'undefined' ? 300 : window.innerWidth - 40);
   useEffect(() => {
@@ -29,8 +30,9 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
     return () => window.removeEventListener('resize', resize);
   }, []);
   const active = variants?.length ? (variants.find(v => v.key === variantKey) || variants[0]) : null;
-  const card = active ? active.card : singleCard;
-  const textFallback = active ? (active.textFallback ?? active.card?.textFallback ?? '') : singleText;
+  const page = pages?.[Math.min(pageIndex, pages.length - 1)];
+  const card = page || (active ? active.card : singleCard);
+  const textFallback = page ? page.textFallback : active ? (active.textFallback ?? active.card?.textFallback ?? '') : singleText;
   const size = cardSize(card);
   const PREVIEW_WIDTH = Math.min(card?.format === 'story' ? 190 : 300, availableWidth);
   const previewScale = PREVIEW_WIDTH / size.width;
@@ -41,7 +43,7 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
   const [renderAttempt, setRenderAttempt] = useState(0);
   const [imageState, setImageState] = useState(null);
   const nativeShare = isNativePlatform();
-  const imageFilename = active ? `${filename}-${active.key}` : filename;
+  const imageFilename = page ? `${filename}-${pageIndex + 1}` : active ? `${filename}-${active.key}` : filename;
   const prepared = open && imageState?.card === card && imageState?.theme === theme && imageState?.filename === imageFilename && !imageState.image.released
     ? imageState.image : null;
   const browserShare = !nativeShare && canShareImage(prepared);
@@ -121,12 +123,13 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
         </div>
       )}
 
-      <Sheet open={open} onOpenChange={(o) => { if (!o) setVariantKey(null); onOpenChange?.(o); }}>
+      <Sheet open={open} onOpenChange={(o) => { if (!o) { setVariantKey(null); setPageIndex(0); } onOpenChange?.(o); }}>
         <SheetContent
           side="bottom"
+          overlayClassName="z-[10040]"
           onOpenAutoFocus={() => { returnFocusRef.current = document.activeElement; }}
           onCloseAutoFocus={event => { event.preventDefault(); returnFocusRef.current?.focus(); }}
-          className="max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-gold-primary/30 bg-[#0f1a2e] px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-4 text-white [&>button]:top-1 [&>button]:right-1 [&>button]:flex [&>button]:h-11 [&>button]:w-11 [&>button]:items-center [&>button]:justify-center"
+          className="z-[10040] max-h-[90dvh] overflow-y-auto overscroll-contain rounded-t-2xl border-t border-gold-primary/30 bg-[#0f1a2e] px-5 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-4 text-white [&>button]:top-1 [&>button]:right-1 [&>button]:flex [&>button]:h-11 [&>button]:w-11 [&>button]:items-center [&>button]:justify-center"
         >
           <SheetHeader className="text-center">
             <SheetTitle className="font-display text-base font-semibold text-gold-accent">
@@ -138,6 +141,15 @@ export default function ShareSheet({ open, onOpenChange, card: singleCard, filen
                 : 'Save or share a 1080×1080 image, or copy the reading as text.'}
             </SheetDescription>
           </SheetHeader>
+
+          {pages?.length > 1 && (
+            <div className="mt-3 flex items-center justify-center gap-3" aria-label="Share card pages">
+              <button type="button" disabled={pageIndex === 0 || downloading} onClick={() => setPageIndex(i => i - 1)} className="min-h-11 rounded-lg px-3 font-body text-xs text-gold-accent disabled:opacity-40">Previous card</button>
+              <span aria-live="polite" className="font-body text-xs text-brass">{pageIndex + 1} of {pages.length}</span>
+              <button type="button" disabled={pageIndex >= pages.length - 1 || downloading} onClick={() => setPageIndex(i => i + 1)} className="min-h-11 rounded-lg px-3 font-body text-xs text-gold-accent disabled:opacity-40">Next card</button>
+            </div>
+          )}
+          {pages?.length > 1 && <p className="mt-1 text-center font-body text-xs text-brass">Save each card to share the full reading. Copy Text includes all cards.</p>}
 
           {variants?.length > 1 && (
             <div className="mt-3 grid grid-cols-2 gap-1 rounded-xl border border-gold-primary/25 p-1" role="group" aria-label="Reading to share">

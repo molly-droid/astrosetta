@@ -7,7 +7,8 @@ import { highlightSynthesisText } from '@/lib/transitUtils';
 import { getMoonPhaseName } from '@/lib/moonPhase';
 import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
-import { fetchExplanation } from '@/lib/explainIt';
+import useExplanation from '@/hooks/useExplanation';
+import { buildSynthesisExplanation } from '@/lib/explanationContext';
 import ShareSheet from '@/components/share/ShareSheet';
 import { formatCollectiveContext, buildKeyDatesCardData, shareVariants } from '@/lib/shareCard';
 import { fetchPeriodKeyDates, keyDateRows } from '@/lib/periodKeyDates';
@@ -28,15 +29,14 @@ export default function MonthSynthesis({ date, chart }) {
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
-  const [explainOpen, setExplainOpen] = useState(false);
-  const [explainText, setExplainText] = useState(null);
-  const [explainLoading, setExplainLoading] = useState(false);
   const [shareCard, setShareCard] = useState(null);
   const [shareLoading, setShareLoading] = useState(false);
   const hasGenerated = useRef(false);
   const shareContextRef = useRef('');
   const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
   const periodKey = `month-v11-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  const explainContext = buildSynthesisExplanation(synthesis, { period: 'month', tab: activeTab });
+  const { open: explainOpen, text: explainText, loading: explainLoading, toggle: handleExplain } = useExplanation(explainContext, knowledgeDepth, JSON.stringify([chart?.id, monthKey, activeTab]));
 
   useEffect(() => {
     // Check memory cache first — handled by DB check below
@@ -67,13 +67,6 @@ export default function MonthSynthesis({ date, chart }) {
       generate();
     }
   }, [chart, monthKey, expanded]);
-
-  // Reset "Explain it" panel when the month changes
-  useEffect(() => {
-    setExplainOpen(false);
-    setExplainText(null);
-    setExplainLoading(false);
-  }, [monthKey]);
 
   if (!canViewPeriodSynthesis) {
     return (
@@ -211,27 +204,6 @@ export default function MonthSynthesis({ date, chart }) {
   const headerTags = synthesis
     ? (activeTab === 'personal' ? synthesis.best_areas : (synthesis.collective_tags || []))
     : [];
-
-  const explainContext = synthesis ? [
-    synthesis.overview,
-    synthesis.personal_focus,
-    synthesis.collective_theme,
-    ...(synthesis.maximize || []),
-    synthesis.focus,
-    ...(synthesis.watch || []),
-  ].filter(Boolean).join('\n') : '';
-
-  const handleExplain = async () => {
-    if (explainOpen) { setExplainOpen(false); return; }
-    setExplainOpen(true);
-    if (explainText) return;
-    setExplainLoading(true);
-    try {
-      const res = await fetchExplanation(explainContext, knowledgeDepth);
-      setExplainText(res);
-    } catch { /* non-critical */ }
-    setExplainLoading(false);
-  };
 
   // F-05: Stories-sized key dates for the month (stations, ingresses,
   // lunations), shared for everyone or as "mine" with the user's houses.

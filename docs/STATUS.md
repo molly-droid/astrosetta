@@ -5,6 +5,8 @@ Update this file as items move. Cutover mechanics live in
 [DEPLOYMENT.md](./DEPLOYMENT.md); the parity protocol in
 [NAVIGATOR_PARITY_TEST.md](./NAVIGATOR_PARITY_TEST.md).
 
+_2026-11-16: **Explanation context and sharing expanded.** Daily/monthly Explain it now reads only the selected Personal or Collective tab. Shared explanation state resets on context, chart, period or knowledge-depth changes and ignores obsolete asynchronous responses. Share cards added to chart details/dynamics, activated formations, transit-natal formations, interactive interpretations and curriculum slides; Cosmic Formations now has a direct row shortcut. Longer readings use numbered Stories cards with full-text copy. Web/PWA deployment is tracked in [verification notes](./EXPLANATION_SHARING_2026-11-16.md). Native apps need these source changes included in their next store build._
+
 _2026-11-12, about 9:15 PM Toronto: **astrosetta.com now serves Vercel in normal
 Chrome and system DNS checks.** Molly's A/CNAME records are correct; earlier
 Base44 responses were cached DNS. HTTPS and the permanent www redirect pass.

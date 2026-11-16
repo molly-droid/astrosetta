@@ -7,7 +7,8 @@ import { formatTransitLabelProse as formatTransitLabel, highlightSynthesisText }
 import { getMoonPhaseName } from '@/lib/moonPhase';
 import { getCachedSynthesis, saveCachedSynthesis, clearMemCache } from '@/lib/synthesisCache';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
-import { fetchExplanation } from '@/lib/explainIt';
+import useExplanation from '@/hooks/useExplanation';
+import { buildSynthesisExplanation } from '@/lib/explanationContext';
 import ShareSheet from '@/components/share/ShareSheet';
 import { buildRisingSignCardData, formatCollectiveContext } from '@/lib/shareCard';
 import { resolveShareSign } from '@/lib/shareReading';
@@ -55,9 +56,6 @@ export default function WeekSynthesis({ days, chart }) {
   const [synthesis, setSynthesis] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const [explainOpen, setExplainOpen] = useState(false);
-  const [explainText, setExplainText] = useState(null);
-  const [explainLoading, setExplainLoading] = useState(false);
   const [shareCard, setShareCard] = useState(null);
   const [shareLoading, setShareLoading] = useState(false);
   const hasGenerated = useRef(false);
@@ -65,6 +63,8 @@ export default function WeekSynthesis({ days, chart }) {
   const weekKey = days?.[0]?.toISOString?.()?.split('T')[0];
   const cacheKey = chart?.id && weekKey ? `${CACHE_VERSION}_${chart.id}_${weekKey}` : null;
   const dbKey = weekKey ? `week-${CACHE_VERSION}-${weekKey}` : null;
+  const explainContext = buildSynthesisExplanation(synthesis, { period: 'week', tab: 'personal' });
+  const { open: explainOpen, text: explainText, loading: explainLoading, toggle: handleExplain } = useExplanation(explainContext, knowledgeDepth, JSON.stringify([chart?.id, weekKey, 'personal']));
   const weekRange = days && days.length
     ? `${days[0].toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric' })} – ${days[days.length - 1].toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' })}`
     : '';
@@ -106,13 +106,6 @@ export default function WeekSynthesis({ days, chart }) {
     hasGenerated.current = true;
     generate();
   }, [chart, weekKey, canViewPeriodSynthesis]);
-
-  // Reset "Explain it" panel when the week changes
-  useEffect(() => {
-    setExplainOpen(false);
-    setExplainText(null);
-    setExplainLoading(false);
-  }, [weekKey]);
 
   if (!canViewPeriodSynthesis) {
     return (
@@ -217,26 +210,6 @@ export default function WeekSynthesis({ days, chart }) {
         summary: `Week at a Glance · ${days?.[0]?.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${days?.[6]?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`,
       });
     }
-  };
-
-  const explainContext = synthesis ? [
-    synthesis.overview,
-    ...(Object.values(synthesis.day_sentences || {})),
-    synthesis.maximize && `Maximize: ${synthesis.maximize}`,
-    synthesis.focus && `Focus: ${synthesis.focus}`,
-    synthesis.watch && `Watch: ${synthesis.watch}`,
-  ].filter(Boolean).join('\n') : '';
-
-  const handleExplain = async () => {
-    if (explainOpen) { setExplainOpen(false); return; }
-    setExplainOpen(true);
-    if (explainText) return;
-    setExplainLoading(true);
-    try {
-      const res = await fetchExplanation(explainContext, knowledgeDepth);
-      setExplainText(res);
-    } catch { /* non-critical */ }
-    setExplainLoading(false);
   };
 
   const handleShare = async () => {

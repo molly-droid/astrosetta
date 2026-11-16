@@ -1,3 +1,4 @@
+import ShareReadingButton from '@/components/share/ShareReadingButton';
 import React, { useState } from 'react';
 import { getTransitNatalFormations } from '@/lib/transitNatalFormations';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
@@ -95,6 +96,10 @@ function FormationInterpretation({ chart, dateKey, formation, expanded }) {
   const facts = buildFormationFacts(formation);
   const { reading, loading } = useDynamicsInterpretation(chart, sectionKey, 'transit-formation', { facts }, expanded);
   if (!expanded) return null;
+  const displayedReading = sanitizeReading(reading, formation);
+  const shareText = [formation.description, facts,
+    ...READING_ORDER.map(([key, label]) => displayedReading?.[key] ? `${label}: ${displayedReading[key]}` : ''),
+  ].filter(Boolean).join('\n');
   return (
     <div className="mt-2 pt-2 border-t border-white/10 space-y-1.5">
       <div className="flex items-center gap-1.5">
@@ -105,8 +110,9 @@ function FormationInterpretation({ chart, dateKey, formation, expanded }) {
       {loading && !reading ? (
         <p className="font-body text-[0.625rem] text-brass/50 italic">Reading the pattern…</p>
       ) : reading ? (
-        <FormationReading reading={sanitizeReading(reading, formation)} />
+        <FormationReading reading={displayedReading} />
       ) : null}
+      <ShareReadingButton title={formation.type} text={shareText} kicker="TRANSIT-NATAL FORMATION" audienceLabel="MY SKY" dateStr={dateKey} label="Share this formation" />
     </div>
   );
 }

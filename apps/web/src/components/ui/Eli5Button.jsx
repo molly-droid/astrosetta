@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Lightbulb, Loader2 } from 'lucide-react';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
-import { fetchExplanation } from '@/lib/explainIt';
+import useExplanation from '@/hooks/useExplanation';
 import { highlightSynthesisText } from '@/lib/transitUtils';
 
 /**
@@ -15,23 +15,8 @@ import { highlightSynthesisText } from '@/lib/transitUtils';
  */
 export default function Eli5Button({ context }) {
   const { knowledgeDepth } = useUserPrefs();
-  const [open, setOpen] = useState(false);
-  const [text, setText] = useState(null);
-  const [loading, setLoading] = useState(false);
-
+  const { open, text, loading, toggle: handleExplain } = useExplanation(context, knowledgeDepth);
   if (!context) return null;
-
-  const handleExplain = async () => {
-    if (open) { setOpen(false); return; }
-    setOpen(true);
-    if (text) return;
-    setLoading(true);
-    try {
-      const res = await fetchExplanation(context, knowledgeDepth);
-      setText(res);
-    } catch { /* non-critical */ }
-    setLoading(false);
-  };
 
   return (
     <div className="mt-2">

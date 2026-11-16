@@ -1,3 +1,4 @@
+import ShareIconButton from '@/components/share/ShareIconButton';
 import React, { useState } from 'react';
 import { getMundanePatterns } from '@/lib/mundanePatterns';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
@@ -99,9 +100,10 @@ export default function MundaneFormationsCard({ transits, onHighlight, chart = n
                 className="rounded-lg overflow-hidden border"
                 style={{ borderColor: style.border, background: style.bg }}
               >
+                <div className="flex items-center pr-2">
                 <button
                   onClick={() => handleItemToggle(i)}
-                  className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors"
+                  className="min-w-0 flex-1 flex items-center justify-between px-3 py-2.5 hover:bg-white/5 transition-colors"
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-base" style={{ fontVariantEmoji: 'text', fontVariant: 'normal', color: style.color }}>{style.icon}</span>
@@ -115,6 +117,8 @@ export default function MundaneFormationsCard({ transits, onHighlight, chart = n
                   </div>
                   {isExpanded ? <ChevronDown size={12} className="text-brass/40" /> : <ChevronRight size={12} className="text-brass/40" />}
                 </button>
+                <ShareIconButton onClick={() => openShare(p)} title={`Share ${p.type}`} className="min-h-11 min-w-11" />
+                </div>
 
                 {isExpanded && (
                   <div className="px-3 pb-3 pt-1 space-y-2.5">

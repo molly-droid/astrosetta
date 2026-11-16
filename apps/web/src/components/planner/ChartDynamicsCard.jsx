@@ -1,3 +1,4 @@
+import ShareReadingButton from '@/components/share/ShareReadingButton';
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, Layers, Flame, Mountain, Wind, Droplet, Loader2 } from 'lucide-react';
 import { analyzeChartDynamics, SIGN_ELEMENTS, SIGN_MODALITIES } from '@/lib/chartDynamics';
@@ -40,10 +41,14 @@ function SectionLoader() {
   );
 }
 
-function InterpretBlock({ reading, loading }) {
+function InterpretBlock({ reading, loading, title }) {
   if (loading && !reading) return <SectionLoader />;
   if (!reading) return null;
   const entries = Object.entries(reading);
+  const shareText = entries.flatMap(([, value]) => {
+    if (typeof value === 'string') return [value];
+    return Array.isArray(value) ? value.map(item => typeof item === 'string' ? item : item.text || '') : [];
+  }).filter(Boolean).join('\n');
   return (
     <>
       {entries.map(([key, val]) => (
@@ -59,6 +64,7 @@ function InterpretBlock({ reading, loading }) {
             ) : null}
         </div>
       ))}
+      <ShareReadingButton title={title} text={shareText} kicker="CHART DETAILS" audienceLabel="MY CHART" />
     </>
   );
 }
@@ -94,7 +100,7 @@ ${rulerPlanet ? `Ruler's sign: ${rulerPlanet.sign} (${SIGN_ELEMENTS[rulerPlanet.
       </p>
       {expanded && (
         <div className="mt-2 pl-2 border-l border-gold-primary/20 space-y-1.5">
-          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} />}
+          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} title="Chart Ruler" />}
         </div>
       )}
     </div>
@@ -137,7 +143,7 @@ ${stellium.type === 'sign' ? `Element: ${SIGN_ELEMENTS[stellium.sign]}, Modality
       </div>
       {expanded && (
         <div className="mt-2 pt-2 border-t border-gold-primary/15 space-y-1.5">
-          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} />}
+          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} title={label} />}
         </div>
       )}
     </div>
@@ -180,7 +186,7 @@ ${house.tradRuler ? `Traditional ruler: ${house.tradRuler}` : ''}`;
       </button>
       {expanded && (
         <div className="px-2.5 pb-2.5 pt-0 border-t border-white/[0.04] space-y-1.5">
-          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} />}
+          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} title={`${ordinal(house.house)} House`} />}
         </div>
       )}
     </div>
@@ -222,7 +228,7 @@ ${houses.map(h => `- ${ordinal(h.house)} House: cusp in ${h.cuspSign} ${SIGN_GLY
       </button>
       {overviewExpanded && (
         <div className="mt-2 pt-2 border-t border-gold-primary/15 space-y-1.5">
-          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} />}
+          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} title="Empty Houses" />}
         </div>
       )}
     </div>
@@ -326,7 +332,7 @@ Weakest element: ${weakest.element}`;
       </div>
       {expanded && (
         <div className="mt-2 pt-2 border-t border-gold-primary/15 space-y-1.5">
-          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} />}
+          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} title="Element & Modality Balance" />}
         </div>
       )}
     </div>
@@ -369,7 +375,7 @@ ${pattern.element ? `Elemental theme: ${pattern.element}` : ''}`;
       {pattern.element && <p className="font-body text-[0.6875rem] text-brass/70 mt-1">Element: {pattern.element}</p>}
       {expanded && (
         <div className="mt-2 pt-2 border-t border-celestial-purple/15 space-y-1.5">
-          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} />}
+          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} title={pattern.type} />}
         </div>
       )}
     </div>
@@ -409,7 +415,7 @@ function StelliumOppositionSection({ chart, opposition, onHighlight }) {
       </div>
       {expanded && (
         <div className="mt-2 pt-2 border-t border-celestial-pink/15 space-y-1.5">
-          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} />}
+          {loading && !reading ? <SectionLoader /> : reading && <InterpretBlock reading={reading} loading={loading} title={`${opposition.sign1} & ${opposition.sign2} Stellium Opposition`} />}
         </div>
       )}
     </div>

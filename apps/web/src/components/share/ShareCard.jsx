@@ -36,6 +36,7 @@ const ShareCard = forwardRef(({ card, theme = 'blue' }, ref) => {
   const { width, height } = cardSize(card);
   const audience = card.audienceLabel || AUDIENCE_LABEL[card.audience];
   const story = card.format === 'story';
+  const compact = card.compactReading;
   const palette = SHARE_CARD_THEMES[theme] || SHARE_CARD_THEMES.blue;
 
   return (
@@ -99,7 +100,7 @@ const ShareCard = forwardRef(({ card, theme = 'blue' }, ref) => {
       {/* Glyph */}
       <div style={{
         fontFamily: "'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols 2', Symbola, serif",
-        fontSize: 150,
+        fontSize: compact ? 100 : 150,
         color: theme === 'cream' ? palette.accent : (card.glyphColor || palette.accent),
         lineHeight: 1,
         marginBottom: 34,
@@ -110,13 +111,14 @@ const ShareCard = forwardRef(({ card, theme = 'blue' }, ref) => {
       {/* Title */}
       <h1 style={{
         fontFamily: 'Playfair Display, Georgia, serif',
-        fontSize: 58,
+        fontSize: compact ? 48 : 58,
         fontWeight: 700,
         color: palette.accent,
         textAlign: 'center',
         lineHeight: 1.18,
         marginBottom: 40,
         maxWidth: 860,
+        overflowWrap: compact ? 'anywhere' : undefined,
         margin: '0 0 40px 0',
       }}>{card.title}</h1>
 
@@ -163,11 +165,12 @@ const ShareCard = forwardRef(({ card, theme = 'blue' }, ref) => {
       ) : (
         <p style={{
           fontFamily: 'Lora, Georgia, serif',
-          fontSize: 33,
-          lineHeight: 1.6,
+          fontSize: compact ? 34 : 33,
+          lineHeight: compact ? 1.55 : 1.6,
           color: palette.text,
           textAlign: 'center',
           maxWidth: 820,
+          overflowWrap: compact ? 'anywhere' : undefined,
           margin: '0 0 50px',
         }}>{card.body}</p>
       )}

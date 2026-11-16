@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import ShareReadingButton from '@/components/share/ShareReadingButton';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 function shuffleArray(arr) {
   const a = [...arr];
@@ -787,6 +788,7 @@ const EXPLORE_SECTIONS = [
 ];
 
 export default function ModulePlayer({ module: mod, progress, userId, user, chart, modules, onClose, onComplete, onNavigate, initialBlockIndex, onViewChart, activeTradition = 'modern', backReturnsToCaller = false }) {
+  const slideContentRef = useRef(null);
   const [blockIndex, setBlockIndex] = useState(() => (typeof initialBlockIndex === 'number' ? initialBlockIndex : 0));
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [answered, setAnswered] = useState(false);
@@ -983,7 +985,7 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
     return (
       <div className="fixed inset-0 bg-cream z-[10020] flex flex-col">
         <div className="bg-paper border-b border-gold-primary/30 px-4 pb-4 flex items-center gap-3" style={{ paddingTop: 'max(2.5rem, calc(env(safe-area-inset-top, 0px) + 0.75rem))' }}>
-          <button onClick={onClose} className="text-brass hover:text-white transition-colors">
+          <button onClick={onClose} aria-label="Close lesson" className="text-brass hover:text-white transition-colors">
             <X size={20} />
           </button>
           <div className="flex-1">
@@ -1106,7 +1108,7 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
     <div className="fixed inset-0 bg-cream z-[10020] flex flex-col">
       {/* Header */}
       <div className="bg-paper border-b border-gold-primary/30 px-4 pb-4 flex items-center gap-3" style={{ paddingTop: 'max(2.5rem, calc(env(safe-area-inset-top, 0px) + 0.75rem))' }}>
-        <button onClick={handleBack} className="text-brass hover:text-white transition-colors">
+        <button onClick={handleBack} aria-label="Go back" className="text-brass hover:text-white transition-colors">
           <ChevronLeft size={20} />
         </button>
         <div className="flex-1">
@@ -1137,7 +1139,7 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
               <span className="font-body text-[0.5625rem] uppercase tracking-wide">Lens</span>
             </span>
           )}
-          <button onClick={onClose} className="text-brass/50 hover:text-white transition-colors">
+          <button onClick={onClose} aria-label="Close lesson" className="text-brass/50 hover:text-white transition-colors">
             <X size={16} />
           </button>
         </div>
@@ -1145,6 +1147,7 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
 
       {/* Block content */}
       <div className="flex-1 overflow-y-auto px-5 py-6 max-w-lg mx-auto w-full">
+        <div ref={slideContentRef}>
 
         {blockIndex === 0 && getModuleImage(mod.subject_key) && (
           <img
@@ -1359,6 +1362,13 @@ export default function ModulePlayer({ module: mod, progress, userId, user, char
             )}
           </div>
         )}
+        </div>
+        <div className="mt-4 flex justify-end border-t border-gold-primary/20 pt-2">
+          <ShareReadingButton key={`${mod.id}-${blockIndex}`} title={block?.heading || mod.title} glyph={mod.glyph}
+            getText={() => slideContentRef.current?.innerText || ''} kicker="LEARN WITH ASTROSETTA"
+            audienceLabel={block?.type === 'synthesis' ? 'MY CHART' : 'LEARN'}
+            dateStr={`${mod.title} · Slide ${blockIndex + 1} of ${blocks.length}`} label="Share this slide" filename="astrosetta-lesson" />
+        </div>
       </div>
 
       {/* Footer */}

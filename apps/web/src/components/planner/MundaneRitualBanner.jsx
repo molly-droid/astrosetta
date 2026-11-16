@@ -1,3 +1,4 @@
+import ShareReadingButton from '@/components/share/ShareReadingButton';
 import React, { useState, useEffect } from 'react';
 import { getSignificantMundanePatterns } from '@/lib/mundanePatterns';
 import { PLANET_GLYPHS } from '@/lib/chartUtils';
@@ -16,7 +17,7 @@ const CATEGORY_STYLES = {
  * — i.e. at least one formation planet is making a transit to the user's natal chart.
  * Consolidated into a single expandable card with per-formation sub-items.
  */
-export default function MundaneRitualBanner({ transits, onHighlight }) {
+export default function MundaneRitualBanner({ transits, onHighlight, dateKey }) {
   const [cardOpen, setCardOpen] = useState(false);
   const [expandedIdx, setExpandedIdx] = useState(-1);
   const patterns = getSignificantMundanePatterns(
@@ -104,6 +105,7 @@ export default function MundaneRitualBanner({ transits, onHighlight }) {
                         </span>
                       ))}
                     </div>
+                    <ShareReadingButton title={p.type} text={`${p.planets.join(', ')}. ${p.description}${p.sign ? ` Sign: ${p.sign}.` : ''}${p.element ? ` Element: ${p.element}.` : ''}${p.apex ? ` Apex: ${p.apex}.` : ''}`} kicker="RITUALLY ACTIVE FORMATION" audienceLabel="MY SKY" dateStr={dateKey} label="Share this formation" />
                     {(p.sign || p.element || p.apex) && (
                       <div className="flex flex-wrap gap-3 text-[0.625rem] font-body text-brass/50">
                         {p.sign && <span>📍 {p.sign}</span>}

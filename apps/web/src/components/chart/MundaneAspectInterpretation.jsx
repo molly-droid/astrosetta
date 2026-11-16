@@ -1,3 +1,4 @@
+import ShareReadingButton from '@/components/share/ShareReadingButton';
 import { useState, useEffect } from 'react';
 import { invokeLLMTask } from '@/api/llmTasks';
 import { Loader2 } from 'lucide-react';
@@ -63,7 +64,8 @@ export default function MundaneAspectInterpretation({ item, transitPlanets = nul
   return (
     <div className="mt-1.5">
       <InterpretationMarkdown text={text} className="font-body text-sm text-white/80 leading-snug" />
-      <Eli5Button context={eli5Context} />
+      <Eli5Button context={`${eli5Context}\n${text}`} />
+      <ShareReadingButton title={`${item.transit_planet} ${item.aspect} ${item.natal_planet}`} text={text} kicker="COLLECTIVE TRANSIT" audienceLabel="THE SKY" />
     </div>
   );
 }

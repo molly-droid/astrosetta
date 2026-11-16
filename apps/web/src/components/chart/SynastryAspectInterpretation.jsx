@@ -1,3 +1,4 @@
+import ShareReadingButton from '@/components/share/ShareReadingButton';
 import { useState, useEffect } from 'react';
 import { invokeLLMTask } from '@/api/llmTasks';
 import { HOUSE_THEMES } from '@/lib/transitUtils';
@@ -107,7 +108,8 @@ export default function SynastryAspectInterpretation({ item, natalPlanets, trans
   return (
     <div className="mt-1.5">
       <InterpretationMarkdown text={text} highlightClass="text-gold-primary" className="font-body text-sm text-white/80 leading-snug" />
-      <Eli5Button context={eli5Context} />
+      <Eli5Button context={`${eli5Context}\n${text}`} />
+      <ShareReadingButton title={`${item.transit_planet} ${item.aspect} ${item.natal_planet}`} text={text} kicker="SYNASTRY" audienceLabel="MY CHART" />
     </div>
   );
 }

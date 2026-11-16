@@ -14,7 +14,8 @@ import { getMundanePatterns } from '@/lib/mundanePatterns';
 import { getEffectiveTier, CORE_CTA_LABEL } from '@/lib/permissions';
 import { useAuth } from '@/lib/AuthContext';
 import { useUserPrefs } from '@/lib/UserPrefsContext';
-import { fetchExplanation } from '@/lib/explainIt';
+import useExplanation from '@/hooks/useExplanation';
+import { buildSynthesisExplanation } from '@/lib/explanationContext';
 import ShareSheet from '@/components/share/ShareSheet';
 import { buildRisingSignCardData, formatCollectiveContext, shareVariants } from '@/lib/shareCard';
 import { resolveShareSign } from '@/lib/shareReading';
@@ -42,9 +43,6 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
   const [expanded, setExpanded] = useState(autoExpand);
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [cacheChecked, setCacheChecked] = useState(false);
-  const [explainOpen, setExplainOpen] = useState(false);
-  const [explainText, setExplainText] = useState(null);
-  const [explainLoading, setExplainLoading] = useState(false);
   const [shareCard, setShareCard] = useState(null);
   const [shareLoading, setShareLoading] = useState(false);
   const hasGenerated = useRef(false);
@@ -52,16 +50,11 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
   const dateKey = date ? new Date(date.getFullYear(), date.getMonth(), date.getDate()).toLocaleDateString('en-CA') : null;
   const cacheKey = chart?.id && dateKey ? `v24_${chart.id}_${dateKey}_${knowledgeDepth}` : null;
   const dbKey = dateKey ? `day-v24-${dateKey}-${knowledgeDepth}` : null;
+  const explainContext = buildSynthesisExplanation(synthesis, { period: 'day', tab: activeTab, isPaid });
+  const { open: explainOpen, text: explainText, loading: explainLoading, toggle: handleExplain } = useExplanation(explainContext, knowledgeDepth, JSON.stringify([chart?.id, dateKey, activeTab]));
   // Opposite-color highlighting: gold body copy → white highlights; white body copy → gold highlights
   const highlightOnGold = (text) => highlightSynthesisText(text, onHighlightTransit, 'text-white');
   const highlightOnWhite = (text) => highlightSynthesisText(text, onHighlightTransit, 'text-gold-primary');
-
-  // Reset "Explain it" panel when the day or density changes
-  useEffect(() => {
-    setExplainOpen(false);
-    setExplainText(null);
-    setExplainLoading(false);
-  }, [dateKey, knowledgeDepth]);
 
   useEffect(() => {
     if (!dateKey) return;
@@ -429,27 +422,6 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
     } finally {
       setLoading(false);
     }
-  };
-
-  const explainContext = synthesis ? [
-    synthesis.overview,
-    ...(synthesis.personal_reading || []),
-    ...(synthesis.collective_reading || []),
-    synthesis.maximize && `Maximize: ${synthesis.maximize}`,
-    synthesis.focus && `Focus: ${synthesis.focus}`,
-    synthesis.watch && `Watch: ${synthesis.watch}`,
-  ].filter(Boolean).join('\n') : '';
-
-  const handleExplain = async () => {
-    if (explainOpen) { setExplainOpen(false); return; }
-    setExplainOpen(true);
-    if (explainText) return;
-    setExplainLoading(true);
-    try {
-      const res = await fetchExplanation(explainContext, knowledgeDepth);
-      setExplainText(res);
-    } catch { /* non-critical */ }
-    setExplainLoading(false);
   };
 
   const handleShare = async () => {

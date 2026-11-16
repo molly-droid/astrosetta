@@ -1,3 +1,4 @@
+import ShareReadingButton from '@/components/share/ShareReadingButton';
 import { useState, useEffect } from 'react';
 import { invokeLLMTask } from '@/api/llmTasks';
 import { loadInterpretation, saveInterpretation } from '@/lib/interpretationStore';
@@ -143,10 +144,17 @@ export default function NatalInterpretation({ item, chartData, skyMode = false, 
 
   if (!text) return null;
 
+  const shareTitle = item.type === 'planet' || item.type === 'transit_planet'
+    ? `${item.name} in ${item.sign}`
+    : item.type === 'house' ? `${getHouseName(item.number)} in ${item.sign}`
+    : item.type === 'aspect' ? `${item.planet1} ${item.aspect} ${item.planet2}`
+    : item.sign || item.name || 'Chart interpretation';
+
   return (
     <div className="mt-1.5">
       <InterpretationMarkdown text={text} className="font-body text-sm text-white/80 leading-snug" />
-      <Eli5Button context={buildEli5Context(item, skyMode)} />
+      <Eli5Button context={`${buildEli5Context(item, skyMode)}\n${text}`} />
+      <ShareReadingButton title={shareTitle} text={text} kicker={skyMode ? 'COLLECTIVE SKY' : 'CHART INTERPRETATION'} audienceLabel={skyMode ? 'THE SKY' : 'MY CHART'} />
     </div>
   );
 }

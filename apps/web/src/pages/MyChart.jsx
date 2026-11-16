@@ -1,3 +1,4 @@
+import ShareReadingButton from '@/components/share/ShareReadingButton';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
@@ -93,7 +94,7 @@ const ASTRO_MD_COMPONENTS = {
   h4: ({ children }) => <h4 className={`${MD_HEADING} text-sm`}>{highlightAstro(children)}</h4>,
 };
 
-function InterpretBody({ item, chartContext }) {
+function InterpretBody({ item, chartContext, label, glyph }) {
   const { text, loading, error, retry } = useInterpretation(item, chartContext);
   if (loading) {
     return (
@@ -122,6 +123,7 @@ function InterpretBody({ item, chartContext }) {
       <div className="font-body text-sm text-white/85 leading-relaxed">
         <ReactMarkdown components={ASTRO_MD_COMPONENTS}>{normalizeInterpretation(text || '')}</ReactMarkdown>
       </div>
+      <ShareReadingButton title={label} glyph={glyph} text={text} kicker="CHART DETAILS" audienceLabel="MY CHART" />
     </div>
   );
 }
@@ -164,7 +166,7 @@ function InterpretCard({ item, chartContext, label, sublabel, glyph, glyphColor,
 
       {open && !gated && (
         <div className="px-4 pb-4 pt-1 border-t border-white/[0.05]">
-          <InterpretBody item={item} chartContext={chartContext} />
+          <InterpretBody item={item} chartContext={chartContext} label={label} glyph={glyph} />
         </div>
       )}
 

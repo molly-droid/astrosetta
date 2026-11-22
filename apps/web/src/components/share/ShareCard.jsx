@@ -37,6 +37,7 @@ const ShareCard = forwardRef(({ card, theme = 'blue' }, ref) => {
   const audience = card.audienceLabel || AUDIENCE_LABEL[card.audience];
   const story = card.format === 'story';
   const compact = card.compactReading;
+  const personalSquare = card.personalReadingTitle && !story;
   const palette = SHARE_CARD_THEMES[theme] || SHARE_CARD_THEMES.blue;
 
   return (
@@ -87,12 +88,12 @@ const ShareCard = forwardRef(({ card, theme = 'blue' }, ref) => {
       {card.kicker && (
         <p style={{
           fontFamily: 'Lora, Georgia, serif',
-          fontSize: 26,
-          letterSpacing: '0.42em',
+          fontSize: personalSquare ? 22 : 26,
+          letterSpacing: personalSquare ? '0.22em' : '0.42em',
           textTransform: 'uppercase',
           color: palette.muted,
           opacity: 0.72,
-          marginBottom: 30,
+          marginBottom: personalSquare ? 20 : 30,
           textAlign: 'center',
         }}>{card.kicker}</p>
       )}
@@ -100,10 +101,10 @@ const ShareCard = forwardRef(({ card, theme = 'blue' }, ref) => {
       {/* Glyph */}
       <div style={{
         fontFamily: "'Apple Symbols', 'Segoe UI Symbol', 'Noto Sans Symbols 2', Symbola, serif",
-        fontSize: compact ? 100 : 150,
+        fontSize: personalSquare ? 110 : compact ? 100 : 150,
         color: theme === 'cream' ? palette.accent : (card.glyphColor || palette.accent),
         lineHeight: 1,
-        marginBottom: 34,
+        marginBottom: personalSquare ? 22 : 34,
         textShadow: theme === 'cream' ? 'none' : '0 0 50px rgba(201,169,97,0.35)',
         fontVariantEmoji: 'text',
       }}>{card.glyph}</div>
@@ -111,7 +112,7 @@ const ShareCard = forwardRef(({ card, theme = 'blue' }, ref) => {
       {/* Title */}
       <h1 style={{
         fontFamily: 'Playfair Display, Georgia, serif',
-        fontSize: compact ? 48 : 58,
+        fontSize: personalSquare ? 46 : compact ? 48 : 58,
         fontWeight: 700,
         color: palette.accent,
         textAlign: 'center',
@@ -119,7 +120,7 @@ const ShareCard = forwardRef(({ card, theme = 'blue' }, ref) => {
         marginBottom: 40,
         maxWidth: 860,
         overflowWrap: compact ? 'anywhere' : undefined,
-        margin: '0 0 40px 0',
+        margin: personalSquare ? '0 0 26px 0' : '0 0 40px 0',
       }}>{card.title}</h1>
 
       {/* Body */}
@@ -165,8 +166,8 @@ const ShareCard = forwardRef(({ card, theme = 'blue' }, ref) => {
       ) : (
         <p style={{
           fontFamily: 'Lora, Georgia, serif',
-          fontSize: compact ? 34 : 33,
-          lineHeight: compact ? 1.55 : 1.6,
+          fontSize: personalSquare ? 29 : compact ? 34 : 33,
+          lineHeight: personalSquare ? 1.5 : compact ? 1.55 : 1.6,
           color: palette.text,
           textAlign: 'center',
           maxWidth: 820,

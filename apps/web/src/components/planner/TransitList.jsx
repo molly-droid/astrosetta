@@ -196,7 +196,7 @@ function AspectRow({ a, chart, date, transitPlanets, natalPlanets, canViewInterp
       return lon == null || raw.unknown_time ? null : findNatalHouseForLongitude(lon, raw.houses || [], raw.house_system || 'whole_sign', chartAscendantSign(chart));
     };
     const asp = { planet1: a.transit_planet, planet2: a.natal_planet, aspect: a.aspect };
-    setShareVariantsState(shareVariants(buildSkyAspectCardData(asp, dateStr), buildMySkyAspectCardData(asp, dateStr, houseOf(a.transit_planet), houseOf(a.natal_planet))));
+    setShareVariantsState(shareVariants(buildSkyAspectCardData(asp, dateStr), buildMySkyAspectCardData(asp, dateStr, houseOf(a.transit_planet), houseOf(a.natal_planet)), { chart }));
   };
 
   const borderColor =

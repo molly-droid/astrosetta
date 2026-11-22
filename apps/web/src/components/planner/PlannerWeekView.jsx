@@ -272,7 +272,7 @@ export default function PlannerWeekView({ date, chart, user, relationshipSelecto
         dateStr: range,
       });
       const hasHouses = events.some(e => e.house);
-      const v = shareVariants(card('everyone'), hasHouses ? card('mine') : null);
+      const v = shareVariants(card('everyone'), hasHouses ? card('mine') : null, { chart, subject: "this week's sky" });
       setShareState(v.length ? v : [{ key: 'everyone', label: 'Share for everyone', card: buildKeyDatesCardData({ title: 'This week in the sky', kicker: 'KEY DATES', dates: [{ date: range, text: 'A quiet week: no stations, sign changes, or lunations' }], audience: 'everyone', dateStr: range }) }]);
     } finally {
       setShareLoading(false);

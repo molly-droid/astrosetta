@@ -222,7 +222,7 @@ export default function MonthSynthesis({ date, chart }) {
         audience,
         dateStr: monthDateStr,
       });
-      setShareCard(shareVariants(card('everyone'), events.some(e => e.house) ? card('mine') : null));
+      setShareCard(shareVariants(card('everyone'), events.some(e => e.house) ? card('mine') : null, { chart, subject: "this month's sky" }));
     } catch { /* non-critical */ }
     setShareLoading(false);
   };

@@ -1,3 +1,4 @@
+import { formatPersonalReadingTitle, personalizeShareCard } from '@/lib/shareReading';
 import html2canvas from 'html2canvas';
 import { PLANET_GLYPHS, SIGN_GLYPHS } from '@/lib/chartUtils';
 import { ECLIPSE_META } from '@/lib/eclipseUtils';
@@ -152,8 +153,7 @@ export function buildLunationCardData(lunation, dateStr) {
 export function buildRisingSignCardData(sign, content, dateStr, { basis = 'rising', period = 'day' } = {}) {
   const glyph = SIGN_GLYPHS[sign] || '✦';
   const bullets = Array.isArray(content?.bullets) ? content.bullets : [];
-  const signLabel = basis === 'sun' ? 'Sun' : 'Rising';
-  const headline = content?.headline || `What ${period === 'week' ? 'this week' : 'today'} means for ${sign} ${signLabel}`;
+  const headline = formatPersonalReadingTitle(period === 'week' ? "this week's sky" : "today's sky", { sign, basis });
   const hashtags = ['#astrology', hashtag(sign), basis === 'sun' ? '#sunsign' : '#rising', '#horoscope', '#astrosetta'];
   // AI-01: the image shows the short standalone summary (the full bullet list
   // overflowed the square card). The copied text keeps the bullets, where
@@ -161,7 +161,7 @@ export function buildRisingSignCardData(sign, content, dateStr, { basis = 'risin
   const summary = typeof content?.summary === 'string' ? content.summary.trim() : '';
   const readingText = bullets.length ? bullets.map(b => `✦ ${b}`).join('\n') : summary;
   const textFallback = `${headline}\n${dateStr}\n\n${readingText}\n\n${hashtags.join(' ')}\n\nGet your chart → astrosetta.com`;
-  const base = { glyph, glyphColor: '#C9A961', kicker: `${period === 'week' ? 'WEEKLY' : 'DAILY'} ${basis === 'sun' ? 'SUN-SIGN READING' : 'HOROSCOPE'}`, title: headline, dateStr, hashtags, textFallback };
+  const base = { glyph, glyphColor: '#C9A961', personalReadingTitle: true, kicker: `${period === 'week' ? 'WEEKLY' : 'DAILY'} ${basis === 'sun' ? 'SUN-SIGN READING' : 'HOROSCOPE'}`, title: headline, dateStr, hashtags, textFallback };
   return summary
     ? { ...base, bodyType: 'prose', body: summary, bullets }
     : { ...base, bodyType: 'bullets', bullets };
@@ -216,7 +216,7 @@ export function buildPersonalIngressCardData(ing, dateStr, house) {
   const where = houseLabel(house);
   if (!where) return null;
   const body = `${ing.planet} ${ing.approaching ? 'approaches' : 'enters'} ${ing.to_sign} in my ${where}. For ${PLANET_DURATIONS[ing.planet] || 'a while'}, ${PLANET_DOMAINS[ing.planet] || 'its themes'} play out in this part of my life.`;
-  return { ...base, audience: 'mine', kicker: 'MY INGRESS', body, textFallback: `${base.title}, in my ${where}\n${dateStr}\n\n${body}\n\n${INVITE}` };
+  return { ...base, audience: 'mine', kicker: 'MY INGRESS', personalSubject: `${ing.planet} in ${ing.to_sign}`, body, textFallback: `${base.title}, in my ${where}\n${dateStr}\n\n${body}\n\n${INVITE}` };
 }
 
 /** Personal version of a station. */
@@ -226,7 +226,7 @@ export function buildPersonalStationCardData(station, dateStr, house) {
   if (!where) return null;
   const isRx = station.type === 'retrograde';
   const body = `${station.planet} ${isRx ? 'stations retrograde' : 'stations direct'} at ${station.degree?.toFixed(1)}° ${station.sign}, in my ${where}. ${isRx ? 'Time to revisit and rethink' : 'Things start moving again'} in this part of my life.`;
-  return { ...base, audience: 'mine', kicker: 'MY STATION', body, textFallback: `${base.title}, in my ${where}\n${dateStr}\n\n${body}\n\n${INVITE}` };
+  return { ...base, audience: 'mine', kicker: 'MY STATION', personalSubject: `${station.planet} ${isRx ? 'retrograde' : 'direct'} in ${station.sign}`, body, textFallback: `${base.title}, in my ${where}\n${dateStr}\n\n${body}\n\n${INVITE}` };
 }
 
 /** Personal version of a lunation. */
@@ -286,10 +286,10 @@ export function buildQuizResultCardData({ title, kicker = 'DAILY QUIZ', stats, b
 
 /** F-04: the two share choices for an event; drops the personal one when it
  *  can't be built (unknown birth time, no house). */
-export function shareVariants(everyoneCard, mineCard) {
+export function shareVariants(everyoneCard, mineCard, { chart, subject } = {}) {
   return [
     everyoneCard && { key: 'everyone', label: 'Share for everyone', card: asEveryone(everyoneCard) },
-    mineCard && { key: 'mine', label: 'Share my reading', card: mineCard },
+    mineCard && { key: 'mine', label: 'Share my reading', card: personalizeShareCard(mineCard, chart, subject) },
   ].filter(Boolean);
 }
 

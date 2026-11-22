@@ -304,7 +304,7 @@ export default function ChartSelectionInfo({
             {item.retrograde && <span className="font-body text-[0.5625rem] text-gold-accent italic">℞</span>}
           </div>
           <p className="font-body text-[0.625rem] text-brass/60 mt-0.5 uppercase tracking-wide">Transit {def.verb || item.aspect} natal</p>
-          <TransitAspectInterpretation item={item} natalPlanets={natalPlanets} transitPlanets={transitPlanets} />
+          <TransitAspectInterpretation chartData={chartData} item={item} natalPlanets={natalPlanets} transitPlanets={transitPlanets} />
         </div>
       </PillShell>
     );

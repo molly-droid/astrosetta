@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { Share2 } from 'lucide-react';
 import ShareSheet from './ShareSheet';
+import { formatPersonalReadingTitle, resolveShareSign } from '@/lib/shareReading';
 import { buildReadingSharePages } from '@/lib/readingShare';
 
-export default function ShareReadingButton({ title, text, getText, glyph, kicker, audienceLabel, dateStr, label = 'Share', filename = 'astrosetta-reading', className = '' }) {
+export default function ShareReadingButton({ title, text, getText, glyph, kicker, audienceLabel, dateStr, chart, personalSubject, label = 'Share', filename = 'astrosetta-reading', className = '' }) {
   const [pages, setPages] = useState(null);
   if (!text && !getText) return null;
   const openShare = event => {
     event.stopPropagation();
-    const built = buildReadingSharePages({ title, text: getText ? getText() : text, glyph, kicker, audienceLabel, dateStr });
+    const shareTitle = personalSubject ? formatPersonalReadingTitle(personalSubject, resolveShareSign(chart)) || title : title;
+    const built = buildReadingSharePages({ title: shareTitle, text: getText ? getText() : text, glyph, kicker, audienceLabel, dateStr });
     if (built.length) setPages(built);
   };
   return (

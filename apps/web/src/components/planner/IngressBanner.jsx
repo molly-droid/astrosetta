@@ -297,7 +297,7 @@ function IngressCard({ ing, chart, compact, onLinkToHighlights, autoExpandKey })
                 onClick={() => {
                   const raw = chart?.raw_data || {};
                   const { entryHouse } = raw.unknown_time ? {} : findNatalHouseForSign(ing.to_sign, raw.houses || [], raw.house_system || 'whole_sign', chartAscendantSign(chart));
-                  setShareCard(shareVariants(buildIngressCardData(ing, dateStr), buildPersonalIngressCardData(ing, dateStr, entryHouse)));
+                  setShareCard(shareVariants(buildIngressCardData(ing, dateStr), buildPersonalIngressCardData(ing, dateStr, entryHouse), { chart }));
                 }}
                 className="flex items-center gap-1.5 self-start font-body text-[0.625rem] text-brass/60 hover:text-gold-accent transition-colors pt-1"
               >

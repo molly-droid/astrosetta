@@ -112,7 +112,7 @@ function FormationInterpretation({ chart, dateKey, formation, expanded }) {
       ) : reading ? (
         <FormationReading reading={displayedReading} />
       ) : null}
-      <ShareReadingButton title={formation.type} text={shareText} kicker="TRANSIT-NATAL FORMATION" audienceLabel="MY SKY" dateStr={dateKey} label="Share this formation" />
+      <ShareReadingButton title={formation.type} chart={chart} personalSubject={formation.type} text={shareText} kicker="TRANSIT-NATAL FORMATION" audienceLabel="MY SKY" dateStr={dateKey} label="Share this formation" />
     </div>
   );
 }

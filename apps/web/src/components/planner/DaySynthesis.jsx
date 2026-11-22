@@ -445,7 +445,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
         textFallback: `The sky on ${shareDateStr}\n\n${sky}\n\nRead your chart → astrosetta.com`,
       } : null;
       const mine = { ...buildRisingSignCardData(shareSign.sign, res.data, shareDateStr, shareSign), audience: 'mine' };
-      setShareCard(shareVariants(everyone, mine));
+      setShareCard(shareVariants(everyone, mine, { chart, subject: "today's sky" }));
     } catch { /* non-critical */ }
     setShareLoading(false);
   };

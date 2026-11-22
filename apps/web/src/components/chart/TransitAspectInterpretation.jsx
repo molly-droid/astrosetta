@@ -22,7 +22,7 @@ const cache = {};
  * Replaces the generic static aspect definition with content tailored to
  * the actual planets, signs, houses, and orb involved.
  */
-export default function TransitAspectInterpretation({ item, natalPlanets, transitPlanets }) {
+export default function TransitAspectInterpretation({ item, natalPlanets, transitPlanets, chartData }) {
   const [text, setText] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -83,7 +83,7 @@ export default function TransitAspectInterpretation({ item, natalPlanets, transi
     <div className="mt-1.5">
       <InterpretationMarkdown text={text} className="font-body text-sm text-white/80 leading-snug" />
       <Eli5Button context={`${eli5Context}\n${text}`} />
-      <ShareReadingButton title={`${item.transit_planet} ${item.aspect} ${item.natal_planet}`} text={text} kicker="PERSONAL TRANSIT" audienceLabel="MY CHART" />
+      <ShareReadingButton chart={{ raw_data: chartData || { planets: natalPlanets } }} personalSubject={`${item.transit_planet} ${item.aspect} natal ${item.natal_planet}`} title={`${item.transit_planet} ${item.aspect} ${item.natal_planet}`} text={text} kicker="PERSONAL TRANSIT" audienceLabel="MY CHART" />
     </div>
   );
 }

@@ -49,7 +49,7 @@ export default function MundaneFormationsCard({ transits, onHighlight, chart = n
         note = `Today's ${p.type}${named ? '' : ` (${p.planets.join(', ')})`} runs through my ${list.length > 1 ? `${list.slice(0, -1).join(', ')} and ${list[list.length - 1]}` : list[0]} house${houses.length > 1 ? 's' : ''}, linking ${houses.length > 1 ? 'those parts' : 'that part'} of my life.`;
       }
     }
-    setShareState(shareVariants(buildFormationCardData(p, dateStr), note ? buildFormationCardData(p, dateStr, note) : null));
+    setShareState(shareVariants(buildFormationCardData(p, dateStr), note ? buildFormationCardData(p, dateStr, note) : null, { chart, subject: p.type }));
   };
 
   const handleCardToggle = () => {

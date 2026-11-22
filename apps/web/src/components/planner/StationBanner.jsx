@@ -212,7 +212,7 @@ function StationCard({ station, chart, autoExpandKey }) {
                   const raw = chart?.raw_data || {};
                   const lon = ZODIAC.indexOf(station.sign) * 30 + (station.degree || 0);
                   const house = raw.unknown_time || ZODIAC.indexOf(station.sign) < 0 ? null : findNatalHouseForLongitude(lon, raw.houses || [], raw.house_system || 'whole_sign', chartAscendantSign(chart));
-                  setShareCard(shareVariants(buildStationCardData(station, dateStr), buildPersonalStationCardData(station, dateStr, house)));
+                  setShareCard(shareVariants(buildStationCardData(station, dateStr), buildPersonalStationCardData(station, dateStr, house), { chart }));
                 }}
                 className="flex items-center gap-1.5 self-start font-body text-[0.625rem] text-brass/60 hover:text-gold-accent transition-colors pt-1"
               >

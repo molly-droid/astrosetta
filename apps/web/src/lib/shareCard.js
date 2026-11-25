@@ -150,10 +150,10 @@ export function buildLunationCardData(lunation, dateStr) {
 }
 
 /** Build card data for a rising-sign listicle (from backend function output). */
-export function buildRisingSignCardData(sign, content, dateStr, { basis = 'rising', period = 'day' } = {}) {
+export function buildRisingSignCardData(sign, content, dateStr, { basis = 'rising', period = 'day', subject } = {}) {
   const glyph = SIGN_GLYPHS[sign] || '✦';
   const bullets = Array.isArray(content?.bullets) ? content.bullets : [];
-  const headline = formatPersonalReadingTitle(period === 'week' ? "this week's sky" : "today's sky", { sign, basis });
+  const headline = formatPersonalReadingTitle(subject || (period === 'week' ? "this week's sky" : "today's sky"), { sign, basis });
   const hashtags = ['#astrology', hashtag(sign), basis === 'sun' ? '#sunsign' : '#rising', '#horoscope', '#astrosetta'];
   // AI-01: the image shows the short standalone summary (the full bullet list
   // overflowed the square card). The copied text keeps the bullets, where

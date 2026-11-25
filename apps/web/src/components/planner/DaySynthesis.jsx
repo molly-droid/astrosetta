@@ -18,7 +18,7 @@ import useExplanation from '@/hooks/useExplanation';
 import { buildSynthesisExplanation } from '@/lib/explanationContext';
 import ShareSheet from '@/components/share/ShareSheet';
 import { buildRisingSignCardData, formatCollectiveContext, shareVariants } from '@/lib/shareCard';
-import { resolveShareSign } from '@/lib/shareReading';
+import { dailyShareSubject, resolveShareSign } from '@/lib/shareReading';
 import CollapsibleCardHeader from '@/components/ui/CollapsibleCardHeader';
 import SynthesisCategoryCard from '@/components/planner/SynthesisCategoryCard';
 import GatedFeature from '@/components/paywall/GatedFeature';
@@ -430,6 +430,7 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
     setShareLoading(true);
     try {
       const shareDateStr = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      const subject = dailyShareSubject(date);
       const res = await base44.functions.invoke('generateRisingSignCard', {
         ...shareSign,
         dateKey,
@@ -444,8 +445,8 @@ export default function DaySynthesis({ date, chart, transits, onSynthesis, userI
         bodyType: 'prose', body: sky, dateStr: '',
         textFallback: `The sky on ${shareDateStr}\n\n${sky}\n\nRead your chart → astrosetta.com`,
       } : null;
-      const mine = { ...buildRisingSignCardData(shareSign.sign, res.data, shareDateStr, shareSign), audience: 'mine' };
-      setShareCard(shareVariants(everyone, mine, { chart, subject: "today's sky" }));
+      const mine = { ...buildRisingSignCardData(shareSign.sign, res.data, shareDateStr, { ...shareSign, subject }), audience: 'mine' };
+      setShareCard(shareVariants(everyone, mine, { chart, subject }));
     } catch { /* non-critical */ }
     setShareLoading(false);
   };

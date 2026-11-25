@@ -106,7 +106,7 @@ export default function PlannerDayView({ date, chart, user, spotlightDynamics = 
           )}
           {/* Highlight banners — above the cards, time/context gated */}
           {data?.ingresses?.length > 0 && (
-            <IngressBanner ingresses={data.ingresses} chart={chart} compact onLinkToHighlights={scrollToHighlights} />
+            <IngressBanner ingresses={data.ingresses} chart={chart} date={date} compact onLinkToHighlights={scrollToHighlights} />
           )}
           <MundaneRitualBanner chart={chart} transits={data} onHighlight={onHighlightPattern} dateKey={dateKey} />
           <TransitNatalFormationsBanner transits={data} chart={chart} dateKey={dateKey} />

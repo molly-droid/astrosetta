@@ -1,6 +1,12 @@
 const SIGNS = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
 const validSign = value => SIGNS.find(sign => sign.toLowerCase() === String(value || '').trim().toLowerCase()) || null;
 
+export function dailyShareSubject(date, today = new Date()) {
+  return date.toDateString() === today.toDateString()
+    ? "today's sky"
+    : `the sky on ${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+}
+
 // Unknown birth times must never reuse an estimated ascendant from raw data.
 export function resolveShareSign(chart) {
   const raw = chart?.raw_data || {};

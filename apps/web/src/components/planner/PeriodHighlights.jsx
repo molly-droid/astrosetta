@@ -34,15 +34,15 @@ export default function PeriodHighlights({ dates, chart }) {
     })).then(results => {
       const stationMap = new Map();
       const ingressMap = new Map();
-      results.forEach(res => {
+      results.forEach((res, index) => {
         if (!res) return;
         onDayOnly(res.stations).forEach(s => {
           const k = `${s.planet}_${s.type}_${s.sign}`;
-          if (!stationMap.has(k)) stationMap.set(k, s);
+          if (!stationMap.has(k)) stationMap.set(k, { ...s, plannerDate: sampled[index] });
         });
         onDayOnly(res.ingresses).forEach(ing => {
           const k = `${ing.planet}_${ing.to_sign}_${ing.from_sign}`;
-          if (!ingressMap.has(k)) ingressMap.set(k, ing);
+          if (!ingressMap.has(k)) ingressMap.set(k, { ...ing, plannerDate: sampled[index] });
         });
       });
       const out = { stations: Array.from(stationMap.values()), ingresses: Array.from(ingressMap.values()) };

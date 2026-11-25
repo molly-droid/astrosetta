@@ -40,6 +40,24 @@ test('daily and weekly headings override cached AI wording and correctly label S
   }
 });
 
+test('planner daily shares name the selected local day in both the image and copied text', () => {
+  const today = new Date(2026, 10, 24, 23, 30);
+  for (const date of [new Date(2026, 9, 1, 0, 15), new Date(2027, 0, 1, 0, 15)]) {
+    const dateStr = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const subject = helpers.dailyShareSubject(date, today);
+    assert.equal(subject, `the sky on ${dateStr}`);
+    for (const basis of ['rising', 'sun']) {
+      const card = cards.buildRisingSignCardData('Taurus', { summary: 'Selected-day reading.' }, dateStr, { basis, subject });
+      assert.equal(card.dateStr, dateStr);
+      assert.equal(card.title, `What the sky on ${dateStr} means for Taurus ${basis === 'sun' ? 'Sun' : 'Rising'}`);
+      assert.equal(card.textFallback.split('\n')[0], card.title);
+      assert.equal(card.textFallback.split('\n')[1], dateStr);
+      assert.doesNotMatch(card.title, /today/i);
+    }
+  }
+  assert.equal(helpers.dailyShareSubject(new Date(2026, 10, 24, 0, 15), today), "today's sky");
+});
+
 test('formations and period cards use Sun fallback without changing house availability', () => {
   const collective = cards.buildFormationCardData({type:'Grand Trine',planets:['Venus','Jupiter','Saturn']}, 'Nov 22');
   const mine = cards.buildFormationCardData({type:'Grand Trine',planets:['Venus','Jupiter','Saturn']}, 'Nov 22', 'My existing reading.');

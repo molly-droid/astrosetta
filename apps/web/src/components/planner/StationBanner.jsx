@@ -21,7 +21,7 @@ const PLANET_DURATIONS = {
 
 const moduleCache = {};
 
-export default function StationBanner({ stations, chart, stationAutoExpand }) {
+export default function StationBanner({ stations, chart, date = new Date(), stationAutoExpand }) {
   if (!stations?.length) return null;
 
   // Prioritize: exact stations first, then approaching by days_until
@@ -35,26 +35,26 @@ export default function StationBanner({ stations, chart, stationAutoExpand }) {
   return (
     <div className="space-y-2">
       {sorted.map((s, i) => (
-        <StationCard key={`stn_${i}`} station={s} chart={chart} autoExpandKey={stationAutoExpand} />
+        <StationCard key={`stn_${i}_${(s.plannerDate || date).toDateString()}`} station={s} chart={chart} date={s.plannerDate || date} autoExpandKey={stationAutoExpand} />
       ))}
     </div>
   );
 }
 
-function StationCard({ station, chart, autoExpandKey }) {
+function StationCard({ station, chart, date, autoExpandKey }) {
   const [reading, setReading] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [cacheChecked, setCacheChecked] = useState(false);
   const [shareCard, setShareCard] = useState(null);
   const hasGenerated = useRef(false);
-  const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const dateStr = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
   // Linked from a Today banner — auto-expand the matching station card
   useEffect(() => {
     if (autoExpandKey && autoExpandKey.split('#')[0] === station.planet) setExpanded(true);
   }, [autoExpandKey]);
-  const dateKey = new Date().toLocaleDateString('en-CA');
+  const dateKey = date.toLocaleDateString('en-CA');
 
   const cacheKey = chart?.id ? `${chart.id}_${dateKey}_${station.planet}_${station.type}_${station.approaching ? 'app' : 'exact'}_v1` : null;
 
@@ -101,7 +101,7 @@ function StationCard({ station, chart, autoExpandKey }) {
   const generate = async () => {
     setLoading(true);
     const raw = chart?.raw_data || {};
-    const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
     const natalPlanets = (raw.planets || [])
       .map(p => `${p.name} in ${p.sign} (House ${p.house}${p.retrograde ? ', Rx' : ''})`)
@@ -172,7 +172,7 @@ function StationCard({ station, chart, autoExpandKey }) {
       <CollapsibleCardHeader
         icon={<span className="text-lg" style={{ color: accentColor, fontVariantEmoji: 'text' }}>{glyph}</span>}
         title={`${station.planet} stations ${isRx ? 'retrograde ℞' : 'direct ↗'}`}
-        subtitle={<>{stationLabel} · {station.degree?.toFixed(1)}° <SignName sign={station.sign} />{station.approaching && expectedDateLabel && <> · est. {expectedDateLabel}</>}{!station.approaching && <> · today</>}</>}
+        subtitle={<>{stationLabel} · {station.degree?.toFixed(1)}° <SignName sign={station.sign} />{station.approaching && expectedDateLabel && <> · est. {expectedDateLabel}</>}{!station.approaching && <> · {dateStr}</>}</>}
         expanded={expanded}
         loading={loading}
         onToggle={() => setExpanded(!expanded)}

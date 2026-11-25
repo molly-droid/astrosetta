@@ -38,7 +38,7 @@ const HOUSE_THEMES = [
 // Module-level cache: `${chartId}_${dateKey}_${planet}_${to_sign}` → result
 const ingressCache = {};
 
-export default function IngressBanner({ ingresses, chart, compact = false, onLinkToHighlights, ingressAutoExpand }) {
+export default function IngressBanner({ ingresses, chart, date = new Date(), compact = false, onLinkToHighlights, ingressAutoExpand }) {
   if (!ingresses?.length) return null;
 
   // Astrologers prioritize ingresses by how slowly the planet moves —
@@ -65,26 +65,26 @@ export default function IngressBanner({ ingresses, chart, compact = false, onLin
   return (
     <div className="space-y-2">
       {sorted.map((ing, i) => (
-        <IngressCard key={`ing_${i}`} ing={ing} chart={chart} compact={compact} onLinkToHighlights={onLinkToHighlights} autoExpandKey={ingressAutoExpand} />
+        <IngressCard key={`ing_${i}_${(ing.plannerDate || date).toDateString()}`} ing={ing} chart={chart} date={ing.plannerDate || date} compact={compact} onLinkToHighlights={onLinkToHighlights} autoExpandKey={ingressAutoExpand} />
       ))}
     </div>
   );
 }
 
-function IngressCard({ ing, chart, compact, onLinkToHighlights, autoExpandKey }) {
+function IngressCard({ ing, chart, date, compact, onLinkToHighlights, autoExpandKey }) {
   const [reading, setReading] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [cacheChecked, setCacheChecked] = useState(false);
   const [shareCard, setShareCard] = useState(null);
   const hasGenerated = useRef(false);
-  const dateStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const dateStr = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
   // Linked from a Today banner — auto-expand the matching ingress card
   useEffect(() => {
     if (autoExpandKey && autoExpandKey.split('#')[0] === `${ing.planet}__${ing.to_sign}`) setExpanded(true);
   }, [autoExpandKey]);
-  const dateKey = new Date().toLocaleDateString('en-CA');
+  const dateKey = date.toLocaleDateString('en-CA');
 
   const cacheKey = chart?.id ? `${chart.id}_${dateKey}_${ing.planet}_${ing.to_sign}_v4` : null;
 
@@ -133,7 +133,7 @@ function IngressCard({ ing, chart, compact, onLinkToHighlights, autoExpandKey })
   const generate = async () => {
     setLoading(true);
     const raw = chart?.raw_data || {};
-    const dateStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+    const dateStr = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
     const natalPlanets = (raw.planets || [])
       .map(p => `${p.name} in ${p.sign} (House ${p.house}${p.retrograde ? ', Rx' : ''})`)
@@ -258,7 +258,7 @@ function IngressCard({ ing, chart, compact, onLinkToHighlights, autoExpandKey })
       <CollapsibleCardHeader
         icon={<span className="text-lg" style={{ fontVariantEmoji: 'text' }}>{glyph}</span>}
         title={<>{ing.planet} {titleVerb} <SignName sign={ing.to_sign} /></>}
-        subtitle={<>{ingressLabel} · {isApproaching ? `at ${ing.degree?.toFixed(1)}° ${ing.from_sign}` : ing.recent ? `now at ${ing.degree?.toFixed(1)}° ${ing.to_sign}` : 'today'}{isApproaching && expectedDateLabel && <> · est. {expectedDateLabel}</>}</>}
+        subtitle={<>{ingressLabel} · {isApproaching ? `at ${ing.degree?.toFixed(1)}° ${ing.from_sign}` : ing.recent ? `now at ${ing.degree?.toFixed(1)}° ${ing.to_sign}` : dateStr}{isApproaching && expectedDateLabel && <> · est. {expectedDateLabel}</>}</>}
         expanded={expanded}
         loading={loading}
         onToggle={() => setExpanded(!expanded)}

@@ -41,7 +41,7 @@ function deriveTradition(zodiac, houseSystem) {
 }
 
 export default function ZodiacHousesSelector({ userProgress, existingChart, onChartRegenerated }) {
-  const { user } = useAuth();
+  const { user, setProgressRecord } = useAuth();
   const { canSwitchTradition, tier } = usePermissions(user);
   const currentTradition = getTradition(userProgress?.active_tradition || 'modern');
   const currentZodiac = currentTradition.zodiac;
@@ -92,9 +92,10 @@ export default function ZodiacHousesSelector({ userProgress, existingChart, onCh
     setError('');
     const traditionKey = deriveTradition(zodiac, houses);
     try {
+      let updatedProgress;
       // 1. Persist the pair (tradition derived from it) to UserProgress
       if (userProgress?.id) {
-        await base44.entities.UserProgress.update(userProgress.id, {
+        updatedProgress = await base44.entities.UserProgress.update(userProgress.id, {
           active_tradition: traditionKey,
           house_system: houses,
         });
@@ -132,6 +133,7 @@ export default function ZodiacHousesSelector({ userProgress, existingChart, onCh
         });
       }
 
+      if (updatedProgress && userProgress.user_id === user?.id) setProgressRecord(updatedProgress);
       setPending(false);
       toast.success('Chart updated');
       if (onChartRegenerated) onChartRegenerated();

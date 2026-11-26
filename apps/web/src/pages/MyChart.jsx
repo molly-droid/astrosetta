@@ -2,6 +2,7 @@ import ShareReadingButton from '@/components/share/ShareReadingButton';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
+import { useSavedCharts } from '@/hooks/useSavedCharts';
 import { useTabUrl } from '@/hooks/useTabUrl';
 import { base44 } from '@/api/base44Client';
 import { Loader2, RefreshCw, ChevronDown, ChevronRight, ChevronLeft, Sparkles, ArrowRight, Eye } from 'lucide-react';
@@ -193,7 +194,7 @@ export default function MyChart() {
   const [highlightKey, setHighlightKey] = useState(null);
   const [highlightPattern, setHighlightPattern] = useState(null);
   const [viewMode, setViewMode] = useState('natal');
-  const [savedCharts, setSavedCharts] = useState([]);
+  const { charts: savedCharts, loading: savedChartsLoading, error: savedChartsError, refresh: loadSavedCharts } = useSavedCharts(user, chart);
   const [selectedChartId, setSelectedChartId] = useState('');
   const [showManager, setShowManager] = useState(false);
   const [synastryOverlay, setSynastryOverlay] = useState(null);
@@ -284,15 +285,9 @@ export default function MyChart() {
     window.history.replaceState({}, '', newUrl);
   };
 
-  const loadSavedCharts = async () => {
-    const charts = await base44.entities.SavedChart.filter({ created_by_id: user.id }, '-created_date', 50);
-    setSavedCharts(charts);
-  };
-
   useEffect(() => {
     if (user) {
       loadChart();
-      loadSavedCharts();
     }
   }, [user]);
 
@@ -304,7 +299,7 @@ export default function MyChart() {
     setLoading(false);
   };
 
-  if (loading) {
+  if (loading || savedChartsLoading) {
     return <div className="flex items-center justify-center min-h-screen"><Loader2 className="animate-spin text-gold-primary" size={28} /></div>;
   }
 
@@ -354,6 +349,7 @@ export default function MyChart() {
 
   return (
     <div className="min-h-screen pb-24">
+      {savedChartsError && <div role="alert" className="p-4 text-center font-body text-sm text-brass">Saved charts could not be updated to your chart settings. <button onClick={() => loadSavedCharts()} className="underline">Try again</button></div>}
       {returnToLearn && (
         <button
           onClick={() => navigate('/learn', { state: { subjectKey: returnToLearn.subjectKey, section: returnToLearn.section, blockIndex: returnToLearn.blockIndex } })}

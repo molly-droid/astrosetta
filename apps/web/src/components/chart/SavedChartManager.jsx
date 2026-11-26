@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Loader2, MapPin, Trash2, Plus, Pencil, Calendar } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { warmSynastry } from '@/lib/synastryCache';
+import { useAuth } from '@/lib/AuthContext';
+import { resolveChartSettings, savedChartMatchesSettings, savedChartCalculationData } from '@/lib/savedChartSettings';
 
 const RELATIONSHIPS = ['Partner', 'Potential Partner', 'Crush', 'Ex', 'Friend', 'Child', 'Mother', 'Father', 'Sibling', 'Colleague', 'Boss', 'Client', 'Mentor', 'Other'];
 const EVENT_TYPES = ['When We Met', 'First Date', 'Wedding', 'Engagement', 'Partnership', 'Career Milestone', 'Relocation', 'Travel', 'Achievement', 'Other'];
@@ -25,6 +27,8 @@ const EMPTY_FORM = {
 };
 
 export default function SavedChartManager({ user, charts, natalChart = null, onRefresh, onClose }) {
+  const { progressRecord } = useAuth();
+  const calculationSettings = resolveChartSettings(progressRecord?.user_id === user?.id ? progressRecord : null, natalChart);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
@@ -90,7 +94,7 @@ export default function SavedChartManager({ user, charts, natalChart = null, onR
       birth_date: chart.birth_date || '',
       birth_time: chart.birth_time ? chart.birth_time.slice(0, 5) : '',
       city_query: loc.city ? `${loc.city}${loc.country ? ', ' + loc.country : ''}` : '',
-      unknown_time: !!chart.raw_data?.unknown_time || !chart.birth_time || chart.birth_time === '12:00:00',
+      unknown_time: !!chart.raw_data?.unknown_time || !chart.birth_time,
     });
     setSelectedLocation(loc.latitude != null ? loc : null);
     setGeoResults([]);
@@ -138,7 +142,7 @@ export default function SavedChartManager({ user, charts, natalChart = null, onR
     } catch { utcOffset = 0; }
 
     const birthLocation = {
-      city: selectedLocation.name,
+      city: selectedLocation.name || selectedLocation.city,
       country: selectedLocation.country,
       latitude: selectedLocation.latitude,
       longitude: selectedLocation.longitude,
@@ -147,20 +151,17 @@ export default function SavedChartManager({ user, charts, natalChart = null, onR
 
     // Check if birth data changed — only recalculate if it did
     const existing = editingId ? charts.find(c => c.id === editingId) : null;
-    const birthDataChanged = !existing ||
+    const birthDataChanged = !existing || !savedChartMatchesSettings(existing, calculationSettings) ||
       existing.birth_date !== form.birth_date ||
       existing.birth_time !== birthTime ||
       existing.utc_offset !== utcOffset ||
       existing?.raw_data?.unknown_time !== unknownTime ||
       JSON.stringify(existing.birth_location) !== JSON.stringify(birthLocation);
 
-    let chartData = existing?.raw_data;
-    let sunSign = existing?.sun_sign;
-    let moonSign = existing?.moon_sign;
-    let ascSign = existing?.ascendant_sign;
-
-    if (birthDataChanged) {
-      try {
+    let calculated;
+    try {
+      let data = existing?.raw_data;
+      if (birthDataChanged) {
         const res = await base44.functions.invoke('chartCalculator', {
           chart_type: 'natal',
           birth_date: form.birth_date,
@@ -168,35 +169,17 @@ export default function SavedChartManager({ user, charts, natalChart = null, onR
           unknown_time: unknownTime,
           utc_offset: utcOffset,
           birth_location: birthLocation,
+          ...calculationSettings,
         });
-        chartData = res.data;
-        const sunPlanet = chartData.planets?.find(p => p.name === 'Sun');
-        const moonPlanet = chartData.planets?.find(p => p.name === 'Moon');
-        sunSign = sunPlanet?.sign || '';
-        moonSign = moonPlanet?.sign || '';
-        ascSign = unknownTime ? '' : (chartData.angles?.ascendant?.sign || '');
-      } catch (err) {
-        setError('Failed to calculate chart. Please try again.');
-        setLoading(false);
-        return;
+        data = res.data;
       }
+      calculated = savedChartCalculationData(data, unknownTime);
+    } catch {
+      setError('Failed to calculate chart. Please try again.');
+      setLoading(false);
+      return;
     }
-
-    // Persist the unknown-time flag inside raw_data and strip house/angle data —
-    // a chart without a birth time must never carry fabricated houses or a rising sign.
-    if (unknownTime) {
-      chartData = {
-        ...chartData,
-        unknown_time: true,
-        houses: [],
-        angles: {},
-        ascendant_sign: '',
-        planets: (chartData?.planets || []).map(p => ({ ...p, house: null })),
-        nodes: Object.fromEntries(Object.entries(chartData?.nodes || {}).map(([k, n]) => [k, { ...n, house: null }])),
-      };
-    } else if (chartData) {
-      chartData = { ...chartData, unknown_time: false };
-    }
+    const chartData = calculated.raw_data;
 
     const recordData = {
       chart_type: form.chart_type || 'person',
@@ -209,10 +192,7 @@ export default function SavedChartManager({ user, charts, natalChart = null, onR
       birth_time: birthTime,
       birth_location: birthLocation,
       utc_offset: utcOffset,
-      raw_data: chartData,
-      sun_sign: sunSign,
-      moon_sign: moonSign,
-      ascendant_sign: ascSign,
+      ...calculated,
     };
 
     let saved;
@@ -232,7 +212,7 @@ export default function SavedChartManager({ user, charts, natalChart = null, onR
         userId: user?.id,
         natalRaw: natalChart?.raw_data,
         savedChart: { id: savedId, raw_data: chartData },
-        houseSystem: natalChart?.raw_data?.house_system || 'whole_sign',
+        houseSystem: calculationSettings.house_system,
       });
     }
 

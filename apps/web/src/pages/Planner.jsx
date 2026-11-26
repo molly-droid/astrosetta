@@ -28,6 +28,7 @@ import { buildSynastryOverlay } from '@/lib/synastryOverlay';
 import { buildCompositeChartObject } from '@/lib/compositeSynthesis';
 import { getHiddenChartPoints } from '@/lib/chartPointVisibility';
 import SavedChartManager from '@/components/chart/SavedChartManager';
+import { useSavedCharts } from '@/hooks/useSavedCharts';
 import PlannerPerspectivePicker from '@/components/planner/PlannerPerspectivePicker';
 import { bondVerbiage } from '@/lib/relationshipVerbiage';
 
@@ -67,7 +68,7 @@ export default function Planner() {
   // Relationship mode — swap the whole Planner to a relationship read for a
   // selected saved chart (partner, friend, etc.). Persists across view
   // switches via the `with` URL param.
-  const [savedCharts, setSavedCharts] = useState([]);
+  const { charts: savedCharts, loading: savedChartsLoading, error: savedChartsError, refresh: loadSavedCharts } = useSavedCharts(user, chart);
   const [partnerChartId, setPartnerChartId] = useState('');
   // Perspective (base) chart — defaults to the user's own chart (''), or any
   // saved chart the user picks, mirroring the Chart page. The base chart is
@@ -150,16 +151,8 @@ export default function Planner() {
   useEffect(() => {
     if (user) {
       loadChart();
-      loadSavedCharts();
     }
   }, [user]);
-
-  const loadSavedCharts = async () => {
-    try {
-      const charts = await base44.entities.SavedChart.filter({ created_by_id: user.id }, '-created_date', 50);
-      setSavedCharts(charts);
-    } catch { /* non-critical */ }
-  };
 
   // Enter/leave relationship mode — keeps the `with` URL param in sync so the
   // selection survives view switches and page refreshes.
@@ -240,7 +233,7 @@ export default function Planner() {
     return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
-  if (loading) {
+  if (loading || savedChartsLoading) {
     return <div className="flex items-center justify-center min-h-screen"><Loader2 className="animate-spin text-gold-primary" size={28} /></div>;
   }
 
@@ -262,6 +255,7 @@ export default function Planner() {
 
   return (
     <div className="min-h-screen pb-24">
+      {savedChartsError && <div role="alert" className="p-4 text-center font-body text-sm text-brass">Saved charts could not be updated to your chart settings. <button onClick={() => loadSavedCharts()} className="underline">Try again</button></div>}
       <PageHeader>
         {/* Title row */}
         <div className="px-4 pt-10 pb-4 flex items-center justify-between gap-2">

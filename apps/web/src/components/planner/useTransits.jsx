@@ -55,6 +55,7 @@ export function useTransits(date, chart) {
   // birth location. A 1-hour mismatch shifts natal angles (ASC/MC/DC/IC) by ~15°,
   // breaking all angle-based transit aspects.
   const utcOffset = chart?.raw_data?.utc_offset ?? (date ? -date.getTimezoneOffset() / 60 : 0);
+  const calculationKey = `${chart?.raw_data?.house_system || 'whole_sign'}_${chart?.raw_data?.tradition || 'modern'}`;
 
   useEffect(() => {
     if (!dateKey || !chart?.raw_data) return;
@@ -67,18 +68,19 @@ export function useTransits(date, chart) {
     const todayKey = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toLocaleDateString('en-CA');
     const isToday = dateKey === todayKey;
     const hourKey = isToday ? `_h${now.getHours()}` : '';
-    const cacheKey = `${CACHE_VERSION}_${dateKey}_${chart.id}_${utcOffset}${hourKey}`;
+    const cacheKey = `${CACHE_VERSION}_${dateKey}_${chart.id}_${calculationKey}_${utcOffset}${hourKey}`;
     const sessionKey = `transit_${cacheKey}`;
-    if (cache[cacheKey]) { setData(cache[cacheKey]); return; }
+    if (cache[cacheKey]) { setData(cache[cacheKey]); setLoading(false); return; }
     if (!isToday) {
       const sessionCached = sessionGet(sessionKey, dateKey);
-      if (sessionCached) { cache[cacheKey] = sessionCached; setData(sessionCached); return; }
+      if (sessionCached) { cache[cacheKey] = sessionCached; setData(sessionCached); setLoading(false); return; }
     }
 
     const raw = chart.raw_data;
     if (!raw.birth_date || raw.birth_location?.latitude == null) return;
 
     setLoading(true);
+    let cancelled = false;
     const payload = {
       chart_type: 'transit',
       birth_date: raw.birth_date,
@@ -95,12 +97,15 @@ export function useTransits(date, chart) {
       const processed = processTransits(res.data, raw, hidden);
       cache[cacheKey] = processed;
       if (!isToday) sessionSet(sessionKey, dateKey, processed);
+      if (cancelled) return;
       setData(processed);
       setLoading(false);
     }).catch(() => {
+      if (cancelled) return;
       setLoading(false);
     });
-  }, [dateKey, chart?.id]);
+    return () => { cancelled = true; };
+  }, [dateKey, chart?.id, calculationKey]);
 
   return { data, loading };
 }
